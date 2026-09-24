@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Khata</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f3f6f9;color:#17212b}
+header{background:#123b5d;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
+header h1{margin:0;font-size:25px} header span{opacity:.85}
+.container{max-width:1200px;margin:22px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
+.card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 3px 14px #00000012}
+h2{margin:0 0 15px;font-size:19px}
+input,textarea,button,select{font:inherit}
+input,textarea,select{width:100%;padding:10px 12px;border:1px solid #d5dde5;border-radius:8px;margin:5px 0 12px;direction:ltr}
+textarea{resize:vertical}
+button{border:0;border-radius:8px;padding:10px 15px;cursor:pointer}
+.primary{background:#1769aa;color:#fff}.success{background:#198754;color:#fff}.danger{background:#dc3545;color:#fff}.muted{background:#e9eef3}
+.search{margin-bottom:10px}
+.customer{padding:12px;border:1px solid #e1e6eb;border-radius:9px;margin:8px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.customer:hover,.customer.active{background:#edf6ff;border-color:#9ac7ed}
+.customer b{display:block}.bal{font-weight:bold}.debit{color:#c62828}.credit{color:#087f5b}.online{color:#1769aa}
+.top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
+.stat{padding:13px;border-radius:9px;background:#f5f8fb}.stat small{display:block;color:#687785}.stat strong{font-size:21px}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #edf0f2;text-align:left}th{background:#f7f9fb}
+.empty{text-align:center;color:#7b8791;padding:35px}
+.actions button{padding:6px 9px;margin-right:4px}
+.modal{display:none;position:fixed;inset:0;background:#0007;align-items:center;justify-content:center;padding:15px}
+.modal .box{background:white;width:min(500px,100%);border-radius:12px;padding:20px}
+.notice{font-size:13px;color:#667}.cash{color:#198754}.expense{color:#dc3545}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.syncbox{font-size:12px;padding:7px 10px;border-radius:8px;background:#f7f9fb;color:#667}.onlineBox{background:#eef7ff}.expenseBox{background:#fff2f2}
+@media(max-width:800px){header{flex-direction:column;align-items:flex-start;gap:10px}header>div:last-child{text-align:left!important}.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div style="width:58px;height:58px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+      <img src="logo.png" alt="FOZAN PRINTING Logo" style="max-width:52px;max-height:52px;object-fit:contain">
+    </div>
+    <div>
+      <h1 style="margin:0;font-size:25px">FOZAN PRINTING</h1>
+      <div style="font-size:14px;margin-top:3px">Printing &amp; Digital Services</div>
+    </div>
+  </div>
+  <div style="text-align:right;font-size:13px;line-height:1.7">
+    <div>📍 Plaza # 17, Backside D-Eatson Medical Store, Main PWD Society Road, Islamabad</div>
+    <strong>◉ 0330-5003388 &nbsp; | &nbsp; 0333-5465626</strong>
+  </div>
+</header>
+
+<div class="container">
+<section class="card" style="margin-bottom:18px">
+  <div class="toolbar">
+    <button class="success" onclick="newSale()">＋ Add Daily Sale</button>
+    <button class="danger" onclick="newExpense()">＋ Add Expense</button>
+    <button class="primary" onclick="exportData()">⬇ Backup</button>
+    <button class="muted" onclick="importData()">⬆ Restore</button><button class="muted" onclick="cloudLoad()">↻ Refresh Cloud</button>
+    <span class="syncbox" id="saveStatus">✓ Auto-saved locally after every change</span>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 12px">
+    <div><strong id="dailyTitle">Daily Sale Summary</strong><div class="notice">Every date has its own record. Changing the date will NOT delete or replace previous days' data.</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label for="summaryDate" style="font-weight:bold">Date</label>
+      <input id="summaryDate" type="date" style="width:auto;margin:0" onchange="renderDashboard();renderSales()">
+    </div>
+  </div>
+  <div id="dateHistory" style="display:flex;gap:7px;flex-wrap:wrap;margin:-2px 0 14px"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;background:#f7f9fb;border-radius:9px">
+    <div><strong id="monthTitle">September 2026</strong><div class="notice">Monthly record — all daily sales and expenses remain saved separately.</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="muted" onclick="changeMonth(-1)">‹ Previous Month</button>
+      <input id="summaryMonth" type="month" style="width:auto;margin:0" onchange="selectMonth(this.value)">
+      <button class="muted" onclick="changeMonth(1)">Next Month ›</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><small>Total Cash Sale</small><strong class="cash" id="totalCash">Rs. 0.00</strong></div>
+    <div class="stat onlineBox"><small>Total Online Sale</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
+    <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
+    <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 0.00</strong></div>
+    <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
+    <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 0.00</strong></div>
+    <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 0.00</strong></div>
+  </div>
+  <div class="notice" style="margin-top:-5px;margin-bottom:12px">
+    Showing totals for the selected date only. Expense is deducted only from Total Cash Sale. Online payments are not used to pay expenses.
+    Cash + Online Total = (Cash Sale − Expenses) + Online Sale.
+  </div>
+
+  <div id="expenseLedger"></div>
+</section>
+
+<section class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+    <h2 style="margin-bottom:0">Daily Sales</h2>
+    <input class="search" id="search" style="max-width:300px;margin:0" placeholder="Search customer / sale — all dates..." oninput="renderSales()">
+  </div>
+  <div id="salesLedger"></div>
+</section>
+</div>
+
+<div class="modal" id="saleModal">
+<div class="box">
+  <h2 id="saleModalTitle">New Daily Sale</h2>
+  <label>Sale Type</label>
+  <select id="sType">
+    <option value="cash">Cash Sale</option>
+    <option value="online">Online Sale (Bank / Easypaisa / JazzCash)</option>
+    <option value="credit">Credit Sale / Customer Owes</option>
+  </select>
+  <label>Amount</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0">
+  <label>Customer Name (Optional)</label><input id="sCustomer" placeholder="e.g. Muhammad Ali">
+  <label>Description / Item</label><input id="sDesc" placeholder="e.g. Visiting Cards / Banner" dir="ltr">
+  <label>Date</label><input id="sDate" type="date">
+  <label>Time</label><input id="sTime" type="time" step="1">
+  <div style="display:flex;gap:8px">
+    <button class="success" onclick="saveSale()">Save Sale</button>
+    <button class="muted" onclick="closeSaleModal()">Cancel</button>
+  </div>
+</div>
+</div>
+
+<div class="modal" id="expenseModal"><div class="box">
+  <h2>Add Expense / Payment</h2>
+  <label>Amount</label><input id="eAmount" type="number" min="0" step="0.01" placeholder="0">
+  <label>Description</label><input id="eDesc" placeholder="e.g. Paper purchase / Staff payment" dir="ltr">
+  <label>Date</label><input id="eDate" type="date">
+  <label>Time</label><input id="eTime" type="time" step="1">
+  <div style="display:flex;gap:8px">
+    <button class="danger" onclick="saveExpense()">Save Expense</button>
+    <button class="muted" onclick="closeExpenseModal()">Cancel</button>
+  </div>
+</div></div>
+
+<script>
+const KEY='daily_sale_v1';
+
+/* ===== FOZAN CLOUD DATABASE SETTINGS =====
+   Create a free Supabase project and paste its Project URL + anon key below.
+   The app will use the cloud database on every PC. Until configured, it keeps
+   the original local browser storage as a fallback.
+*/
+const SUPABASE_URL = 'PASTE_YOUR_SUPABASE_PROJECT_URL_HERE';
+const SUPABASE_ANON_KEY = 'PASTE_YOUR_SUPABASE_ANON_KEY_HERE';
+const CLOUD_ENABLED =
+  SUPABASE_URL.startsWith('https://') &&
+  !SUPABASE_URL.includes('PASTE_') &&
+  SUPABASE_ANON_KEY &&
+  !SUPABASE_ANON_KEY.includes('PASTE_');
+
+
+/*
+SUPABASE SQL SETUP (run once in Supabase SQL Editor):
+
+create table if not exists public.fozan_sales (
+  id text primary key,
+  type text not null,
+  amount numeric not null default 0,
+  customer text default '',
+  description text default '',
+  sale_date date not null,
+  sale_time text default ''
+);
+
+create table if not exists public.fozan_expenses (
+  id text primary key,
+  amount numeric not null default 0,
+  description text default '',
+  expense_date date not null,
+  expense_time text default ''
+);
+
+alter table public.fozan_sales enable row level security;
+alter table public.fozan_expenses enable row level security;
+
+create policy "fozan sales public access" on public.fozan_sales
+  for all to anon using (true) with check (true);
+
+create policy "fozan expenses public access" on public.fozan_expenses
+  for all to anon using (true) with check (true);
+
+NOTE: These policies make the database publicly writable. For a private
+business system, enable Supabase Auth and restrict access to your users.
+*/
+
+let supabaseClient = CLOUD_ENABLED
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+let data=JSON.parse(localStorage.getItem(KEY)||'{"sales":[],"expenses":[]}');
+if(!Array.isArray(data.sales)) data.sales=[];
+if(!Array.isArray(data.expenses)) data.expenses=[];
+let editingSale=null;
+let summaryMode='date';
+
+function cloudStatus(msg, ok=false){
+  const s=document.getElementById('saveStatus');
+  if(s){ s.textContent=(ok?'✓ ':'☁ ')+msg; }
+}
+
+async function cloudReplaceAll(){
+  if(!CLOUD_ENABLED) return;
+  cloudStatus('Syncing to cloud...');
+  try{
+    const { error: delSales } = await supabaseClient.from('fozan_sales').delete().neq('id','__never__');
+    if(delSales) throw delSales;
+    const { error: delExpenses } = await supabaseClient.from('fozan_expenses').delete().neq('id','__never__');
+    if(delExpenses) throw delExpenses;
+
+    if(data.sales.length){
+      const {error}=await supabaseClient.from('fozan_sales').insert(
+        data.sales.map(x=>({id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',description:x.desc||'',sale_date:x.date,sale_time:x.time||''}))
+      );
+      if(error) throw error;
+    }
+    if(data.expenses.length){
+      const {error}=await supabaseClient.from('fozan_expenses').insert(
+        data.expenses.map(x=>({id:x.id,amount:Number(x.amount||0),description:x.desc||'',expense_date:x.date,expense_time:x.time||''}))
+      );
+      if(error) throw error;
+    }
+    cloudStatus('Cloud saved • shared on all PCs', true);
+  }catch(e){
+    console.error(e);
+    cloudStatus('Cloud sync error — local copy kept');
+  }
+}
+
+async function cloudLoad(){
+  if(!CLOUD_ENABLED){
+    cloudStatus('Local mode — configure cloud to share PCs');
+    return;
+  }
+  cloudStatus('Loading cloud data...');
+  try{
+    const [{data:sales,error:se},{data:expenses,error:ee}] = await Promise.all([
+      supabaseClient.from('fozan_sales').select('*'),
+      supabaseClient.from('fozan_expenses').select('*')
+    ]);
+    if(se) throw se;
+    if(ee) throw ee;
+
+    data.sales=(sales||[]).map(x=>({
+      id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
+      desc:x.description||'',date:x.sale_date,time:x.sale_time||''
+    }));
+    data.expenses=(expenses||[]).map(x=>({
+      id:x.id,amount:Number(x.amount||0),desc:x.description||'',
+      date:x.expense_date,time:x.expense_time||''
+    }));
+    localStorage.setItem(KEY,JSON.stringify(data));
+    renderDashboard(); renderSales();
+    cloudStatus('Cloud connected • all PCs share this data', true);
+  }catch(e){
+    console.error(e);
+    cloudStatus('Cloud connection failed — local copy kept');
+  }
+}
+
+function persist(){
+  localStorage.setItem(KEY,JSON.stringify(data));
+  const s=document.getElementById('saveStatus');
+  if(s && !CLOUD_ENABLED) s.textContent='✓ Auto-saved locally: '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+  if(CLOUD_ENABLED) cloudReplaceAll();
+}
+function nowLocal(){
+  const d=new Date(), pad=n=>String(n).padStart(2,'0');
+  return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
+          time:`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+}
+function money(n){return 'Rs. '+Number(n||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function getSummaryDate(){
+  const el=document.getElementById('summaryDate');
+  return el && el.value ? el.value : nowLocal().date;
+}
+
+function monthKey(date){
+  return String(date||'').slice(0,7);
+}
+function monthLabel(month){
+  if(!month)return '';
+  const [y,m]=month.split('-').map(Number);
+  return new Date(y,m-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+}
+function getSummaryMonth(){
+  const el=document.getElementById('summaryMonth');
+  return el && el.value ? el.value : monthKey(getSummaryDate());
+}
+function selectMonth(month){
+  if(!month)return;
+  summaryMode='month';
+  document.getElementById('summaryMonth').value=month;
+  const current=getSummaryDate();
+  if(monthKey(current)!==month){
+    document.getElementById('summaryDate').value=month+'-01';
+  }
+  renderDashboard();
+  renderSales();
+}
+function changeMonth(step){
+  const month=getSummaryMonth();
+  const [y,m]=month.split('-').map(Number);
+  const d=new Date(y,m-1+step,1);
+  selectMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+}
+function monthlyTotals(month){
+  let cash=0,online=0,credit=0,expenses=0;
+  data.sales.forEach(x=>{
+    if(monthKey(x.date)!==month)return;
+    if(x.type==='cash')cash+=+x.amount;
+    if(x.type==='online')online+=+x.amount;
+    if(x.type==='credit')credit+=+x.amount;
+  });
+  data.expenses.forEach(x=>{
+    if(monthKey(x.date)===month)expenses+=+x.amount;
+  });
+  return {cash,online,credit,expenses,totalSale:cash+online+credit,net:cash+online-expenses};
+}
+
+function renderDateHistory(){
+  const el=document.getElementById('dateHistory');
+  if(!el)return;
+  const dates=[...new Set([
+    ...data.sales.map(x=>x.date).filter(Boolean),
+    ...data.expenses.map(x=>x.date).filter(Boolean)
+  ])].sort().reverse();
+  if(!dates.length){el.innerHTML='';return;}
+  const current=getSummaryDate();
+  el.innerHTML='<span class="notice" style="padding:7px 4px">Saved dates:</span>'+
+    dates.map(d=>`<button class="${d===current?'primary':'muted'}" style="padding:7px 10px" onclick="selectDate('${d}')">${d}</button>`).join('');
+}
+function selectDate(date){
+  summaryMode='date';
+  document.getElementById('summaryDate').value=date;
+  renderDashboard();
+  renderSales();
+}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+
+function totals(date){
+  let cash=0,online=0,credit=0,expenses=0;
+  data.sales.forEach(x=>{
+    if(date && x.date!==date)return;
+    if(x.type==='cash')cash+=+x.amount;
+    if(x.type==='online')online+=+x.amount;
+    if(x.type==='credit')credit+=+x.amount;
+  });
+  data.expenses.forEach(x=>{if(!date || x.date===date)expenses+=+x.amount;});
+  return {cash,online,credit,expenses,totalSale:cash+online+credit,net:cash+online-expenses};
+}
+
+function renderDashboard(){
+  const date=getSummaryDate(), t=totals(date);
+  const month=getSummaryMonth(), mt=monthlyTotals(month);
+  // Dashboard totals are date-wise, not monthly.
+  const dt=t;
+  renderDateHistory();
+  document.getElementById('summaryMonth').value=month;
+  document.getElementById('monthTitle').textContent='Monthly Sale Summary — '+monthLabel(month);
+  document.getElementById('dailyTitle').textContent='Daily Sale Summary — '+date;
+
+  // Date click shows date totals; month click shows full month totals.
+  const summary=summaryMode==='month' ? mt : dt;
+  document.getElementById('totalCash').textContent=money(summary.cash);
+  document.getElementById('totalOnline').textContent=money(summary.online);
+  document.getElementById('totalCredit').textContent=money(summary.credit);
+  document.getElementById('totalSale').textContent=money(summary.totalSale);
+  document.getElementById('totalExpense').textContent=money(summary.expenses);
+
+  // Expense is deducted ONLY from cash in hand.
+  const cashInHandAfterExpense = summary.cash - summary.expenses;
+
+  // Final total = remaining cash in hand + online payments.
+  document.getElementById('paymentAfterExpense').textContent=money(cashInHandAfterExpense);
+  document.getElementById('cashOnlineTotal').textContent=money(cashInHandAfterExpense+summary.online);
+
+  const el=document.getElementById('expenseLedger');
+  const dayExpenses=data.expenses.filter(x=>x.date===date);
+  if(!dayExpenses.length){
+    el.innerHTML='<h2 style="margin-top:18px">Expense / Payment Ledger — '+date+'</h2><div class="notice">No expenses for this date.</div>';
+    return;
+  }
+  const rows=[...dayExpenses].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+  el.innerHTML='<h2 style="margin-top:18px">Expense / Payment Ledger — '+date+'</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
+    rows.map(x=>`<tr><td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions"><button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button></td></tr>`).join('')+
+    '</tbody></table>';
+}
+
+function renderSales(){
+  const date=getSummaryDate();
+  const q=document.getElementById('search').value.toLowerCase().trim();
+
+  // When searching, search ALL saved dates so the customer's complete history appears.
+  // When the search box is empty, show selected date or selected month sales.
+  let rows;
+  if(q){
+    rows=data.sales.filter(x=>((x.desc||'')+' '+(x.customer||'')).toLowerCase().includes(q));
+  }else{
+    const month=getSummaryMonth();
+    rows=summaryMode==='month' ? data.sales.filter(x=>monthKey(x.date)===month) : data.sales.filter(x=>x.date===date);
+  }
+
+  rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) ||
+                   String(b.time||'').localeCompare(String(a.time||'')) ||
+                   String(b.id).localeCompare(String(a.id)));
+
+  const el=document.getElementById('salesLedger');
+  if(!rows.length){
+    el.innerHTML=q
+      ? '<div class="empty">No customer / sale found in any saved date.</div>'
+      : '<div class="empty">No sales saved for '+(summaryMode==='month'?monthLabel(getSummaryMonth()):date)+'. Click “Add Daily Sale” to enter a sale.</div>';
+    return;
+  }
+  el.innerHTML='<table><thead><tr><th>Date & Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Credit</th><th>Actions</th></tr></thead><tbody>'+
+    rows.map(x=>`<tr>
+      <td>${x.date} ${x.time||''}</td>
+      <td>${esc(x.customer||'-')}</td>
+      <td>${esc(x.desc||'-')}</td>
+      <td class="cash">${x.type==='cash'?money(x.amount):'-'}</td>
+      <td class="online">${x.type==='online'?money(x.amount):'-'}</td>
+      <td class="debit">${x.type==='credit'?money(x.amount):'-'}</td>
+      <td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td>
+    </tr>`).join('')+'</tbody></table>';
+}
+
+function newSale(){
+  editingSale=null;
+  document.getElementById('saleModalTitle').textContent='New Daily Sale';
+  document.getElementById('sType').value='cash';
+  document.getElementById('sAmount').value='';
+  document.getElementById('sCustomer').value='';
+  document.getElementById('sDesc').value='';
+  const n=nowLocal();
+  document.getElementById('sDate').value=getSummaryDate()||n.date;
+  document.getElementById('sTime').value=n.time;
+  document.getElementById('saleModal').style.display='flex';
+}
+function editSale(id){
+  const x=data.sales.find(s=>s.id===id); if(!x)return;
+  editingSale=id;
+  document.getElementById('saleModalTitle').textContent='Edit Daily Sale';
+  document.getElementById('sType').value=x.type;
+  document.getElementById('sAmount').value=x.amount;
+  document.getElementById('sCustomer').value=x.customer||'';
+  document.getElementById('sDesc').value=x.desc||'';
+  document.getElementById('sDate').value=x.date;
+  document.getElementById('sTime').value=x.time||'00:00:00';
+  document.getElementById('saleModal').style.display='flex';
+}
+function saveSale(){
+  const customer=document.getElementById('sCustomer').value.trim();
+  const desc=document.getElementById('sDesc').value.trim();
+
+  // Sale can now be saved without payment details.
+  // Only Customer Name OR Description / Item is required.
+  if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
+
+  const amountValue=document.getElementById('sAmount').value.trim();
+  const amount=amountValue==='' ? 0 : +amountValue;
+  if(amountValue!=='' && (!(amount>=0)))return alert('Please enter a valid amount.');
+
+  const obj={
+    type:document.getElementById('sType').value,
+    amount,
+    customer,
+    desc,
+    date:document.getElementById('sDate').value,
+    time:document.getElementById('sTime').value||nowLocal().time
+  };
+  if(editingSale){
+    const x=data.sales.find(s=>s.id===editingSale); if(x)Object.assign(x,obj);
+  }else data.sales.push({id:uid(),...obj});
+  persist(); closeSaleModal(); renderDashboard(); renderSales();
+}
+function deleteSale(id){
+  if(!confirm('Delete this sale?'))return;
+  data.sales=data.sales.filter(x=>x.id!==id);
+  persist();renderDashboard();renderSales();
+}
+function closeSaleModal(){document.getElementById('saleModal').style.display='none';editingSale=null}
+
+function newExpense(){
+  window._editingExpense=null;
+  document.getElementById('eAmount').value='';
+  document.getElementById('eDesc').value='';
+  const n=nowLocal();
+  document.getElementById('eDate').value=getSummaryDate()||n.date;
+  document.getElementById('eTime').value=n.time;
+  document.getElementById('expenseModal').style.display='flex';
+}
+function saveExpense(){
+  const amount=+document.getElementById('eAmount').value;
+  if(!(amount>0))return alert('Please enter a valid amount.');
+  const obj={amount,desc:document.getElementById('eDesc').value.trim(),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
+  const id=window._editingExpense;
+  if(id){
+    const x=data.expenses.find(e=>e.id===id); if(x)Object.assign(x,obj);
+  }else data.expenses.push({id:uid(),...obj});
+  persist();closeExpenseModal();renderDashboard();renderSales();
+}
+function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);persist();renderDashboard();renderSales();}
+function editExpense(id){
+  const x=data.expenses.find(e=>e.id===id);if(!x)return;
+  document.getElementById('eAmount').value=x.amount;
+  document.getElementById('eDesc').value=x.desc||'';
+  document.getElementById('eDate').value=x.date;
+  document.getElementById('eTime').value=x.time||'00:00:00';
+  window._editingExpense=id;
+  document.getElementById('expenseModal').style.display='flex';
+}
+function closeExpenseModal(){document.getElementById('expenseModal').style.display='none';window._editingExpense=null}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fozan-daily-sale-backup.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+function importData(){
+  const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+  input.onchange=()=>{
+    const f=input.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const x=JSON.parse(r.result);
+        if(!x.sales)throw 0;
+        data=x;if(!data.expenses)data.expenses=[];
+        persist();renderDashboard();renderSales();alert('Backup restored successfully.');
+      }catch(e){alert('Invalid Daily Sale backup file.')}
+    };r.readAsText(f);
+  };input.click();
+}
+
+const summaryDate=document.getElementById('summaryDate');
+summaryDate.value=nowLocal().date;
+document.getElementById('summaryMonth').value=monthKey(nowLocal().date);
+renderDateHistory();renderDashboard();renderSales();
+cloudLoad();
+window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
+</script>
+</body>
+</html>
