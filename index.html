@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0052)https://fozanprintingpress-786.github.io/fozanpress/ -->
+<html lang="en" dir="ltr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Customer Khata</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./Daily Sale_files/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f3f6f9;color:#17212b}
 header{background:#123b5d;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
@@ -38,7 +38,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 <header>
   <div style="display:flex;align-items:center;gap:16px">
     <div style="width:58px;height:58px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
-      <img src="logo.png" alt="FOZAN PRINTING Logo" style="max-width:52px;max-height:52px;object-fit:contain">
+      <img src="./Daily Sale_files/logo.png" alt="FOZAN PRINTING Logo" style="max-width:52px;max-height:52px;object-fit:contain">
     </div>
     <div>
       <h1 style="margin:0;font-size:25px">FOZAN PRINTING</h1>
@@ -58,19 +58,19 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <button class="danger" onclick="newExpense()">＋ Add Expense</button>
     <button class="primary" onclick="exportData()">⬇ Backup</button>
     <button class="muted" onclick="importData()">⬆ Restore</button><button class="muted" onclick="cloudLoad()">↻ Refresh Cloud</button>
-    <span class="syncbox" id="saveStatus">✓ Auto-saved locally after every change</span>
+    <span class="syncbox" id="saveStatus">✓ Cloud saved • shared on all PCs</span>
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 12px">
-    <div><strong id="dailyTitle">Daily Sale Summary</strong><div class="notice">Every date has its own record. Changing the date will NOT delete or replace previous days' data.</div></div>
+    <div><strong id="dailyTitle">Daily Sale Summary — 2026-09-27</strong><div class="notice">Current month is shown automatically. Previous months remain safely saved and can be opened with Previous Month or searched.</div></div>
     <div style="display:flex;align-items:center;gap:8px">
       <label for="summaryDate" style="font-weight:bold">Date</label>
       <input id="summaryDate" type="date" style="width:auto;margin:0" onchange="renderDashboard();renderSales()">
     </div>
   </div>
-  <div id="dateHistory" style="display:flex;gap:7px;flex-wrap:wrap;margin:-2px 0 14px"></div>
+  <div id="dateHistory" style="display:flex;gap:7px;flex-wrap:wrap;margin:-2px 0 14px"><span class="notice" style="padding:7px 4px">Saved dates:</span><button class="primary" style="padding:7px 10px" onclick="selectDate('2026-09-27')">2026-09-27</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-26')">2026-09-26</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-24')">2026-09-24</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-23')">2026-09-23</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-22')">2026-09-22</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-21')">2026-09-21</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-20')">2026-09-20</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-19')">2026-09-19</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-16')">2026-09-16</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-15')">2026-09-15</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-14')">2026-09-14</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-13')">2026-09-13</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-12')">2026-09-12</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-10')">2026-09-10</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-09')">2026-09-09</button></div>
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;background:#f7f9fb;border-radius:9px">
-    <div><strong id="monthTitle">September 2026</strong><div class="notice">Monthly record — all daily sales and expenses remain saved separately.</div></div>
+    <div><strong id="monthTitle">Monthly Sale Summary — September 2026</strong><div class="notice">Only the selected/current month is shown normally. Older months stay saved in the cloud and can be viewed with Previous Month or Search.</div></div>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="muted" onclick="changeMonth(-1)">‹ Previous Month</button>
       <input id="summaryMonth" type="month" style="width:auto;margin:0" onchange="selectMonth(this.value)">
@@ -79,32 +79,51 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   </div>
 
   <div class="stats">
-    <div class="stat"><small>Total Cash Sale</small><strong class="cash" id="totalCash">Rs. 0.00</strong></div>
+    <div class="stat"><small>Total Cash Sale</small><strong class="cash" id="totalCash">Rs. 750.00</strong></div>
     <div class="stat onlineBox"><small>Total Online Sale</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
-    <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 0.00</strong></div>
+    <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 750.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
-    <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 0.00</strong></div>
-    <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 0.00</strong></div>
+    <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
+    <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
   </div>
   <div class="notice" style="margin-top:-5px;margin-bottom:12px">
     Showing totals for the selected date only. Expense is deducted only from Total Cash Sale. Online payments are not used to pay expenses.
     Cash + Online Total = (Cash Sale − Expenses) + Online Sale.
   </div>
 
-  <div id="expenseLedger"></div>
+  <div id="expenseLedger"><h2 style="margin-top:18px">Expense / Payment Ledger — 2026-09-27</h2><div class="notice">No expenses for this date.</div></div>
 </section>
 
 <section class="card">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
     <h2 style="margin-bottom:0">Daily Sales</h2>
-    <input class="search" id="search" style="max-width:300px;margin:0" placeholder="Search customer / sale — all dates..." oninput="renderSales()">
+    <div style="display:flex;gap:6px;align-items:center">
+      <input class="search" id="search" style="max-width:300px;margin:0" placeholder="Search Customer / Credit / Sale — all months..." oninput="renderSales()">
+      <button class="muted" style="padding:9px 11px" onclick="clearSearch()">Clear</button>
+    </div>
   </div>
-  <div id="salesLedger"></div>
+  <div id="salesLedger"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Credit</th><th>Actions</th></tr></thead><tbody><tr>
+      <td>2026-09-27 10:57:48</td>
+      <td>-</td>
+      <td>Color Prints</td>
+      <td class="cash">Rs. 250.00</td>
+      <td class="online">-</td>
+      <td class="debit">-</td>
+      <td class="actions"><button class="muted" onclick="editSale('mujeqhh4onaub3')">✎</button><button class="danger" onclick="deleteSale('mujeqhh4onaub3')">×</button></td>
+    </tr><tr>
+      <td>2026-09-27 10:57:24</td>
+      <td>-</td>
+      <td>Photo Prints</td>
+      <td class="cash">Rs. 500.00</td>
+      <td class="online">-</td>
+      <td class="debit">-</td>
+      <td class="actions"><button class="muted" onclick="editSale('mujepy29r3waq4')">✎</button><button class="danger" onclick="deleteSale('mujepy29r3waq4')">×</button></td>
+    </tr></tbody></table></div>
 </section>
 </div>
 
-<div class="modal" id="saleModal">
+<div class="modal" id="saleModal" style="display: none;">
 <div class="box">
   <h2 id="saleModalTitle">New Daily Sale</h2>
   <label>Sale Type</label>
@@ -254,6 +273,11 @@ async function cloudLoad(){
       date:x.expense_date,time:x.expense_time||''
     }));
     localStorage.setItem(KEY,JSON.stringify(data));
+    // Always return to the current month after cloud refresh.
+    const todayNow=nowLocal();
+    document.getElementById('summaryDate').value=todayNow.date;
+    document.getElementById('summaryMonth').value=monthKey(todayNow.date);
+    summaryMode='month';
     renderDashboard(); renderSales();
     cloudStatus('Cloud connected • all PCs share this data', true);
   }catch(e){
@@ -290,6 +314,32 @@ function monthLabel(month){
 function getSummaryMonth(){
   const el=document.getElementById('summaryMonth');
   return el && el.value ? el.value : monthKey(getSummaryDate());
+}
+
+function currentMonthKey(){
+  return monthKey(nowLocal().date);
+}
+
+function clearSearch(){
+  const el=document.getElementById('search');
+  if(el) el.value='';
+  renderSales();
+}
+
+function isCredit(x){
+  return x && x.type==='credit';
+}
+
+function searchText(x){
+  return [
+    x.customer || '',
+    x.desc || '',
+    x.type || '',
+    isCredit(x) ? 'credit udhaar customer owes' : '',
+    x.date || '',
+    x.time || '',
+    x.amount != null ? String(x.amount) : ''
+  ].join(' ').toLowerCase();
 }
 function selectMonth(month){
   if(!month)return;
@@ -394,34 +444,46 @@ function renderDashboard(){
 
 function renderSales(){
   const date=getSummaryDate();
-  const q=document.getElementById('search').value.toLowerCase().trim();
+  const q=(document.getElementById('search').value||'').toLowerCase().trim();
 
-  // When searching, search ALL saved dates so the customer's complete history appears.
-  // When the search box is empty, show selected date or selected month sales.
+  /*
+    Normal view:
+      - Always shows the selected/current month only.
+      - On a new month, old month rows disappear from the main screen automatically.
+    Search view:
+      - Searches ALL saved months.
+      - Searches Customer, Description, Credit type, date, time and amount.
+      - Therefore old customer/credit records can always be found without changing month.
+  */
   let rows;
+
   if(q){
-    rows=data.sales.filter(x=>((x.desc||'')+' '+(x.customer||'')).toLowerCase().includes(q));
+    rows=data.sales.filter(x=>searchText(x).includes(q));
   }else{
     const month=getSummaryMonth();
-    rows=summaryMode==='month' ? data.sales.filter(x=>monthKey(x.date)===month) : data.sales.filter(x=>x.date===date);
+    rows=data.sales.filter(x=>monthKey(x.date)===month);
   }
 
-  rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) ||
-                   String(b.time||'').localeCompare(String(a.time||'')) ||
-                   String(b.id).localeCompare(String(a.id)));
+  rows.sort((a,b)=>
+    String(b.date||'').localeCompare(String(a.date||'')) ||
+    String(b.time||'').localeCompare(String(a.time||'')) ||
+    String(b.id).localeCompare(String(a.id))
+  );
 
   const el=document.getElementById('salesLedger');
+
   if(!rows.length){
     el.innerHTML=q
-      ? '<div class="empty">No customer / sale found in any saved date.</div>'
-      : '<div class="empty">No sales saved for '+(summaryMode==='month'?monthLabel(getSummaryMonth()):date)+'. Click “Add Daily Sale” to enter a sale.</div>';
+      ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>'
+      : '<div class="empty">No sales saved for '+monthLabel(getSummaryMonth())+'. Click “Add Daily Sale” to enter a sale.</div>';
     return;
   }
+
   el.innerHTML='<table><thead><tr><th>Date & Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Credit</th><th>Actions</th></tr></thead><tbody>'+
     rows.map(x=>`<tr>
       <td>${x.date} ${x.time||''}</td>
       <td>${esc(x.customer||'-')}</td>
-      <td>${esc(x.desc||'-')}</td>
+      <td>${esc(x.desc||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}</td>
       <td class="cash">${x.type==='cash'?money(x.amount):'-'}</td>
       <td class="online">${x.type==='online'?money(x.amount):'-'}</td>
       <td class="debit">${x.type==='credit'?money(x.amount):'-'}</td>
@@ -538,11 +600,14 @@ function importData(){
 }
 
 const summaryDate=document.getElementById('summaryDate');
-summaryDate.value=nowLocal().date;
-document.getElementById('summaryMonth').value=monthKey(nowLocal().date);
+const todayNow=nowLocal();
+summaryDate.value=todayNow.date;
+document.getElementById('summaryMonth').value=monthKey(todayNow.date);
+summaryMode='month';
 renderDateHistory();renderDashboard();renderSales();
 cloudLoad();
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
 </script>
-</body>
-</html>
+
+
+</body></html>
