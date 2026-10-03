@@ -3,8 +3,8 @@
 <html lang="en" dir="ltr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Customer Khata</title>
-<script src="./Daily Sale_files/supabase-js@2"></script>
+<title>FOZAN Printing — Customer Khata</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f3f6f9;color:#17212b}
 header{background:#123b5d;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
@@ -277,7 +277,7 @@ async function cloudLoad(){
     const todayNow=nowLocal();
     document.getElementById('summaryDate').value=todayNow.date;
     document.getElementById('summaryMonth').value=monthKey(todayNow.date);
-    summaryMode='month';
+    summaryMode='date';
     renderDashboard(); renderSales();
     cloudStatus('Cloud connected • all PCs share this data', true);
   }catch(e){
@@ -458,10 +458,12 @@ function renderSales(){
   let rows;
 
   if(q){
+    // Search intentionally searches all saved dates.
     rows=data.sales.filter(x=>searchText(x).includes(q));
   }else{
-    const month=getSummaryMonth();
-    rows=data.sales.filter(x=>monthKey(x.date)===month);
+    // Normal daily view: ONLY show sales for the selected date.
+    // This prevents yesterday/older dates from appearing together with today's sales.
+    rows=data.sales.filter(x=>x.date===date);
   }
 
   rows.sort((a,b)=>
@@ -475,7 +477,7 @@ function renderSales(){
   if(!rows.length){
     el.innerHTML=q
       ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>'
-      : '<div class="empty">No sales saved for '+monthLabel(getSummaryMonth())+'. Click “Add Daily Sale” to enter a sale.</div>';
+      : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';
     return;
   }
 
@@ -603,7 +605,7 @@ const summaryDate=document.getElementById('summaryDate');
 const todayNow=nowLocal();
 summaryDate.value=todayNow.date;
 document.getElementById('summaryMonth').value=monthKey(todayNow.date);
-summaryMode='month';
+summaryMode='date';
 renderDateHistory();renderDashboard();renderSales();
 cloudLoad();
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
