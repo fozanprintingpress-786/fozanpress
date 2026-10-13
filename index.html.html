@@ -189,8 +189,13 @@ create table if not exists public.fozan_sales (
   customer text default '',
   description text default '',
   sale_date date not null,
-  sale_time text default ''
+  sale_time text default '',
+  advance_payment numeric not null default 0,
+  balance_payment numeric not null default 0
 );
+
+alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;
+alter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;
 
 create table if not exists public.fozan_expenses (
   id text primary key,
@@ -222,6 +227,10 @@ if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
 let editingSale=null;
 let summaryMode='date';
+function cleanDescription(raw){
+  return String(raw||'').replace(/\s*\[\[FOZAN_PAYMENT_META:\{.*?\}\]\]\s*$/,'').trim();
+}
+
 
 function cloudStatus(msg, ok=false){
   const s=document.getElementById('saveStatus');
@@ -232,27 +241,24 @@ async function cloudReplaceAll(){
   if(!CLOUD_ENABLED) return;
   cloudStatus('Syncing to cloud...');
   try{
-    const { error: delSales } = await supabaseClient.from('fozan_sales').delete().neq('id','__never__');
-    if(delSales) throw delSales;
-    const { error: delExpenses } = await supabaseClient.from('fozan_expenses').delete().neq('id','__never__');
-    if(delExpenses) throw delExpenses;
-
     if(data.sales.length){
-      const {error}=await supabaseClient.from('fozan_sales').insert(
-        data.sales.map(x=>({id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',description:x.desc||'',sale_date:x.date,sale_time:x.time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)}))
+      const {error}=await supabaseClient.from('fozan_sales').upsert(
+        data.sales.map(x=>({id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',description:cleanDescription(x.desc),sale_date:x.date,sale_time:x.time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)})),
+        {onConflict:'id'}
       );
       if(error) throw error;
     }
     if(data.expenses.length){
-      const {error}=await supabaseClient.from('fozan_expenses').insert(
-        data.expenses.map(x=>({id:x.id,amount:Number(x.amount||0),description:x.desc||'',expense_date:x.date,expense_time:x.time||''}))
+      const {error}=await supabaseClient.from('fozan_expenses').upsert(
+        data.expenses.map(x=>({id:x.id,amount:Number(x.amount||0),description:cleanDescription(x.desc),expense_date:x.date,expense_time:x.time||''})),
+        {onConflict:'id'}
       );
       if(error) throw error;
     }
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
     console.error(e);
-    cloudStatus('Cloud sync error — local copy kept');
+    cloudStatus('Cloud sync error — check SQL setup; local copy kept');
   }
 }
 
@@ -272,10 +278,10 @@ async function cloudLoad(){
 
     data.sales=(sales||[]).map(x=>({
       id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
-      desc:x.description||'',date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
+      desc:cleanDescription(x.description),date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
     data.expenses=(expenses||[]).map(x=>({
-      id:x.id,amount:Number(x.amount||0),desc:x.description||'',
+      id:x.id,amount:Number(x.amount||0),desc:cleanDescription(x.description),
       date:x.expense_date,time:x.expense_time||''
     }));
     localStorage.setItem(KEY,JSON.stringify(data));
@@ -468,7 +474,7 @@ function renderSales(){
     rows.map(x=>`<tr>
       <td>${x.date} ${x.time||''}</td>
       <td>${esc(x.customer||'-')}</td>
-      <td>${esc(x.desc||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE PAYMENT</span>':''}</td>
+      <td>${esc(cleanDescription(x.desc)||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE PAYMENT</span>':''}</td>
       <td class="cash">${x.type==='cash'?money(x.amount):'-'}</td>
       <td class="online">${x.type==='online'?money(x.amount):'-'}</td>
       <td class="debit">${x.type==='credit'?money(x.amount):'-'}</td>
@@ -501,24 +507,30 @@ function editSale(id){
   document.getElementById('sAdvance').value=x.advance_payment||0;
   document.getElementById('sBalancePayment').value=x.balance_payment||0;
   document.getElementById('sCustomer').value=x.customer||'';
-  document.getElementById('sDesc').value=x.desc||'';
+  document.getElementById('sDesc').value=cleanDescription(x.desc);
   document.getElementById('sDate').value=x.date;
   document.getElementById('sTime').value=x.time||'00:00:00';
   document.getElementById('saleModal').style.display='flex';
 }
 function saveSale(){
   const customer=document.getElementById('sCustomer').value.trim();
-  const desc=document.getElementById('sDesc').value.trim();
+  const desc=cleanDescription(document.getElementById('sDesc').value);
   if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
   const amountValue=document.getElementById('sAmount').value.trim();
-  const amount=amountValue==='' ? 0 : Number(amountValue);
-  if(!Number.isFinite(amount) || amount<0)return alert('Please enter a valid amount.');
+  let amount=amountValue==='' ? 0 : Number(amountValue);
   const type=document.getElementById('sType').value;
   const advance=type==='credit' ? Number(document.getElementById('sAdvance').value||0) : 0;
-  const balancePayment=type==='credit' ? Number(document.getElementById('sBalancePayment').value||0) : 0;
+  const enteredBalance=Number(document.getElementById('sBalancePayment').value||0);
+  // For a Credit Sale, record advance/balance against the credit amount.
+  // For a later Balance Payment Received entry, accept either the main Amount
+  // field or the Balance Payment field so the payment is not accidentally lost.
+  const balancePayment=type==='credit' ? enteredBalance : 0;
+  if(type==='balance_payment' && enteredBalance>0) amount=enteredBalance;
+  if(!Number.isFinite(amount) || amount<0)return alert('Please enter a valid amount.');
   if(!Number.isFinite(advance)||advance<0)return alert('Please enter a valid Advance Payment.');
-  if(!Number.isFinite(balancePayment)||balancePayment<0)return alert('Please enter a valid Balance Payment.');
+  if(!Number.isFinite(enteredBalance)||enteredBalance<0)return alert('Please enter a valid Balance Payment.');
   if(type==='credit' && advance+balancePayment>amount)return alert('Advance Payment + Balance Payment cannot be greater than Credit Amount.');
+  if(type==='balance_payment' && amount<=0)return alert('Please enter the balance payment in Amount or Balance Payment.');
   const obj={type,amount,customer,desc,date:document.getElementById('sDate').value,time:document.getElementById('sTime').value||nowLocal().time,advance_payment:advance,balance_payment:balancePayment};
   if(editingSale){
     const x=data.sales.find(s=>s.id===editingSale); if(x)Object.assign(x,obj);
