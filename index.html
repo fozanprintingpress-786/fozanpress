@@ -201,7 +201,7 @@ create table if not exists public.fozan_expenses (
 );
 
 alter table public.fozan_sales enable row level security;
-alter table public.fozan_expenses enable row level security;
+alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;\nalter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;\n\nalter table public.fozan_expenses enable row level security;
 
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
@@ -228,31 +228,50 @@ function cloudStatus(msg, ok=false){
   if(s){ s.textContent=(ok?'✓ ':'☁ ')+msg; }
 }
 
-async function cloudReplaceAll(){
+async function cloudSyncData(){
   if(!CLOUD_ENABLED) return;
-  cloudStatus('Syncing to cloud...');
+  cloudStatus('Saving changes to cloud...');
   try{
-    const { error: delSales } = await supabaseClient.from('fozan_sales').delete().neq('id','__never__');
-    if(delSales) throw delSales;
-    const { error: delExpenses } = await supabaseClient.from('fozan_expenses').delete().neq('id','__never__');
-    if(delExpenses) throw delExpenses;
-
-    if(data.sales.length){
-      const {error}=await supabaseClient.from('fozan_sales').insert(
-        data.sales.map(x=>({id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',description:x.desc||'',sale_date:x.date,sale_time:x.time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)}))
-      );
+    const salesRows = data.sales.map(x=>({
+      id:String(x.id),
+      type:x.type,
+      amount:Number(x.amount||0),
+      customer:x.customer||'',
+      description:cleanDescription(x.desc||''),
+      sale_date:x.date,
+      sale_time:x.time||'',
+      advance_payment:Number(x.advance_payment||0),
+      balance_payment:Number(x.balance_payment||0)
+    }));
+    const expenseRows = data.expenses.map(x=>({
+      id:String(x.id),
+      amount:Number(x.amount||0),
+      description:cleanDescription(x.desc||''),
+      expense_date:x.date,
+      expense_time:x.time||''
+    }));
+    if(salesRows.length){
+      const {error}=await supabaseClient.from('fozan_sales').upsert(salesRows,{onConflict:'id'});
       if(error) throw error;
     }
-    if(data.expenses.length){
-      const {error}=await supabaseClient.from('fozan_expenses').insert(
-        data.expenses.map(x=>({id:x.id,amount:Number(x.amount||0),description:x.desc||'',expense_date:x.date,expense_time:x.time||''}))
-      );
+    if(expenseRows.length){
+      const {error}=await supabaseClient.from('fozan_expenses').upsert(expenseRows,{onConflict:'id'});
       if(error) throw error;
     }
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
-    console.error(e);
-    cloudStatus('Cloud sync error — local copy kept');
+    console.error('Cloud save error:',e);
+    cloudStatus('Cloud save error — check database columns / connection');
+  }
+}
+async function cloudDeleteRow(table,id){
+  if(!CLOUD_ENABLED || !id) return;
+  try{
+    const {error}=await supabaseClient.from(table).delete().eq('id',String(id));
+    if(error) throw error;
+  }catch(e){
+    console.error('Cloud delete error:',e);
+    cloudStatus('Cloud delete error — refresh cloud to verify');
   }
 }
 
@@ -272,7 +291,7 @@ async function cloudLoad(){
 
     data.sales=(sales||[]).map(x=>({
       id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
-      desc:x.description||'',date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
+      desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
     data.expenses=(expenses||[]).map(x=>({
       id:x.id,amount:Number(x.amount||0),desc:x.description||'',
@@ -296,12 +315,19 @@ function persist(){
   localStorage.setItem(KEY,JSON.stringify(data));
   const s=document.getElementById('saveStatus');
   if(s && !CLOUD_ENABLED) s.textContent='✓ Auto-saved locally: '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  if(CLOUD_ENABLED) cloudReplaceAll();
+  if(CLOUD_ENABLED) cloudSyncData();
 }
 function nowLocal(){
   const d=new Date(), pad=n=>String(n).padStart(2,'0');
   return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
           time:`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+}
+function cleanDescription(value){
+  return String(value ?? '')
+    .replace(/\\s*\\[\\[?\\s*FOZAN_PAYMENT_META[\\s\\S]*?\\]\\]?\\s*/gi, ' ')
+    .replace(/\\s*\\[FOZAN_PAYMENT_META[^\\]]*\\]\\s*/gi, ' ')
+    .replace(/\\s{2,}/g, ' ')
+    .trim();
 }
 function money(n){return 'Rs. '+Number(n||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function getSummaryDate(){
@@ -508,7 +534,7 @@ function editSale(id){
 }
 function saveSale(){
   const customer=document.getElementById('sCustomer').value.trim();
-  const desc=document.getElementById('sDesc').value.trim();
+  const desc=cleanDescription(document.getElementById('sDesc').value);
   if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
   const amountValue=document.getElementById('sAmount').value.trim();
   const amount=amountValue==='' ? 0 : Number(amountValue);
@@ -547,14 +573,14 @@ function newExpense(){
 function saveExpense(){
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
-  const obj={amount,desc:document.getElementById('eDesc').value.trim(),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
+  const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
   const id=window._editingExpense;
   if(id){
     const x=data.expenses.find(e=>e.id===id); if(x)Object.assign(x,obj);
   }else data.expenses.push({id:uid(),...obj});
   persist();closeExpenseModal();renderDashboard();renderSales();
 }
-function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);persist();renderDashboard();renderSales();}
+function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
 function editExpense(id){
   const x=data.expenses.find(e=>e.id===id);if(!x)return;
   document.getElementById('eAmount').value=x.amount;
@@ -592,7 +618,8 @@ const todayNow=nowLocal();
 summaryDate.value=todayNow.date;
 document.getElementById('summaryMonth').value=monthKey(todayNow.date);
 summaryMode='date';
-data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;});
+data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;x.desc=cleanDescription(x.desc||'');});
+data.expenses.forEach(x=>{x.desc=cleanDescription(x.desc||'');});
 renderDateHistory();renderDashboard();renderSales();
 cloudLoad();
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
