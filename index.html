@@ -29,7 +29,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 .empty{text-align:center;color:#7b8791;padding:35px}
 .actions button{padding:6px 9px;margin-right:4px}
 .modal{display:none;position:fixed;inset:0;background:#0007;align-items:center;justify-content:center;padding:15px}
-.modal .box{background:white;width:min(500px,100%);max-height:90vh;overflow-y:auto;border-radius:12px;padding:20px}.modal label{display:block;font-size:14px;margin-top:2px}.modal input,.modal select{margin-top:5px}.modal .field-hidden{display:none!important}
+.modal .box{background:white;width:min(500px,100%);max-height:90vh;overflow-y:auto;border-radius:12px;padding:20px}.modal .box .field-hidden{display:none!important}.modal label{display:block;font-size:14px;margin-top:2px}.modal input,.modal select{margin-top:5px}.modal .field-hidden{display:none!important}
 .notice{font-size:13px;color:#667}.cash{color:#198754}.expense{color:#dc3545}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.syncbox{font-size:12px;padding:7px 10px;border-radius:8px;background:#f7f9fb;color:#667}.onlineBox{background:#eef7ff}.expenseBox{background:#fff2f2}
 @media(max-width:800px){header{flex-direction:column;align-items:flex-start;gap:10px}header>div:last-child{text-align:left!important}.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 </style>
@@ -93,8 +93,8 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
   </div>
   <div class="notice" style="margin-top:-5px;margin-bottom:12px">
-    Showing totals for the selected date only. Total Daily Sale includes received payments only; unpaid credit is excluded. Advance and balance receipts are included without counting the same allocation twice. Expense is deducted only from Total Cash Sale.
-    Cash + Online Total = (Cash Sale − Expenses) + Online Sale + Advance Received + Balance Received.
+    Showing totals for the selected date only. Expense is deducted only from Total Cash Sale. Online payments are not used to pay expenses.
+    Cash + Online Total = (Cash Sale − Expenses) + Online Sale.
   </div>
 
   <div id="expenseLedger"><h2 style="margin-top:18px">Expense / Payment Ledger — 2026-09-27</h2><div class="notice">No expenses for this date.</div></div>
@@ -142,7 +142,6 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   </select>
   <div id="amountField"><label id="amountLabel">Amount / Total Bill</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0"></div>
   <div id="advanceField"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
-  <div id="advanceMethodField"><label>Advance Payment Method</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="balanceField"><label>Balance Payment Received Now</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
   <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Select sale type; fields will adjust automatically.</div>
   <label>Customer Name (Optional)</label><input id="sCustomer" placeholder="e.g. Muhammad Ali">
@@ -207,7 +206,7 @@ create table if not exists public.fozan_expenses (
 );
 
 alter table public.fozan_sales enable row level security;
-alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;\nalter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;\nalter table public.fozan_sales add column if not exists advance_method text not null default 'cash';\n\nalter table public.fozan_expenses enable row level security;
+alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;\nalter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;\n\nalter table public.fozan_expenses enable row level security;
 
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
@@ -247,8 +246,7 @@ async function cloudSyncData(){
       sale_date:x.date,
       sale_time:x.time||'',
       advance_payment:Number(x.advance_payment||0),
-      balance_payment:Number(x.balance_payment||0),
-      advance_method:x.advance_method||'cash'
+      balance_payment:Number(x.balance_payment||0)
     }));
     const expenseRows = data.expenses.map(x=>({
       id:String(x.id),
@@ -298,8 +296,7 @@ async function cloudLoad(){
 
     data.sales=(sales||[]).map(x=>({
       id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
-      desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0),
-      advance_method:x.advance_method||'cash'
+      desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
     data.expenses=(expenses||[]).map(x=>({
       id:x.id,amount:Number(x.amount||0),desc:x.description||'',
@@ -406,24 +403,17 @@ function monthlyTotals(month){
   let cash=0,online=0,credit=0,advance=0,balancePayment=0,expenses=0;
   data.sales.forEach(x=>{
     if(monthKey(x.date)!==month)return;
-    const amount=Number(x.amount||0), adv=Number(x.advance_payment||0), bal=Number(x.balance_payment||0);
-    if(x.type==='cash') cash+=amount;
-    // Split online receipt into the online advance portion and the separately
-    // displayed balance portion, so the same money is not counted twice.
-    if(x.type==='online'){ online+=Math.max(0,amount-bal); balancePayment+=bal; }
-    // Total Payment entries are tracked separately from Cash and Online.
+    if(x.type==='cash')cash+=Number(x.amount||0);
+    if(x.type==='online')online+=Number(x.amount||0);
     if(x.type==='credit'){
-      credit+=amount;
-      if(x.advance_method==='online') online+=adv; else advance+=adv;
+      credit+=Number(x.amount||0);
+      advance+=Number(x.advance_payment||0);
     }
-    if(x.type==='advance_payment'){
-      const received=Math.max(0,amount-bal);
-      if(x.advance_method==='online') online+=received; else { cash+=received; advance+=received; }
-    }
-    if(x.type==='balance_payment') balancePayment+=amount;
+    if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
+    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
   });
   data.expenses.forEach(x=>{if(monthKey(x.date)===month)expenses+=Number(x.amount||0);});
-  return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+advance+balancePayment,net:cash+online+advance+balancePayment-expenses};
+  return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+credit,net:cash+online+advance+balancePayment-expenses};
 }
 
 function renderDateHistory(){
@@ -459,23 +449,19 @@ function totals(date){
   let cash=0,online=0,credit=0,advance=0,balancePayment=0,expenses=0;
   data.sales.forEach(x=>{
     if(date && x.date!==date)return;
-    const amount=Number(x.amount||0), adv=Number(x.advance_payment||0), bal=Number(x.balance_payment||0);
-    if(x.type==='cash') cash+=amount;
-    // Split online receipt into online amount and the separately displayed balance.
-    if(x.type==='online'){ online+=Math.max(0,amount-bal); balancePayment+=bal; }
-    // Total Payment entries are tracked separately from Cash and Online.
+    if(x.type==='cash')cash+=Number(x.amount||0);
+    if(x.type==='online')online+=Number(x.amount||0);
     if(x.type==='credit'){
-      credit+=amount;
-      if(x.advance_method==='online') online+=adv; else advance+=adv;
+      credit+=Number(x.amount||0);
+      advance+=Number(x.advance_payment||0);
     }
-    if(x.type==='advance_payment'){
-      const received=Math.max(0,amount-bal);
-      if(x.advance_method==='online') online+=received; else { cash+=received; advance+=received; }
-    }
-    if(x.type==='balance_payment') balancePayment+=amount;
+    if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
+    // Balance receipts are counted from their own transaction only; the linked
+    // credit row also stores the allocation, but must not double-count it.
+    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
   });
   data.expenses.forEach(x=>{if(!date || x.date===date)expenses+=Number(x.amount||0);});
-  return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+advance+balancePayment,net:cash+online+advance+balancePayment-expenses};
+  return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+credit,net:cash+online+advance+balancePayment-expenses};
 }
 
 function renderDashboard(){
@@ -513,12 +499,42 @@ function renderDashboard(){
 function customerBalance(credit){
   return Math.max(0, Number(credit.amount||0)-Number(credit.advance_payment||0)-Number(credit.balance_payment||0));
 }
-function creditPaymentDate(credit){
+function creditPaymentInfo(credit){
   const customer=(credit.customer||'').trim().toLowerCase();
-  if(!customer)return '';
-  const receipts=data.sales.filter(x=>x.type==='balance_payment' && (x.customer||'').trim().toLowerCase()===customer && String(x.date||'')>=String(credit.date||''))
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) || String(a.time||'').localeCompare(String(b.time||'')));
-  return receipts.length ? receipts[receipts.length-1].date : '';
+  if(!customer)return null;
+
+  // Rebuild the receipt-to-credit allocation in the same oldest-unpaid-first
+  // order used when a balance payment is received.
+  const credits=data.sales
+    .filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===customer)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+                 String(a.time||'').localeCompare(String(b.time||'')) ||
+                 String(a.id||'').localeCompare(String(b.id||'')));
+  const receipts=data.sales
+    .filter(x=>x.type==='balance_payment' && (x.customer||'').trim().toLowerCase()===customer)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+                 String(a.time||'').localeCompare(String(b.time||'')) ||
+                 String(a.id||'').localeCompare(String(b.id||'')));
+
+  const remainingAllocation=new Map(
+    credits.map(x=>[String(x.id),Math.max(0,Number(x.balance_payment||0))])
+  );
+  const info=new Map();
+
+  for(const receipt of receipts){
+    let remaining=Math.max(0,Number(receipt.amount||0));
+    for(const item of credits){
+      if(remaining<=0.0001)break;
+      const key=String(item.id);
+      const stillAllocated=remainingAllocation.get(key)||0;
+      if(stillAllocated<=0.0001)continue;
+      const applied=Math.min(stillAllocated,remaining);
+      remainingAllocation.set(key,stillAllocated-applied);
+      remaining-=applied;
+      info.set(key,{date:receipt.date||'',amount:applied});
+    }
+  }
+  return info.get(String(credit.id))||null;
 }
 function renderSales(){
   const date=getSummaryDate();
@@ -529,21 +545,17 @@ function renderSales(){
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
-    const cash=x.type==='cash'?amount:(x.type==='credit'&&x.advance_method!=='online'?Number(x.advance_payment||0):(x.type==='advance_payment'&&x.advance_method!=='online'?Math.max(0,amount-Number(x.balance_payment||0)):0));
-    const online=x.type==='online'?Math.max(0,amount-Number(x.balance_payment||0)):((x.type==='credit'||x.type==='advance_payment')&&x.advance_method==='online'?(x.type==='credit'?Number(x.advance_payment||0):Math.max(0,amount-Number(x.balance_payment||0))):0);
+    const cash=x.type==='cash'?amount:0, online=x.type==='online'?amount:0;
     const credit=x.type==='credit'?customerBalance(x):0;
-    // For an online sale, the advance and balance are allocations within the same
-    // online receipt, so don't repeat them in the separate allocation columns.
-    const advance=x.type==='credit'?(x.advance_method==='online'?0:Number(x.advance_payment||0)):(x.type==='advance_payment'?(x.advance_method==='online'?0:Math.max(0,amount-Number(x.balance_payment||0))):0);
+    const advance=(x.type==='credit'||x.type==='online')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
     const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
-    const total=x.type==='cash'?amount:
-      x.type==='online'?amount:
-      x.type==='credit'?Number(x.advance_payment||0)+Number(x.balance_payment||0):
-      x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):
-      x.type==='balance_payment'?amount:
-      x.type==='total_payment'?amount:0;
-    const paidDate=x.type==='credit' ? creditPaymentDate(x) : '';
-    const paidDateLabel=paidDate ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${credit<=0.0001?'Paid on':'Last paid'}: ${esc(paidDate)}</div>` : '';
+    // Total Payment is reserved for customer advance/balance receipts, not ordinary cash/online sales.
+    // For a credit/online entry, show only the advance + balance actually received.
+    const total=(x.type==='advance_payment'||x.type==='balance_payment')?amount:
+      ((x.type==='credit'||x.type==='online') && (advance>0||balance>0) ? advance+balance :
+      (x.type==='total_payment'?amount:0));
+    const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : null;
+    const paidDateLabel=paymentInfo ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${credit<=0.0001?'Paid on':'Last paid'}: ${esc(paymentInfo.date)} • ${money(paymentInfo.amount)}</div>` : '';
     const creditStatus=x.type==='credit'
       ? (credit<=0.0001
           ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
@@ -551,21 +563,48 @@ function renderSales(){
               ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel
               : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>'))
       : '';
-    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${money(total)}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
 function updateSaleFields(){
   const type=document.getElementById('sType').value;
   const show=(id,yes)=>document.getElementById(id).classList.toggle('field-hidden',!yes);
-  show('advanceField',type==='credit'||type==='online');
-  show('advanceMethodField',type==='credit'||type==='advance_payment'||type==='online');
-  show('balanceField',type==='credit'||type==='online');
+  // Amount and customer are editable for every transaction type.
   show('amountField',true);
+  document.getElementById('sCustomer').parentElement.style.display='';
+  show('advanceField',type==='credit'||type==='online');
+  show('balanceField',type==='credit'||type==='online');
   document.getElementById('amountLabel').textContent=type==='credit'?'Total Bill / Credit Amount':type==='balance_payment'?'Balance Payment Amount':type==='advance_payment'?'Advance Payment Amount':type==='total_payment'?'Total Payment Amount':'Amount';
   document.getElementById('sAmount').placeholder=type==='credit'?'Total bill amount':'Enter amount';
   document.getElementById('saleTypeHelp').textContent=type==='cash'?'Cash amount received immediately.':type==='online'?'Online payment received through bank, Easypaisa or JazzCash. You can also enter the advance and balance portions below; their combined amount must not exceed this payment amount.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
   if(type==='balance_payment'){document.getElementById('sAdvance').value='0';document.getElementById('sBalancePayment').value='0';}
+}
+function rebuildBalanceAllocations(customer){
+  const key=(customer||'').trim().toLowerCase();
+  if(!key)return;
+  const credits=data.sales
+    .filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===key)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+                 String(a.time||'').localeCompare(String(b.time||'')) ||
+                 String(a.id||'').localeCompare(String(b.id||'')));
+  credits.forEach(x=>x.balance_payment=0);
+  const receipts=data.sales
+    .filter(x=>x.type==='balance_payment' && (x.customer||'').trim().toLowerCase()===key)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+                 String(a.time||'').localeCompare(String(b.time||'')) ||
+                 String(a.id||'').localeCompare(String(b.id||'')));
+  for(const receipt of receipts){
+    let remaining=Math.max(0,Number(receipt.amount||0));
+    for(const credit of credits){
+      if(remaining<=0.0001)break;
+      const due=customerBalance(credit);
+      if(due<=0.0001)continue;
+      const paid=Math.min(due,remaining);
+      credit.balance_payment=Number(credit.balance_payment||0)+paid;
+      remaining-=paid;
+    }
+  }
 }
 function applyBalancePayment(customer, amount, paymentDate, paymentTime, paymentId){
   let remaining=Number(amount||0);
@@ -617,7 +656,6 @@ function newSale(){
   document.getElementById('sAmount').value='';
   document.getElementById('sAdvance').value='0';
   document.getElementById('sBalancePayment').value='0';
-  document.getElementById('sAdvanceMethod').value='cash';
   document.getElementById('sCustomer').value='';
   document.getElementById('sDesc').value='';
   const n=nowLocal();
@@ -634,7 +672,6 @@ function editSale(id){
   document.getElementById('sAmount').value=x.amount||0;
   document.getElementById('sAdvance').value=x.advance_payment||0;
   document.getElementById('sBalancePayment').value=x.balance_payment||0;
-  document.getElementById('sAdvanceMethod').value=x.advance_method||'cash';
   document.getElementById('sCustomer').value=x.customer||'';
   document.getElementById('sDesc').value=x.desc||'';
   document.getElementById('sDate').value=x.date;
@@ -659,11 +696,21 @@ function saveSale(){
   const time=document.getElementById('sTime').value||nowLocal().time;
   if(editingSale){
     const old=data.sales.find(x=>x.id===editingSale);
-    if(old && old.type==='balance_payment')return alert('To preserve the linked customer balance, delete this payment and add it again if you need to correct it.');
-    const obj={type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance,advance_method:document.getElementById('sAdvanceMethod').value||'cash'};
-    const x=data.sales.find(s=>s.id===editingSale);if(x)Object.assign(x,obj);
+    if(!old)return;
+    const oldType=old.type;
+    const oldCustomer=(old.customer||'').trim();
+    const oldCustomerKey=oldCustomer.toLowerCase();
+    const obj={type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
+    Object.assign(old,obj);
+
+    // Balance receipts remain editable. Recalculate their allocations for the
+    // old and new customer so the oldest unpaid credit is settled correctly.
+    if(oldType==='balance_payment' || type==='balance_payment'){
+      if(oldCustomerKey)rebuildBalanceAllocations(oldCustomer);
+      if(customer && customer.toLowerCase()!==oldCustomerKey)rebuildBalanceAllocations(customer);
+    }
   }else if(type==='credit'){
-    const credit={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:0,advance_method:document.getElementById('sAdvanceMethod').value||'cash'};
+    const credit={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:0};
     data.sales.push(credit);
     applyUnallocatedAdvancesToCredit(customer);
     // Record any same-day receipts as separate transactions so daily totals remain accurate.
@@ -672,7 +719,7 @@ function saveSale(){
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
-    const obj={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance,advance_method:document.getElementById('sAdvanceMethod').value||'cash'};
+    const obj={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
     data.sales.push(obj);
     if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
     if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
