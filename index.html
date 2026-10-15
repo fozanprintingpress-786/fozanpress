@@ -509,8 +509,8 @@ function renderSales(){
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const total=Number(x.amount||0);
     const cash=x.type==='cash'?total:0, online=x.type==='online'?total:0, credit=x.type==='credit'?total:0;
-    const advance=x.type==='credit'?Number(x.advance_payment||0):(x.type==='advance_payment'?total:0);
-    const balance=x.type==='credit'?Number(x.balance_payment||0):(x.type==='balance_payment'?total:0);
+    const advance=(x.type==='credit'||x.type==='online')?Number(x.advance_payment||0):(x.type==='advance_payment'?total:0);
+    const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?total:0);
     return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${money(total)}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
@@ -518,12 +518,12 @@ function renderSales(){
 function updateSaleFields(){
   const type=document.getElementById('sType').value;
   const show=(id,yes)=>document.getElementById(id).classList.toggle('field-hidden',!yes);
-  show('advanceField',type==='credit');
-  show('balanceField',type==='credit');
+  show('advanceField',type==='credit'||type==='online');
+  show('balanceField',type==='credit'||type==='online');
   show('amountField',true);
   document.getElementById('amountLabel').textContent=type==='credit'?'Total Bill / Credit Amount':type==='balance_payment'?'Balance Payment Amount':type==='advance_payment'?'Advance Payment Amount':type==='total_payment'?'Total Payment Amount':'Amount';
   document.getElementById('sAmount').placeholder=type==='credit'?'Total bill amount':'Enter amount';
-  document.getElementById('saleTypeHelp').textContent=type==='cash'?'Cash amount received immediately.':type==='online'?'Online payment received through bank, Easypaisa or JazzCash.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
+  document.getElementById('saleTypeHelp').textContent=type==='cash'?'Cash amount received immediately.':type==='online'?'Online payment received through bank, Easypaisa or JazzCash. You can also enter the advance and balance portions below; their combined amount must not exceed this payment amount.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
   if(type==='balance_payment'){document.getElementById('sAdvance').value='0';document.getElementById('sBalancePayment').value='0';}
 }
 function applyBalancePayment(customer, amount, paymentDate, paymentTime, paymentId){
@@ -607,11 +607,11 @@ function saveSale(){
   if(type==='balance_payment' && !customer)return alert('For a balance payment, enter the customer name exactly as it appears on the credit entry.');
   const amountValue=document.getElementById('sAmount').value.trim();
   const amount=amountValue===''?0:Number(amountValue);
-  const advance=type==='credit'?Number(document.getElementById('sAdvance').value||0):0;
-  const initialBalance=type==='credit'?Number(document.getElementById('sBalancePayment').value||0):0;
+  const advance=(type==='credit'||type==='online')?Number(document.getElementById('sAdvance').value||0):0;
+  const initialBalance=(type==='credit'||type==='online')?Number(document.getElementById('sBalancePayment').value||0):0;
   if(!Number.isFinite(amount)||amount<=0)return alert('Please enter an amount greater than zero.');
   if(!Number.isFinite(advance)||advance<0||!Number.isFinite(initialBalance)||initialBalance<0)return alert('Please enter valid advance and balance amounts.');
-  if(type==='credit' && advance+initialBalance>amount)return alert('Advance + balance received cannot exceed the total bill.');
+  if((type==='credit'||type==='online') && advance+initialBalance>amount)return alert('Advance + balance amounts cannot exceed the total bill / online payment amount.');
   const date=document.getElementById('sDate').value||nowLocal().date;
   const time=document.getElementById('sTime').value||nowLocal().time;
   if(editingSale){
@@ -629,7 +629,7 @@ function saveSale(){
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
-    const obj={id:uid(),type,amount,customer,desc,date,time,advance_payment:0,balance_payment:0};
+    const obj={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
     data.sales.push(obj);
     if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
     if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
