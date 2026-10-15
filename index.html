@@ -408,9 +408,9 @@ function monthlyTotals(month){
     if(monthKey(x.date)!==month)return;
     const amount=Number(x.amount||0), adv=Number(x.advance_payment||0), bal=Number(x.balance_payment||0);
     if(x.type==='cash') cash+=amount;
-    // An Online Sale amount is the full payment received online. Advance/balance
-    // fields on that row are allocations of the same payment, not extra receipts.
-    if(x.type==='online') online+=amount;
+    // Split online receipt into the online advance portion and the separately
+    // displayed balance portion, so the same money is not counted twice.
+    if(x.type==='online'){ online+=Math.max(0,amount-bal); balancePayment+=bal; }
     // Total Payment entries are tracked separately from Cash and Online.
     if(x.type==='credit'){
       credit+=amount;
@@ -461,8 +461,8 @@ function totals(date){
     if(date && x.date!==date)return;
     const amount=Number(x.amount||0), adv=Number(x.advance_payment||0), bal=Number(x.balance_payment||0);
     if(x.type==='cash') cash+=amount;
-    // Count each online sale only once; its advance/balance values are a split of amount.
-    if(x.type==='online') online+=amount;
+    // Split online receipt into online amount and the separately displayed balance.
+    if(x.type==='online'){ online+=Math.max(0,amount-bal); balancePayment+=bal; }
     // Total Payment entries are tracked separately from Cash and Online.
     if(x.type==='credit'){
       credit+=amount;
@@ -530,12 +530,12 @@ function renderSales(){
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
     const cash=x.type==='cash'?amount:(x.type==='credit'&&x.advance_method!=='online'?Number(x.advance_payment||0):(x.type==='advance_payment'&&x.advance_method!=='online'?Math.max(0,amount-Number(x.balance_payment||0)):0));
-    const online=x.type==='online'?amount:((x.type==='credit'||x.type==='advance_payment')&&x.advance_method==='online'?(x.type==='credit'?Number(x.advance_payment||0):Math.max(0,amount-Number(x.balance_payment||0))):0);
+    const online=x.type==='online'?Math.max(0,amount-Number(x.balance_payment||0)):((x.type==='credit'||x.type==='advance_payment')&&x.advance_method==='online'?(x.type==='credit'?Number(x.advance_payment||0):Math.max(0,amount-Number(x.balance_payment||0))):0);
     const credit=x.type==='credit'?customerBalance(x):0;
     // For an online sale, the advance and balance are allocations within the same
     // online receipt, so don't repeat them in the separate allocation columns.
     const advance=x.type==='credit'?(x.advance_method==='online'?0:Number(x.advance_payment||0)):(x.type==='advance_payment'?(x.advance_method==='online'?0:Math.max(0,amount-Number(x.balance_payment||0))):0);
-    const balance=x.type==='credit'?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
+    const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
     const total=x.type==='cash'?amount:
       x.type==='online'?amount:
       x.type==='credit'?Number(x.advance_payment||0)+Number(x.balance_payment||0):
