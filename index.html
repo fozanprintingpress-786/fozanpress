@@ -82,19 +82,19 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 
   <div class="stats">
     <div class="stat"><small>Total Cash Sale</small><strong class="cash" id="totalCash">Rs. 750.00</strong></div>
-    <div class="stat onlineBox"><small>Total Online Sale</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Advance Received</small><strong class="cash" id="totalAdvance">Rs. 0.00</strong></div>
-    <div class="stat"><small>Total Balance Payment Received</small><strong class="online" id="totalBalancePayment">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Payment Received</small><strong id="totalPaymentReceived">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 750.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
+    <div class="stat"><small>Total Balance Payment Received</small><strong class="online" id="totalBalancePayment">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
+    <div class="stat onlineBox"><small>Total Online (Including Online Balance)</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
   </div>
   <div class="notice" style="margin-top:-5px;margin-bottom:12px">
-    Showing totals for the selected date only. Expense is deducted only from Total Cash Sale. Online payments are not used to pay expenses.
-    Cash + Online Total = (Cash Sale − Expenses) + Online Sale.
+    Showing totals for the selected date only. Cash balance payments are added to Cash In Hand. Online balance payments are added to Online Total. Expenses are deducted from cash only.
+    Cash + Online Total = Cash In Hand After Expense + Online Total.
   </div>
 
   <div id="expenseLedger"><h2 style="margin-top:18px">Expense / Payment Ledger — 2026-09-27</h2><div class="notice">No expenses for this date.</div></div>
@@ -409,26 +409,27 @@ function changeMonth(step){
   const d=new Date(y,m-1+step,1);
   selectMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
 }
-function monthlyTotals(month){
-  let cash=0,online=0,credit=0,advance=0,balancePayment=0,expenses=0;
+function calculateTotals(filterFn){
+  let cash=0,online=0,credit=0,advance=0,balancePayment=0,cashBalancePayment=0,onlineBalancePayment=0,expenses=0;
   data.sales.forEach(x=>{
-    if(monthKey(x.date)!==month)return;
-    if(x.type==='cash')cash+=Number(x.amount||0);
-    if(x.type==='online')online+=(
-      (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0)
-        ? Number(x.advance_payment||0)
-        : Number(x.amount||0)
-    );
-    if(x.type==='credit'){
-      credit+=Number(x.amount||0);
-      advance+=Number(x.advance_payment||0);
+    if(!filterFn(x.date))return;
+    const amount=Number(x.amount||0);
+    if(x.type==='cash')cash+=amount;
+    if(x.type==='online')online+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
+    if(x.type==='credit'){credit+=amount;advance+=Number(x.advance_payment||0);}
+    if(x.type==='advance_payment')advance+=Math.max(0,amount-Number(x.balance_payment||0));
+    if(isBalancePayment(x)){
+      balancePayment+=amount;
+      if(balanceMethod(x)==='online')onlineBalancePayment+=amount;
+      else cashBalancePayment+=amount;
     }
-    if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
-    if(isBalancePayment(x))balancePayment+=Number(x.amount||0);
   });
-  data.expenses.forEach(x=>{if(monthKey(x.date)===month)expenses+=Number(x.amount||0);});
-  return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+credit,net:cash+online+advance+balancePayment-expenses};
+  data.expenses.forEach(x=>{if(filterFn(x.date))expenses+=Number(x.amount||0);});
+  const cashInHand=cash+cashBalancePayment-expenses;
+  const onlineTotal=online+onlineBalancePayment;
+  return {cash,online:onlineTotal,credit,advance,balancePayment,cashBalancePayment,onlineBalancePayment,expenses,cashInHand,totalSale:cash+online+credit,net:cashInHand+onlineTotal+advance};
 }
+function monthlyTotals(month){return calculateTotals(date=>monthKey(date)===month);}
 
 function renderDateHistory(){
   const el=document.getElementById('dateHistory');
@@ -459,28 +460,7 @@ function selectDate(date){
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 
-function totals(date){
-  let cash=0,online=0,credit=0,advance=0,balancePayment=0,expenses=0;
-  data.sales.forEach(x=>{
-    if(date && x.date!==date)return;
-    if(x.type==='cash')cash+=Number(x.amount||0);
-    if(x.type==='online')online+=(
-      (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0)
-        ? Number(x.advance_payment||0)
-        : Number(x.amount||0)
-    );
-    if(x.type==='credit'){
-      credit+=Number(x.amount||0);
-      advance+=Number(x.advance_payment||0);
-    }
-    if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
-    // Balance receipts are counted from their own transaction only; the linked
-    // credit row also stores the allocation, but must not double-count it.
-    if(isBalancePayment(x))balancePayment+=Number(x.amount||0);
-  });
-  data.expenses.forEach(x=>{if(!date || x.date===date)expenses+=Number(x.amount||0);});
-  return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+credit,net:cash+online+advance+balancePayment-expenses};
-}
+function totals(date){return calculateTotals(d=>!date || d===date);}
 
 function renderDashboard(){
   const date=getSummaryDate(), t=totals(date);
@@ -496,11 +476,11 @@ function renderDashboard(){
   set('totalCredit',summary.credit);
   set('totalAdvance',summary.advance);
   set('totalBalancePayment',summary.balancePayment);
-  set('totalPaymentReceived',summary.cash+summary.online+summary.advance+summary.balancePayment);
+  set('totalPaymentReceived',summary.cash+summary.cashBalancePayment+summary.online+summary.advance);
   set('totalSale',summary.totalSale);
   set('totalExpense',summary.expenses);
-  set('paymentAfterExpense',summary.cash-summary.expenses);
-  set('cashOnlineTotal',(summary.cash-summary.expenses)+summary.online+summary.advance+summary.balancePayment);
+  set('paymentAfterExpense',summary.cashInHand);
+  set('cashOnlineTotal',summary.cashInHand+summary.online);
 
   const el=document.getElementById('expenseLedger');
   const dayExpenses=data.expenses.filter(x=>x.date===date);
