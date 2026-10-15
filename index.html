@@ -64,11 +64,13 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 12px">
     <div><strong id="dailyTitle">Daily Sale Summary — 2026-09-27</strong><div class="notice">Current month is shown automatically. Previous months remain safely saved and can be opened with Previous Month or searched.</div></div>
     <div style="display:flex;align-items:center;gap:8px">
+      <button class="muted" onclick="changeDate(-1)">‹ Previous Date</button>
       <label for="summaryDate" style="font-weight:bold">Date</label>
       <input id="summaryDate" type="date" style="width:auto;margin:0" onchange="renderDashboard();renderSales()">
+      <button class="muted" onclick="changeDate(1)">Next Date ›</button>
     </div>
   </div>
-  <div id="dateHistory" style="display:flex;gap:7px;flex-wrap:wrap;margin:-2px 0 14px"><span class="notice" style="padding:7px 4px">Saved dates:</span><button class="primary" style="padding:7px 10px" onclick="selectDate('2026-09-27')">2026-09-27</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-26')">2026-09-26</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-24')">2026-09-24</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-23')">2026-09-23</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-22')">2026-09-22</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-21')">2026-09-21</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-20')">2026-09-20</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-19')">2026-09-19</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-16')">2026-09-16</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-15')">2026-09-15</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-14')">2026-09-14</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-13')">2026-09-13</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-12')">2026-09-12</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-10')">2026-09-10</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-09')">2026-09-09</button></div>
+  <div id="dateHistory" style="display:none;gap:7px;flex-wrap:wrap;margin:-2px 0 14px"><span class="notice" style="padding:7px 4px">Saved dates:</span><button class="primary" style="padding:7px 10px" onclick="selectDate('2026-09-27')">2026-09-27</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-26')">2026-09-26</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-24')">2026-09-24</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-23')">2026-09-23</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-22')">2026-09-22</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-21')">2026-09-21</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-20')">2026-09-20</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-19')">2026-09-19</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-16')">2026-09-16</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-15')">2026-09-15</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-14')">2026-09-14</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-13')">2026-09-13</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-12')">2026-09-12</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-10')">2026-09-10</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-09')">2026-09-09</button></div>
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;background:#f7f9fb;border-radius:9px">
     <div><strong id="monthTitle">Monthly Sale Summary — September 2026</strong><div class="notice">Only the selected/current month is shown normally. Older months stay saved in the cloud and can be viewed with Previous Month or Search.</div></div>
     <div style="display:flex;align-items:center;gap:8px">
@@ -84,6 +86,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Advance Received</small><strong class="cash" id="totalAdvance">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Balance Payment Received</small><strong class="online" id="totalBalancePayment">Rs. 0.00</strong></div>
+    <div class="stat"><small>Total Payment Received</small><strong id="totalPaymentReceived">Rs. 750.00</strong></div>
     <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 750.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
@@ -105,7 +108,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
       <button class="muted" style="padding:9px 11px" onclick="clearSearch()">Clear</button>
     </div>
   </div>
-  <div id="salesLedger"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody><tr>
+  <div id="salesLedger"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Credit</th><th>Actions</th></tr></thead><tbody><tr>
       <td>2026-09-27 10:57:48</td>
       <td>-</td>
       <td>Color Prints</td>
@@ -201,7 +204,7 @@ create table if not exists public.fozan_expenses (
 );
 
 alter table public.fozan_sales enable row level security;
-alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;\nalter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;\n\nalter table public.fozan_expenses enable row level security;
+alter table public.fozan_expenses enable row level security;
 
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
@@ -228,50 +231,31 @@ function cloudStatus(msg, ok=false){
   if(s){ s.textContent=(ok?'✓ ':'☁ ')+msg; }
 }
 
-async function cloudSyncData(){
+async function cloudReplaceAll(){
   if(!CLOUD_ENABLED) return;
-  cloudStatus('Saving changes to cloud...');
+  cloudStatus('Syncing to cloud...');
   try{
-    const salesRows = data.sales.map(x=>({
-      id:String(x.id),
-      type:x.type,
-      amount:Number(x.amount||0),
-      customer:x.customer||'',
-      description:cleanDescription(x.desc||''),
-      sale_date:x.date,
-      sale_time:x.time||'',
-      advance_payment:Number(x.advance_payment||0),
-      balance_payment:Number(x.balance_payment||0)
-    }));
-    const expenseRows = data.expenses.map(x=>({
-      id:String(x.id),
-      amount:Number(x.amount||0),
-      description:cleanDescription(x.desc||''),
-      expense_date:x.date,
-      expense_time:x.time||''
-    }));
-    if(salesRows.length){
-      const {error}=await supabaseClient.from('fozan_sales').upsert(salesRows,{onConflict:'id'});
+    const { error: delSales } = await supabaseClient.from('fozan_sales').delete().neq('id','__never__');
+    if(delSales) throw delSales;
+    const { error: delExpenses } = await supabaseClient.from('fozan_expenses').delete().neq('id','__never__');
+    if(delExpenses) throw delExpenses;
+
+    if(data.sales.length){
+      const {error}=await supabaseClient.from('fozan_sales').insert(
+        data.sales.map(x=>({id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',description:x.desc||'',sale_date:x.date,sale_time:x.time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)}))
+      );
       if(error) throw error;
     }
-    if(expenseRows.length){
-      const {error}=await supabaseClient.from('fozan_expenses').upsert(expenseRows,{onConflict:'id'});
+    if(data.expenses.length){
+      const {error}=await supabaseClient.from('fozan_expenses').insert(
+        data.expenses.map(x=>({id:x.id,amount:Number(x.amount||0),description:x.desc||'',expense_date:x.date,expense_time:x.time||''}))
+      );
       if(error) throw error;
     }
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
-    console.error('Cloud save error:',e);
-    cloudStatus('Cloud save error — check database columns / connection');
-  }
-}
-async function cloudDeleteRow(table,id){
-  if(!CLOUD_ENABLED || !id) return;
-  try{
-    const {error}=await supabaseClient.from(table).delete().eq('id',String(id));
-    if(error) throw error;
-  }catch(e){
-    console.error('Cloud delete error:',e);
-    cloudStatus('Cloud delete error — refresh cloud to verify');
+    console.error(e);
+    cloudStatus('Cloud sync error — local copy kept');
   }
 }
 
@@ -291,7 +275,7 @@ async function cloudLoad(){
 
     data.sales=(sales||[]).map(x=>({
       id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
-      desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
+      desc:x.description||'',date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
     data.expenses=(expenses||[]).map(x=>({
       id:x.id,amount:Number(x.amount||0),desc:x.description||'',
@@ -315,19 +299,12 @@ function persist(){
   localStorage.setItem(KEY,JSON.stringify(data));
   const s=document.getElementById('saveStatus');
   if(s && !CLOUD_ENABLED) s.textContent='✓ Auto-saved locally: '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  if(CLOUD_ENABLED) cloudSyncData();
+  if(CLOUD_ENABLED) cloudReplaceAll();
 }
 function nowLocal(){
   const d=new Date(), pad=n=>String(n).padStart(2,'0');
   return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
           time:`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
-}
-function cleanDescription(value){
-  return String(value ?? '')
-    .replace(/\\s*\\[\\[?\\s*FOZAN_PAYMENT_META[\\s\\S]*?\\]\\]?\\s*/gi, ' ')
-    .replace(/\\s*\\[FOZAN_PAYMENT_META[^\\]]*\\]\\s*/gi, ' ')
-    .replace(/\\s{2,}/g, ' ')
-    .trim();
 }
 function money(n){return 'Rs. '+Number(n||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function getSummaryDate(){
@@ -429,6 +406,13 @@ function selectDate(date){
   renderDashboard();
   renderSales();
 }
+function changeDate(step){
+  const current=getSummaryDate();
+  const d=new Date(current+'T12:00:00');
+  d.setDate(d.getDate()+step);
+  const next=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  selectDate(next);
+}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 
@@ -464,6 +448,7 @@ function renderDashboard(){
   set('totalAdvance',summary.advance);
   set('totalBalancePayment',summary.balancePayment);
   set('totalSale',summary.totalSale);
+  set('totalPaymentReceived',summary.cash+summary.online+summary.advance+summary.balancePayment);
   set('totalExpense',summary.expenses);
   set('paymentAfterExpense',summary.cash-summary.expenses);
   set('cashOnlineTotal',(summary.cash-summary.expenses)+summary.online+summary.advance+summary.balancePayment);
@@ -490,16 +475,18 @@ function renderSales(){
     el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';
     return;
   }
-  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date & Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+
+  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date & Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Balance Status</th><th>Actions</th></tr></thead><tbody>'+
     rows.map(x=>`<tr>
       <td>${x.date} ${x.time||''}</td>
       <td>${esc(x.customer||'-')}</td>
       <td>${esc(x.desc||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE PAYMENT</span>':''}</td>
+      <td><strong>${money(x.type==='credit'?Number(x.advance_payment||0)+Number(x.balance_payment||0):x.amount)}</strong></td>
       <td class="cash">${x.type==='cash'?money(x.amount):'-'}</td>
       <td class="online">${x.type==='online'?money(x.amount):'-'}</td>
       <td class="debit">${x.type==='credit'?money(x.amount):'-'}</td>
       <td class="advance">${x.type==='credit'?money(x.advance_payment):'-'}</td>
       <td class="balance">${x.type==='credit'?money(x.balance_payment):(x.type==='balance_payment'?money(x.amount):'-')}</td>
+      <td>${x.type==='credit' ? (Number(x.advance_payment||0)+Number(x.balance_payment||0)>=Number(x.amount||0) ? '<span class="credit">PAID</span>' : '<span class="debit">BALANCE DUE: '+money(Math.max(0,Number(x.amount||0)-Number(x.advance_payment||0)-Number(x.balance_payment||0)))+'</span>') : '-'}</td>
       <td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td>
     </tr>`).join('')+'</tbody></table></div>';
 }
@@ -534,18 +521,37 @@ function editSale(id){
 }
 function saveSale(){
   const customer=document.getElementById('sCustomer').value.trim();
-  const desc=cleanDescription(document.getElementById('sDesc').value);
+  const desc=document.getElementById('sDesc').value.trim();
   if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
   const amountValue=document.getElementById('sAmount').value.trim();
-  const amount=amountValue==='' ? 0 : Number(amountValue);
-  if(!Number.isFinite(amount) || amount<0)return alert('Please enter a valid amount.');
+  let amount=amountValue==='' ? 0 : Number(amountValue);
   const type=document.getElementById('sType').value;
   const advance=type==='credit' ? Number(document.getElementById('sAdvance').value||0) : 0;
-  const balancePayment=type==='credit' ? Number(document.getElementById('sBalancePayment').value||0) : 0;
+  const enteredBalance=Number(document.getElementById('sBalancePayment').value||0);
+  // For a Credit Sale, record advance/balance against the credit amount.
+  // For a later Balance Payment Received entry, accept either the main Amount
+  // field or the Balance Payment field so the payment is not accidentally lost.
+  const balancePayment=type==='credit' ? enteredBalance : 0;
+  if(type==='balance_payment' && enteredBalance>0) amount=enteredBalance;
+  if(!Number.isFinite(amount) || amount<0)return alert('Please enter a valid amount.');
   if(!Number.isFinite(advance)||advance<0)return alert('Please enter a valid Advance Payment.');
-  if(!Number.isFinite(balancePayment)||balancePayment<0)return alert('Please enter a valid Balance Payment.');
+  if(!Number.isFinite(enteredBalance)||enteredBalance<0)return alert('Please enter a valid Balance Payment.');
   if(type==='credit' && advance+balancePayment>amount)return alert('Advance Payment + Balance Payment cannot be greater than Credit Amount.');
+  if(type==='balance_payment' && amount<=0)return alert('Please enter the balance payment in Amount or Balance Payment.');
   const obj={type,amount,customer,desc,date:document.getElementById('sDate').value,time:document.getElementById('sTime').value||nowLocal().time,advance_payment:advance,balance_payment:balancePayment};
+  // A later balance receipt automatically updates the customer's oldest outstanding credit entry.
+  if(type==='balance_payment' && customer && !editingSale){
+    let remaining=amount;
+    const outstanding=data.sales.filter(x=>x.type==='credit' && String(x.customer||'').trim().toLowerCase()===customer.toLowerCase() && x.id!==editingSale)
+      .sort((a,b)=>String(a.date).localeCompare(String(b.date)) || String(a.time||'').localeCompare(String(b.time||'')));
+    for(const oldSale of outstanding){
+      const due=Math.max(0,Number(oldSale.amount||0)-Number(oldSale.advance_payment||0)-Number(oldSale.balance_payment||0));
+      if(due<=0 || remaining<=0) continue;
+      const applied=Math.min(due,remaining);
+      oldSale.balance_payment=Number(oldSale.balance_payment||0)+applied;
+      remaining-=applied;
+    }
+  }
   if(editingSale){
     const x=data.sales.find(s=>s.id===editingSale); if(x)Object.assign(x,obj);
   }else{
@@ -573,14 +579,14 @@ function newExpense(){
 function saveExpense(){
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
-  const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
+  const obj={amount,desc:document.getElementById('eDesc').value.trim(),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
   const id=window._editingExpense;
   if(id){
     const x=data.expenses.find(e=>e.id===id); if(x)Object.assign(x,obj);
   }else data.expenses.push({id:uid(),...obj});
   persist();closeExpenseModal();renderDashboard();renderSales();
 }
-function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
+function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);persist();renderDashboard();renderSales();}
 function editExpense(id){
   const x=data.expenses.find(e=>e.id===id);if(!x)return;
   document.getElementById('eAmount').value=x.amount;
@@ -618,8 +624,7 @@ const todayNow=nowLocal();
 summaryDate.value=todayNow.date;
 document.getElementById('summaryMonth').value=monthKey(todayNow.date);
 summaryMode='date';
-data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;x.desc=cleanDescription(x.desc||'');});
-data.expenses.forEach(x=>{x.desc=cleanDescription(x.desc||'');});
+data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;});
 renderDateHistory();renderDashboard();renderSales();
 cloudLoad();
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
