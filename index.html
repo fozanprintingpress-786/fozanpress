@@ -29,7 +29,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 .empty{text-align:center;color:#7b8791;padding:35px}
 .actions button{padding:6px 9px;margin-right:4px}
 .modal{display:none;position:fixed;inset:0;background:#0007;align-items:center;justify-content:center;padding:15px}
-.modal .box{background:white;width:min(500px,100%);border-radius:12px;padding:20px}
+.modal .box{background:white;width:min(500px,100%);max-height:90vh;overflow-y:auto;border-radius:12px;padding:20px}.modal label{display:block;font-size:14px;margin-top:2px}.modal input,.modal select{margin-top:5px}.modal .field-hidden{display:none!important}
 .notice{font-size:13px;color:#667}.cash{color:#198754}.expense{color:#dc3545}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.syncbox{font-size:12px;padding:7px 10px;border-radius:8px;background:#f7f9fb;color:#667}.onlineBox{background:#eef7ff}.expenseBox{background:#fff2f2}
 @media(max-width:800px){header{flex-direction:column;align-items:flex-start;gap:10px}header>div:last-child{text-align:left!important}.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
 </style>
@@ -86,7 +86,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Advance Received</small><strong class="cash" id="totalAdvance">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Balance Payment Received</small><strong class="online" id="totalBalancePayment">Rs. 0.00</strong></div>
-    <div class="stat"><small>Total Payment Received</small><strong id="totalPaymentReceived">Rs. 750.00</strong></div>
+    <div class="stat"><small>Total Payment Received</small><strong id="totalPaymentReceived">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 750.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
@@ -108,7 +108,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
       <button class="muted" style="padding:9px 11px" onclick="clearSearch()">Clear</button>
     </div>
   </div>
-  <div id="salesLedger"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Credit</th><th>Actions</th></tr></thead><tbody><tr>
+  <div id="salesLedger"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody><tr>
       <td>2026-09-27 10:57:48</td>
       <td>-</td>
       <td>Color Prints</td>
@@ -132,16 +132,18 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 <div class="box">
   <h2 id="saleModalTitle">New Daily Sale</h2>
   <label>Sale Type</label>
-  <select id="sType">
+  <select id="sType" onchange="updateSaleFields()">
     <option value="cash">Cash Sale</option>
     <option value="online">Online Sale (Bank / Easypaisa / JazzCash)</option>
+    <option value="total_payment">Total Payment</option>
+    <option value="advance_payment">Advance Payment Received</option>
     <option value="credit">Credit Sale / Customer Owes</option>
     <option value="balance_payment">Balance Payment Received</option>
   </select>
-  <label>Amount</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0">
-  <label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0">
-  <label>Balance Payment</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="0">
-  <div class="notice" style="margin:-8px 0 10px">For a later payment, choose “Balance Payment Received” and enter the customer + payment amount.</div>
+  <div id="amountField"><label id="amountLabel">Amount / Total Bill</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0"></div>
+  <div id="advanceField"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
+  <div id="balanceField"><label>Balance Payment Received Now</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
+  <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Select sale type; fields will adjust automatically.</div>
   <label>Customer Name (Optional)</label><input id="sCustomer" placeholder="e.g. Muhammad Ali">
   <label>Description / Item</label><input id="sDesc" placeholder="e.g. Visiting Cards / Banner" dir="ltr">
   <label>Date</label><input id="sDate" type="date">
@@ -204,7 +206,7 @@ create table if not exists public.fozan_expenses (
 );
 
 alter table public.fozan_sales enable row level security;
-alter table public.fozan_expenses enable row level security;
+alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;\nalter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;\n\nalter table public.fozan_expenses enable row level security;
 
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
@@ -231,31 +233,50 @@ function cloudStatus(msg, ok=false){
   if(s){ s.textContent=(ok?'✓ ':'☁ ')+msg; }
 }
 
-async function cloudReplaceAll(){
+async function cloudSyncData(){
   if(!CLOUD_ENABLED) return;
-  cloudStatus('Syncing to cloud...');
+  cloudStatus('Saving changes to cloud...');
   try{
-    const { error: delSales } = await supabaseClient.from('fozan_sales').delete().neq('id','__never__');
-    if(delSales) throw delSales;
-    const { error: delExpenses } = await supabaseClient.from('fozan_expenses').delete().neq('id','__never__');
-    if(delExpenses) throw delExpenses;
-
-    if(data.sales.length){
-      const {error}=await supabaseClient.from('fozan_sales').insert(
-        data.sales.map(x=>({id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',description:x.desc||'',sale_date:x.date,sale_time:x.time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)}))
-      );
+    const salesRows = data.sales.map(x=>({
+      id:String(x.id),
+      type:x.type,
+      amount:Number(x.amount||0),
+      customer:x.customer||'',
+      description:cleanDescription(x.desc||''),
+      sale_date:x.date,
+      sale_time:x.time||'',
+      advance_payment:Number(x.advance_payment||0),
+      balance_payment:Number(x.balance_payment||0)
+    }));
+    const expenseRows = data.expenses.map(x=>({
+      id:String(x.id),
+      amount:Number(x.amount||0),
+      description:cleanDescription(x.desc||''),
+      expense_date:x.date,
+      expense_time:x.time||''
+    }));
+    if(salesRows.length){
+      const {error}=await supabaseClient.from('fozan_sales').upsert(salesRows,{onConflict:'id'});
       if(error) throw error;
     }
-    if(data.expenses.length){
-      const {error}=await supabaseClient.from('fozan_expenses').insert(
-        data.expenses.map(x=>({id:x.id,amount:Number(x.amount||0),description:x.desc||'',expense_date:x.date,expense_time:x.time||''}))
-      );
+    if(expenseRows.length){
+      const {error}=await supabaseClient.from('fozan_expenses').upsert(expenseRows,{onConflict:'id'});
       if(error) throw error;
     }
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
-    console.error(e);
-    cloudStatus('Cloud sync error — local copy kept');
+    console.error('Cloud save error:',e);
+    cloudStatus('Cloud save error — check database columns / connection');
+  }
+}
+async function cloudDeleteRow(table,id){
+  if(!CLOUD_ENABLED || !id) return;
+  try{
+    const {error}=await supabaseClient.from(table).delete().eq('id',String(id));
+    if(error) throw error;
+  }catch(e){
+    console.error('Cloud delete error:',e);
+    cloudStatus('Cloud delete error — refresh cloud to verify');
   }
 }
 
@@ -275,7 +296,7 @@ async function cloudLoad(){
 
     data.sales=(sales||[]).map(x=>({
       id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
-      desc:x.description||'',date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
+      desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
     data.expenses=(expenses||[]).map(x=>({
       id:x.id,amount:Number(x.amount||0),desc:x.description||'',
@@ -287,7 +308,7 @@ async function cloudLoad(){
     document.getElementById('summaryDate').value=todayNow.date;
     document.getElementById('summaryMonth').value=monthKey(todayNow.date);
     summaryMode='date';
-    renderDashboard(); renderSales();
+    renderDateHistory(); renderDashboard(); renderSales();
     cloudStatus('Cloud connected • all PCs share this data', true);
   }catch(e){
     console.error(e);
@@ -299,12 +320,19 @@ function persist(){
   localStorage.setItem(KEY,JSON.stringify(data));
   const s=document.getElementById('saveStatus');
   if(s && !CLOUD_ENABLED) s.textContent='✓ Auto-saved locally: '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  if(CLOUD_ENABLED) cloudReplaceAll();
+  if(CLOUD_ENABLED) cloudSyncData();
 }
 function nowLocal(){
   const d=new Date(), pad=n=>String(n).padStart(2,'0');
   return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
           time:`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+}
+function cleanDescription(value){
+  return String(value ?? '')
+    .replace(/\\s*\\[\\[?\\s*FOZAN_PAYMENT_META[\\s\\S]*?\\]\\]?\\s*/gi, ' ')
+    .replace(/\\s*\\[FOZAN_PAYMENT_META[^\\]]*\\]\\s*/gi, ' ')
+    .replace(/\\s{2,}/g, ' ')
+    .trim();
 }
 function money(n){return 'Rs. '+Number(n||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function getSummaryDate(){
@@ -345,6 +373,8 @@ function searchText(x){
     x.desc || '',
     x.type || '',
     isCredit(x) ? 'credit udhaar customer owes' : '',
+    x.type==='balance_payment' ? 'balance payment received' : '',
+    x.type==='advance_payment' ? 'advance payment received' : '',
     x.date || '',
     x.time || '',
     x.amount != null ? String(x.amount) : '',
@@ -375,22 +405,21 @@ function monthlyTotals(month){
     if(monthKey(x.date)!==month)return;
     if(x.type==='cash')cash+=Number(x.amount||0);
     if(x.type==='online')online+=Number(x.amount||0);
-    if(x.type==='credit')credit+=Number(x.amount||0);
-    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
     if(x.type==='credit'){
+      credit+=Number(x.amount||0);
       advance+=Number(x.advance_payment||0);
-      balancePayment+=Number(x.balance_payment||0);
     }
+    if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
+    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
   });
-  data.expenses.forEach(x=>{
-    if(monthKey(x.date)===month)expenses+=Number(x.amount||0);
-  });
+  data.expenses.forEach(x=>{if(monthKey(x.date)===month)expenses+=Number(x.amount||0);});
   return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+credit,net:cash+online+advance+balancePayment-expenses};
 }
 
 function renderDateHistory(){
   const el=document.getElementById('dateHistory');
   if(!el)return;
+  el.style.display='none';
   const dates=[...new Set([
     ...data.sales.map(x=>x.date).filter(Boolean),
     ...data.expenses.map(x=>x.date).filter(Boolean)
@@ -400,18 +429,18 @@ function renderDateHistory(){
   el.innerHTML='<span class="notice" style="padding:7px 4px">Saved dates:</span>'+
     dates.map(d=>`<button class="${d===current?'primary':'muted'}" style="padding:7px 10px" onclick="selectDate('${d}')">${d}</button>`).join('');
 }
+function changeDate(step){
+  const current=getSummaryDate();
+  const d=new Date(current+'T12:00:00'); d.setDate(d.getDate()+step);
+  const value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  summaryMode='date'; document.getElementById('summaryDate').value=value;
+  document.getElementById('summaryMonth').value=monthKey(value); renderDashboard(); renderSales();
+}
 function selectDate(date){
   summaryMode='date';
   document.getElementById('summaryDate').value=date;
   renderDashboard();
   renderSales();
-}
-function changeDate(step){
-  const current=getSummaryDate();
-  const d=new Date(current+'T12:00:00');
-  d.setDate(d.getDate()+step);
-  const next=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  selectDate(next);
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -425,8 +454,10 @@ function totals(date){
     if(x.type==='credit'){
       credit+=Number(x.amount||0);
       advance+=Number(x.advance_payment||0);
-      balancePayment+=Number(x.balance_payment||0);
     }
+    if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
+    // Balance receipts are counted from their own transaction only; the linked
+    // credit row also stores the allocation, but must not double-count it.
     if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
   });
   data.expenses.forEach(x=>{if(!date || x.date===date)expenses+=Number(x.amount||0);});
@@ -447,8 +478,8 @@ function renderDashboard(){
   set('totalCredit',summary.credit);
   set('totalAdvance',summary.advance);
   set('totalBalancePayment',summary.balancePayment);
-  set('totalSale',summary.totalSale);
   set('totalPaymentReceived',summary.cash+summary.online+summary.advance+summary.balancePayment);
+  set('totalSale',summary.totalSale);
   set('totalExpense',summary.expenses);
   set('paymentAfterExpense',summary.cash-summary.expenses);
   set('cashOnlineTotal',(summary.cash-summary.expenses)+summary.online+summary.advance+summary.balancePayment);
@@ -465,32 +496,79 @@ function renderDashboard(){
     '</tbody></table>';
 }
 
+function customerBalance(credit){
+  return Math.max(0, Number(credit.amount||0)-Number(credit.advance_payment||0)-Number(credit.balance_payment||0));
+}
 function renderSales(){
   const date=getSummaryDate();
   const q=(document.getElementById('search').value||'').toLowerCase().trim();
   let rows=q ? data.sales.filter(x=>searchText(x).includes(q)) : data.sales.filter(x=>x.date===date);
   rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) || String(b.time||'').localeCompare(String(a.time||'')) || String(b.id).localeCompare(String(a.id)));
   const el=document.getElementById('salesLedger');
-  if(!rows.length){
-    el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';
-    return;
-  }
-  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date & Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Balance Status</th><th>Actions</th></tr></thead><tbody>'+
-    rows.map(x=>`<tr>
-      <td>${x.date} ${x.time||''}</td>
-      <td>${esc(x.customer||'-')}</td>
-      <td>${esc(x.desc||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE PAYMENT</span>':''}</td>
-      <td><strong>${money(x.type==='credit'?Number(x.advance_payment||0)+Number(x.balance_payment||0):x.amount)}</strong></td>
-      <td class="cash">${x.type==='cash'?money(x.amount):'-'}</td>
-      <td class="online">${x.type==='online'?money(x.amount):'-'}</td>
-      <td class="debit">${x.type==='credit'?money(x.amount):'-'}</td>
-      <td class="advance">${x.type==='credit'?money(x.advance_payment):'-'}</td>
-      <td class="balance">${x.type==='credit'?money(x.balance_payment):(x.type==='balance_payment'?money(x.amount):'-')}</td>
-      <td>${x.type==='credit' ? (Number(x.advance_payment||0)+Number(x.balance_payment||0)>=Number(x.amount||0) ? '<span class="credit">PAID</span>' : '<span class="debit">BALANCE DUE: '+money(Math.max(0,Number(x.amount||0)-Number(x.advance_payment||0)-Number(x.balance_payment||0)))+'</span>') : '-'}</td>
-      <td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td>
-    </tr>`).join('')+'</tbody></table></div>';
+  if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
+  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
+    const total=Number(x.amount||0);
+    const cash=x.type==='cash'?total:0, online=x.type==='online'?total:0, credit=x.type==='credit'?total:0;
+    const advance=x.type==='credit'?Number(x.advance_payment||0):(x.type==='advance_payment'?total:0);
+    const balance=x.type==='credit'?Number(x.balance_payment||0):(x.type==='balance_payment'?total:0);
+    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${money(total)}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+  }).join('')+'</tbody></table></div>';
 }
 
+function updateSaleFields(){
+  const type=document.getElementById('sType').value;
+  const show=(id,yes)=>document.getElementById(id).classList.toggle('field-hidden',!yes);
+  show('advanceField',type==='credit');
+  show('balanceField',type==='credit');
+  show('amountField',true);
+  document.getElementById('amountLabel').textContent=type==='credit'?'Total Bill / Credit Amount':type==='balance_payment'?'Balance Payment Amount':type==='advance_payment'?'Advance Payment Amount':type==='total_payment'?'Total Payment Amount':'Amount';
+  document.getElementById('sAmount').placeholder=type==='credit'?'Total bill amount':'Enter amount';
+  document.getElementById('saleTypeHelp').textContent=type==='cash'?'Cash amount received immediately.':type==='online'?'Online payment received through bank, Easypaisa or JazzCash.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
+  if(type==='balance_payment'){document.getElementById('sAdvance').value='0';document.getElementById('sBalancePayment').value='0';}
+}
+function applyBalancePayment(customer, amount, paymentDate, paymentTime, paymentId){
+  let remaining=Number(amount||0);
+  const matches=data.sales.filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+  for(const credit of matches){
+    if(remaining<=0)break;
+    const due=customerBalance(credit), paid=Math.min(due,remaining);
+    credit.balance_payment=Number(credit.balance_payment||0)+paid;
+    remaining-=paid;
+  }
+  if(remaining>0.0001) alert('Note: '+money(remaining)+' could not be matched to an unpaid credit for this customer. Check the customer name and old credit entries. The received payment is still saved.');
+}
+function applyAdvancePayment(customer, amount, paymentId){
+  let payment=data.sales.find(x=>x.id===paymentId && x.type==='advance_payment');
+  if(!payment)return;
+  let remaining=Math.max(0,Number(amount||0)-Number(payment.balance_payment||0));
+  const matches=data.sales.filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+  for(const credit of matches){
+    if(remaining<=0)break;
+    const due=customerBalance(credit), applied=Math.min(due,remaining);
+    credit.advance_payment=Number(credit.advance_payment||0)+applied;
+    payment.balance_payment=Number(payment.balance_payment||0)+applied; // allocated portion; avoids double-counting summary totals
+    remaining-=applied;
+  }
+}
+function applyUnallocatedAdvancesToCredit(customer){
+  const credits=data.sales.filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+  const receipts=data.sales.filter(x=>x.type==='advance_payment' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && Number(x.amount||0)>Number(x.balance_payment||0))
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
+  for(const receipt of receipts){
+    let remaining=Number(receipt.amount||0)-Number(receipt.balance_payment||0);
+    for(const credit of credits){
+      if(remaining<=0)break;
+      const due=customerBalance(credit); if(due<=0)continue;
+      const applied=Math.min(due,remaining);
+      credit.advance_payment=Number(credit.advance_payment||0)+applied;
+      receipt.balance_payment=Number(receipt.balance_payment||0)+applied;
+      remaining-=applied;
+    }
+  }
+}
 function newSale(){
   editingSale=null;
   document.getElementById('saleModalTitle').textContent='New Daily Sale';
@@ -503,6 +581,7 @@ function newSale(){
   const n=nowLocal();
   document.getElementById('sDate').value=getSummaryDate()||n.date;
   document.getElementById('sTime').value=n.time;
+  updateSaleFields();
   document.getElementById('saleModal').style.display='flex';
 }
 function editSale(id){
@@ -517,51 +596,51 @@ function editSale(id){
   document.getElementById('sDesc').value=x.desc||'';
   document.getElementById('sDate').value=x.date;
   document.getElementById('sTime').value=x.time||'00:00:00';
+  updateSaleFields();
   document.getElementById('saleModal').style.display='flex';
 }
 function saveSale(){
   const customer=document.getElementById('sCustomer').value.trim();
-  const desc=document.getElementById('sDesc').value.trim();
-  if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
-  const amountValue=document.getElementById('sAmount').value.trim();
-  let amount=amountValue==='' ? 0 : Number(amountValue);
+  const desc=cleanDescription(document.getElementById('sDesc').value);
   const type=document.getElementById('sType').value;
-  const advance=type==='credit' ? Number(document.getElementById('sAdvance').value||0) : 0;
-  const enteredBalance=Number(document.getElementById('sBalancePayment').value||0);
-  // For a Credit Sale, record advance/balance against the credit amount.
-  // For a later Balance Payment Received entry, accept either the main Amount
-  // field or the Balance Payment field so the payment is not accidentally lost.
-  const balancePayment=type==='credit' ? enteredBalance : 0;
-  if(type==='balance_payment' && enteredBalance>0) amount=enteredBalance;
-  if(!Number.isFinite(amount) || amount<0)return alert('Please enter a valid amount.');
-  if(!Number.isFinite(advance)||advance<0)return alert('Please enter a valid Advance Payment.');
-  if(!Number.isFinite(enteredBalance)||enteredBalance<0)return alert('Please enter a valid Balance Payment.');
-  if(type==='credit' && advance+balancePayment>amount)return alert('Advance Payment + Balance Payment cannot be greater than Credit Amount.');
-  if(type==='balance_payment' && amount<=0)return alert('Please enter the balance payment in Amount or Balance Payment.');
-  const obj={type,amount,customer,desc,date:document.getElementById('sDate').value,time:document.getElementById('sTime').value||nowLocal().time,advance_payment:advance,balance_payment:balancePayment};
-  // A later balance receipt automatically updates the customer's oldest outstanding credit entry.
-  if(type==='balance_payment' && customer && !editingSale){
-    let remaining=amount;
-    const outstanding=data.sales.filter(x=>x.type==='credit' && String(x.customer||'').trim().toLowerCase()===customer.toLowerCase() && x.id!==editingSale)
-      .sort((a,b)=>String(a.date).localeCompare(String(b.date)) || String(a.time||'').localeCompare(String(b.time||'')));
-    for(const oldSale of outstanding){
-      const due=Math.max(0,Number(oldSale.amount||0)-Number(oldSale.advance_payment||0)-Number(oldSale.balance_payment||0));
-      if(due<=0 || remaining<=0) continue;
-      const applied=Math.min(due,remaining);
-      oldSale.balance_payment=Number(oldSale.balance_payment||0)+applied;
-      remaining-=applied;
-    }
-  }
+  if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
+  if(type==='balance_payment' && !customer)return alert('For a balance payment, enter the customer name exactly as it appears on the credit entry.');
+  const amountValue=document.getElementById('sAmount').value.trim();
+  const amount=amountValue===''?0:Number(amountValue);
+  const advance=type==='credit'?Number(document.getElementById('sAdvance').value||0):0;
+  const initialBalance=type==='credit'?Number(document.getElementById('sBalancePayment').value||0):0;
+  if(!Number.isFinite(amount)||amount<=0)return alert('Please enter an amount greater than zero.');
+  if(!Number.isFinite(advance)||advance<0||!Number.isFinite(initialBalance)||initialBalance<0)return alert('Please enter valid advance and balance amounts.');
+  if(type==='credit' && advance+initialBalance>amount)return alert('Advance + balance received cannot exceed the total bill.');
+  const date=document.getElementById('sDate').value||nowLocal().date;
+  const time=document.getElementById('sTime').value||nowLocal().time;
   if(editingSale){
-    const x=data.sales.find(s=>s.id===editingSale); if(x)Object.assign(x,obj);
+    const old=data.sales.find(x=>x.id===editingSale);
+    if(old && old.type==='balance_payment')return alert('To preserve the linked customer balance, delete this payment and add it again if you need to correct it.');
+    const obj={type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
+    const x=data.sales.find(s=>s.id===editingSale);if(x)Object.assign(x,obj);
+  }else if(type==='credit'){
+    const credit={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:0};
+    data.sales.push(credit);
+    applyUnallocatedAdvancesToCredit(customer);
+    // Record any same-day receipts as separate transactions so daily totals remain accurate.
+    if(initialBalance>0){
+      const payment={id:uid(),type:'balance_payment',amount:initialBalance,customer,desc:'Balance received for '+desc,date,time,advance_payment:0,balance_payment:0};
+      data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
+    }
   }else{
-    data.sales.push({id:uid(),...obj});
+    const obj={id:uid(),type,amount,customer,desc,date,time,advance_payment:0,balance_payment:0};
+    data.sales.push(obj);
+    if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
+    if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
   }
-  persist(); closeSaleModal(); renderDashboard(); renderSales();
+  persist();closeSaleModal();renderDateHistory();renderDashboard();renderSales();
 }
+
 function deleteSale(id){
   if(!confirm('Delete this sale?'))return;
   data.sales=data.sales.filter(x=>x.id!==id);
+  cloudDeleteRow('fozan_sales',id);
   persist();renderDashboard();renderSales();
 }
 
@@ -579,14 +658,14 @@ function newExpense(){
 function saveExpense(){
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
-  const obj={amount,desc:document.getElementById('eDesc').value.trim(),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
+  const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
   const id=window._editingExpense;
   if(id){
     const x=data.expenses.find(e=>e.id===id); if(x)Object.assign(x,obj);
   }else data.expenses.push({id:uid(),...obj});
   persist();closeExpenseModal();renderDashboard();renderSales();
 }
-function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);persist();renderDashboard();renderSales();}
+function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
 function editExpense(id){
   const x=data.expenses.find(e=>e.id===id);if(!x)return;
   document.getElementById('eAmount').value=x.amount;
@@ -624,7 +703,10 @@ const todayNow=nowLocal();
 summaryDate.value=todayNow.date;
 document.getElementById('summaryMonth').value=monthKey(todayNow.date);
 summaryMode='date';
-data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;});
+data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;x.desc=cleanDescription(x.desc||'');});
+data.expenses.forEach(x=>{x.desc=cleanDescription(x.desc||'');});
+document.getElementById('sType').addEventListener('change',updateSaleFields);
+updateSaleFields();
 renderDateHistory();renderDashboard();renderSales();
 cloudLoad();
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
