@@ -140,6 +140,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <option value="credit">Credit Sale / Customer Owes</option>
     <option value="balance_payment">Balance Payment Received</option>
   </select>
+  <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="amountField"><label id="amountLabel">Amount / Total Bill</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0"></div>
   <div id="advanceField"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
   <div id="balanceField"><label>Balance Payment Received Now</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
@@ -206,7 +207,10 @@ create table if not exists public.fozan_expenses (
 );
 
 alter table public.fozan_sales enable row level security;
-alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;\nalter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;\n\nalter table public.fozan_expenses enable row level security;
+alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;
+alter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;
+
+alter table public.fozan_expenses enable row level security;
 
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
@@ -366,6 +370,12 @@ function clearSearch(){
 function isCredit(x){
   return x && x.type==='credit';
 }
+function isBalancePayment(x){
+  return !!x && String(x.type||'').startsWith('balance_payment');
+}
+function balanceMethod(x){
+  return String(x?.type||'').endsWith('_online') ? 'online' : 'cash';
+}
 
 function searchText(x){
   return [
@@ -373,7 +383,7 @@ function searchText(x){
     x.desc || '',
     x.type || '',
     isCredit(x) ? (customerBalance(x)>0 ? 'credit udhaar customer owes unpaid' : 'paid settled') : '',
-    x.type==='balance_payment' ? 'balance payment received' : '',
+    isBalancePayment(x) ? 'balance payment received' : '',
     x.type==='advance_payment' ? 'advance payment received' : '',
     x.date || '',
     x.time || '',
@@ -414,7 +424,7 @@ function monthlyTotals(month){
       advance+=Number(x.advance_payment||0);
     }
     if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
-    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
+    if(isBalancePayment(x))balancePayment+=Number(x.amount||0);
   });
   data.expenses.forEach(x=>{if(monthKey(x.date)===month)expenses+=Number(x.amount||0);});
   return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+credit,net:cash+online+advance+balancePayment-expenses};
@@ -466,7 +476,7 @@ function totals(date){
     if(x.type==='advance_payment')advance+=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));
     // Balance receipts are counted from their own transaction only; the linked
     // credit row also stores the allocation, but must not double-count it.
-    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
+    if(isBalancePayment(x))balancePayment+=Number(x.amount||0);
   });
   data.expenses.forEach(x=>{if(!date || x.date===date)expenses+=Number(x.amount||0);});
   return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+credit,net:cash+online+advance+balancePayment-expenses};
@@ -519,7 +529,7 @@ function creditPaymentInfo(credit){
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
   const receipts=data.sales
-    .filter(x=>x.type==='balance_payment' && (x.customer||'').trim().toLowerCase()===customer)
+    .filter(x=>isBalancePayment(x) && (x.customer||'').trim().toLowerCase()===customer)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
@@ -555,7 +565,7 @@ function onlinePaymentInfo(entry){
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
   const receipts=data.sales
-    .filter(x=>x.type==='balance_payment' &&
+    .filter(x=>isBalancePayment(x) &&
       (x.customer||'').trim().toLowerCase()===customer &&
       String(x.date||'')>=String(entry.date||''))
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
@@ -588,18 +598,18 @@ function renderSales(){
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
-    const cash=x.type==='cash'?amount:0;
+    const cash=(x.type==='cash' || (isBalancePayment(x) && balanceMethod(x)==='cash'))?amount:0;
     const onlineSplit=x.type==='online' &&
       (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
     // For split online payments, display the received amount once in the
     // Advance Payment cell labelled "Online"; keep the Online column blank.
-    const online=x.type==='online' ? (onlineSplit ? 0 : amount) : 0;
+    const online=(x.type==='online' ? (onlineSplit ? 0 : amount) : (isBalancePayment(x) && balanceMethod(x)==='online' ? amount : 0));
     const credit=x.type==='credit'?customerBalance(x):0;
     const advance=(x.type==='credit'||x.type==='online')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
     const advanceCell=onlineSplit && advance ? `<div style="font-size:10px;color:#1769aa;margin-bottom:2px">Online</div>${money(advance)}` : (advance?money(advance):'-');
-    const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
+    const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(isBalancePayment(x)?amount:0);
     // Total Payment shows the full bill amount for split online/credit entries.
-    const total=(x.type==='advance_payment'||x.type==='balance_payment')?amount:
+    const total=(x.type==='advance_payment'||isBalancePayment(x))?amount:
       ((x.type==='credit'||x.type==='online') && (advance>0||balance>0) ? advance+balance :
       (x.type==='total_payment'?amount:0));
     const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : (x.type==='online' ? onlinePaymentInfo(x) : null);
@@ -620,15 +630,17 @@ function renderSales(){
               ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
               : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel)
           : receiptNote);
-    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advanceCell}</td><td class="online">${(x.type==='balance_payment' || (x.type==='online' && onlinePaid))?'-':(balance?money(balance):'-')}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advanceCell}</td><td class="online">${(isBalancePayment(x) || (x.type==='online' && onlinePaid))?'-':(balance?money(balance):'-')}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
 function updateSaleFields(){
   const type=document.getElementById('sType').value;
+  const storedType=type==='balance_payment' ? 'balance_payment_'+document.getElementById('sBalanceMethod').value : type;
   const show=(id,yes)=>document.getElementById(id).classList.toggle('field-hidden',!yes);
   // Amount and customer are editable for every transaction type.
   show('amountField',true);
+  show('balanceMethodField',type==='balance_payment');
   document.getElementById('sCustomer').parentElement.style.display='';
   show('advanceField',type==='credit'||type==='online');
   show('balanceField',type==='credit'||type==='online');
@@ -647,7 +659,7 @@ function rebuildBalanceAllocations(customer){
                  String(a.id||'').localeCompare(String(b.id||'')));
   credits.forEach(x=>x.balance_payment=0);
   const receipts=data.sales
-    .filter(x=>x.type==='balance_payment' && (x.customer||'').trim().toLowerCase()===key)
+    .filter(x=>isBalancePayment(x) && (x.customer||'').trim().toLowerCase()===key)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
@@ -725,7 +737,8 @@ function editSale(id){
   const x=data.sales.find(s=>s.id===id); if(!x)return;
   editingSale=id;
   document.getElementById('saleModalTitle').textContent='Edit Daily Sale';
-  document.getElementById('sType').value=x.type;
+  document.getElementById('sType').value=isBalancePayment(x)?'balance_payment':x.type;
+  document.getElementById('sBalanceMethod').value=balanceMethod(x);
   document.getElementById('sAmount').value=x.amount||0;
   document.getElementById('sAdvance').value=x.advance_payment||0;
   document.getElementById('sBalancePayment').value=x.balance_payment||0;
@@ -757,12 +770,12 @@ function saveSale(){
     const oldType=old.type;
     const oldCustomer=(old.customer||'').trim();
     const oldCustomerKey=oldCustomer.toLowerCase();
-    const obj={type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
+    const obj={type:storedType,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
     Object.assign(old,obj);
 
     // Balance receipts remain editable. Recalculate their allocations for the
     // old and new customer so the oldest unpaid credit is settled correctly.
-    if(oldType==='balance_payment' || type==='balance_payment'){
+    if(String(oldType).startsWith('balance_payment') || type==='balance_payment'){
       if(oldCustomerKey)rebuildBalanceAllocations(oldCustomer);
       if(customer && customer.toLowerCase()!==oldCustomerKey)rebuildBalanceAllocations(customer);
     }
@@ -776,7 +789,7 @@ function saveSale(){
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
-    const obj={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
+    const obj={id:uid(),type:storedType,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
     data.sales.push(obj);
     if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
     if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
