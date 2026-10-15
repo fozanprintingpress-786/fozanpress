@@ -544,6 +544,41 @@ function creditPaymentInfo(credit){
   }
   return info.get(String(credit.id))||null;
 }
+function onlinePaymentInfo(entry){
+  const customer=(entry.customer||'').trim().toLowerCase();
+  if(!customer || entry.type!=='online')return null;
+  const dueEntries=data.sales
+    .filter(x=>x.type==='online' &&
+      (x.customer||'').trim().toLowerCase()===customer &&
+      Number(x.balance_payment||0)>0)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+                 String(a.time||'').localeCompare(String(b.time||'')) ||
+                 String(a.id||'').localeCompare(String(b.id||'')));
+  const receipts=data.sales
+    .filter(x=>x.type==='balance_payment' &&
+      (x.customer||'').trim().toLowerCase()===customer &&
+      String(x.date||'')>=String(entry.date||''))
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+                 String(a.time||'').localeCompare(String(b.time||'')) ||
+                 String(a.id||'').localeCompare(String(b.id||'')));
+  let remainingByEntry=new Map(dueEntries.map(x=>[String(x.id),Number(x.balance_payment||0)]));
+  let infoByEntry=new Map();
+  for(const receipt of receipts){
+    let remaining=Math.max(0,Number(receipt.amount||0));
+    for(const item of dueEntries){
+      if(remaining<=0.0001)break;
+      const key=String(item.id);
+      const due=remainingByEntry.get(key)||0;
+      if(due<=0.0001)continue;
+      const applied=Math.min(due,remaining);
+      remainingByEntry.set(key,due-applied);
+      remaining-=applied;
+      infoByEntry.set(key,{date:receipt.date||'',amount:applied});
+    }
+  }
+  return infoByEntry.get(String(entry.id))||null;
+}
+
 function renderSales(){
   const date=getSummaryDate();
   const q=(document.getElementById('search').value||'').toLowerCase().trim();
@@ -554,31 +589,38 @@ function renderSales(){
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
     const cash=x.type==='cash'?amount:0;
-    const online=x.type==='online'
-      ? ((Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0)
-          ? Number(x.advance_payment||0)
-          : amount)
-      : 0;
+    const onlineSplit=x.type==='online' &&
+      (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
+    // For split online payments, display the received amount once in the
+    // Advance Payment cell labelled "Online"; keep the Online column blank.
+    const online=x.type==='online' ? (onlineSplit ? 0 : amount) : 0;
     const credit=x.type==='credit'?customerBalance(x):0;
     const advance=(x.type==='credit'||x.type==='online')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
+    const advanceCell=onlineSplit && advance ? `<div style="font-size:10px;color:#1769aa;margin-bottom:2px">Online</div>${money(advance)}` : (advance?money(advance):'-');
     const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
     // Total Payment shows the full bill amount for split online/credit entries.
     const total=(x.type==='advance_payment'||x.type==='balance_payment')?amount:
       ((x.type==='credit'||x.type==='online') && (advance>0||balance>0) ? advance+balance :
       (x.type==='total_payment'?amount:0));
-    const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : null;
-    const paidDateLabel=paymentInfo ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${credit<=0.0001?'PAID on':'Last payment'}: ${esc(paymentInfo.date)} • ${money(paymentInfo.amount)}</div>` : '';
-    const receiptNote=x.type==='balance_payment'
-      ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">Previous balance received • ${esc(x.date||'')} • ${money(x.amount)}</div>`
-      : '';
+    const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : (x.type==='online' ? onlinePaymentInfo(x) : null);
+    const onlineDue=Math.max(0,Number(x.balance_payment||0));
+    const onlinePaid=!!(x.type==='online' && paymentInfo && onlineDue>0 && paymentInfo.amount>=onlineDue-0.0001);
+    const paidDateLabel=paymentInfo ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${(x.type==='online'?onlinePaid:credit<=0.0001)?'PAID on':'Last payment'}: ${esc(paymentInfo.date)} • ${money(paymentInfo.amount)}</div>` : '';
+    // Keep the new receipt row simple: its existing BALANCE RECEIVED badge
+    // is sufficient. The payment date and amount are shown on the old credit row.
+    const receiptNote='';
     const creditStatus=x.type==='credit'
       ? (credit<=0.0001
           ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
           : (credit<total
               ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel
               : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>'))
-      : receiptNote;
-    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+      : (x.type==='online' && paymentInfo
+          ? (onlinePaid
+              ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
+              : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel)
+          : receiptNote);
+    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advanceCell}</td><td class="online">${(x.type==='balance_payment' || (x.type==='online' && onlinePaid))?'-':(balance?money(balance):'-')}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
