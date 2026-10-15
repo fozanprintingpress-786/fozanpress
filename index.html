@@ -406,15 +406,21 @@ function monthlyTotals(month){
   let cash=0,online=0,credit=0,advance=0,balancePayment=0,expenses=0;
   data.sales.forEach(x=>{
     if(monthKey(x.date)!==month)return;
-    if(x.type==='cash')cash+=Number(x.amount||0);
-    if(x.type==='online')online+=Math.max(0,Number(x.amount||0)-Number(x.advance_payment||0)-Number(x.balance_payment||0))+(x.advance_method==='online'?Number(x.advance_payment||0):0);
-    if(x.type==='total_payment')cash+=Number(x.amount||0);
+    const amount=Number(x.amount||0), adv=Number(x.advance_payment||0), bal=Number(x.balance_payment||0);
+    if(x.type==='cash') cash+=amount;
+    // An Online Sale amount is the full payment received online. Advance/balance
+    // fields on that row are allocations of the same payment, not extra receipts.
+    if(x.type==='online') online+=amount;
+    // Total Payment entries are tracked separately from Cash and Online.
     if(x.type==='credit'){
-      credit+=Number(x.amount||0);
-      if(x.advance_method==='online')online+=Number(x.advance_payment||0);else advance+=Number(x.advance_payment||0);
+      credit+=amount;
+      if(x.advance_method==='online') online+=adv; else advance+=adv;
     }
-    if(x.type==='advance_payment'){const a=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));if(x.advance_method==='online')online+=a;else advance+=a;}
-    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
+    if(x.type==='advance_payment'){
+      const received=Math.max(0,amount-bal);
+      if(x.advance_method==='online') online+=received; else { cash+=received; advance+=received; }
+    }
+    if(x.type==='balance_payment') balancePayment+=amount;
   });
   data.expenses.forEach(x=>{if(monthKey(x.date)===month)expenses+=Number(x.amount||0);});
   return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+advance+balancePayment,net:cash+online+advance+balancePayment-expenses};
@@ -453,17 +459,20 @@ function totals(date){
   let cash=0,online=0,credit=0,advance=0,balancePayment=0,expenses=0;
   data.sales.forEach(x=>{
     if(date && x.date!==date)return;
-    if(x.type==='cash')cash+=Number(x.amount||0);
-    if(x.type==='online')online+=Math.max(0,Number(x.amount||0)-Number(x.advance_payment||0)-Number(x.balance_payment||0))+(x.advance_method==='online'?Number(x.advance_payment||0):0);
-    if(x.type==='total_payment')cash+=Number(x.amount||0);
+    const amount=Number(x.amount||0), adv=Number(x.advance_payment||0), bal=Number(x.balance_payment||0);
+    if(x.type==='cash') cash+=amount;
+    // Count each online sale only once; its advance/balance values are a split of amount.
+    if(x.type==='online') online+=amount;
+    // Total Payment entries are tracked separately from Cash and Online.
     if(x.type==='credit'){
-      credit+=Number(x.amount||0);
-      if(x.advance_method==='online')online+=Number(x.advance_payment||0);else advance+=Number(x.advance_payment||0);
+      credit+=amount;
+      if(x.advance_method==='online') online+=adv; else advance+=adv;
     }
-    if(x.type==='advance_payment'){const a=Math.max(0,Number(x.amount||0)-Number(x.balance_payment||0));if(x.advance_method==='online')online+=a;else advance+=a;}
-    // Balance receipts are counted from their own transaction only; the linked
-    // credit row also stores the allocation, but must not double-count it.
-    if(x.type==='balance_payment')balancePayment+=Number(x.amount||0);
+    if(x.type==='advance_payment'){
+      const received=Math.max(0,amount-bal);
+      if(x.advance_method==='online') online+=received; else { cash+=received; advance+=received; }
+    }
+    if(x.type==='balance_payment') balancePayment+=amount;
   });
   data.expenses.forEach(x=>{if(!date || x.date===date)expenses+=Number(x.amount||0);});
   return {cash,online,credit,advance,balancePayment,expenses,totalSale:cash+online+advance+balancePayment,net:cash+online+advance+balancePayment-expenses};
@@ -520,10 +529,13 @@ function renderSales(){
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
-    const cash=(x.type==='cash'||(x.type==='credit'&&x.advance_method!=='online')||(x.type==='advance_payment'&&x.advance_method!=='online'))?(x.type==='cash'?amount:(x.type==='credit'?Number(x.advance_payment||0):Math.max(0,amount-Number(x.balance_payment||0)))):0, online=(x.type==='online'?Math.max(0,amount-Number(x.advance_payment||0)-Number(x.balance_payment||0)):0)+((x.type==='credit'||x.type==='online')&&x.advance_method==='online'?Number(x.advance_payment||0):0)+(x.type==='advance_payment'&&x.advance_method==='online'?Math.max(0,amount-Number(x.balance_payment||0)):0);
+    const cash=x.type==='cash'?amount:(x.type==='credit'&&x.advance_method!=='online'?Number(x.advance_payment||0):(x.type==='advance_payment'&&x.advance_method!=='online'?Math.max(0,amount-Number(x.balance_payment||0)):0));
+    const online=x.type==='online'?amount:((x.type==='credit'||x.type==='advance_payment')&&x.advance_method==='online'?(x.type==='credit'?Number(x.advance_payment||0):Math.max(0,amount-Number(x.balance_payment||0))):0);
     const credit=x.type==='credit'?customerBalance(x):0;
-    const advance=(x.type==='credit'||x.type==='online')?(x.advance_method==='online'?0:Number(x.advance_payment||0)):(x.type==='advance_payment'?(x.advance_method==='online'?0:Math.max(0,amount-Number(x.balance_payment||0))):0);
-    const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
+    // For an online sale, the advance and balance are allocations within the same
+    // online receipt, so don't repeat them in the separate allocation columns.
+    const advance=x.type==='credit'?(x.advance_method==='online'?0:Number(x.advance_payment||0)):(x.type==='advance_payment'?(x.advance_method==='online'?0:Math.max(0,amount-Number(x.balance_payment||0))):0);
+    const balance=x.type==='credit'?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
     const total=x.type==='cash'?amount:
       x.type==='online'?amount:
       x.type==='credit'?Number(x.advance_payment||0)+Number(x.balance_payment||0):
