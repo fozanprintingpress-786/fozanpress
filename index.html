@@ -404,7 +404,11 @@ function monthlyTotals(month){
   data.sales.forEach(x=>{
     if(monthKey(x.date)!==month)return;
     if(x.type==='cash')cash+=Number(x.amount||0);
-    if(x.type==='online')online+=Number(x.amount||0);
+    if(x.type==='online')online+=(
+      (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0)
+        ? Number(x.advance_payment||0)
+        : Number(x.amount||0)
+    );
     if(x.type==='credit'){
       credit+=Number(x.amount||0);
       advance+=Number(x.advance_payment||0);
@@ -450,7 +454,11 @@ function totals(date){
   data.sales.forEach(x=>{
     if(date && x.date!==date)return;
     if(x.type==='cash')cash+=Number(x.amount||0);
-    if(x.type==='online')online+=Number(x.amount||0);
+    if(x.type==='online')online+=(
+      (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0)
+        ? Number(x.advance_payment||0)
+        : Number(x.amount||0)
+    );
     if(x.type==='credit'){
       credit+=Number(x.amount||0);
       advance+=Number(x.advance_payment||0);
@@ -545,24 +553,31 @@ function renderSales(){
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
-    const cash=x.type==='cash'?amount:0, online=x.type==='online'?amount:0;
+    const cash=x.type==='cash'?amount:0;
+    const online=x.type==='online'
+      ? ((Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0)
+          ? Number(x.advance_payment||0)
+          : amount)
+      : 0;
     const credit=x.type==='credit'?customerBalance(x):0;
     const advance=(x.type==='credit'||x.type==='online')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
     const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?amount:0);
-    // Total Payment is reserved for customer advance/balance receipts, not ordinary cash/online sales.
-    // For a credit/online entry, show only the advance + balance actually received.
+    // Total Payment shows the full bill amount for split online/credit entries.
     const total=(x.type==='advance_payment'||x.type==='balance_payment')?amount:
       ((x.type==='credit'||x.type==='online') && (advance>0||balance>0) ? advance+balance :
       (x.type==='total_payment'?amount:0));
     const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : null;
-    const paidDateLabel=paymentInfo ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${credit<=0.0001?'Paid on':'Last paid'}: ${esc(paymentInfo.date)} • ${money(paymentInfo.amount)}</div>` : '';
+    const paidDateLabel=paymentInfo ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${credit<=0.0001?'PAID on':'Last payment'}: ${esc(paymentInfo.date)} • ${money(paymentInfo.amount)}</div>` : '';
+    const receiptNote=x.type==='balance_payment'
+      ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">Previous balance received • ${esc(x.date||'')} • ${money(x.amount)}</div>`
+      : '';
     const creditStatus=x.type==='credit'
       ? (credit<=0.0001
           ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
           : (credit<total
               ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel
               : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>'))
-      : '';
+      : receiptNote;
     return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
@@ -577,7 +592,7 @@ function updateSaleFields(){
   show('balanceField',type==='credit'||type==='online');
   document.getElementById('amountLabel').textContent=type==='credit'?'Total Bill / Credit Amount':type==='balance_payment'?'Balance Payment Amount':type==='advance_payment'?'Advance Payment Amount':type==='total_payment'?'Total Payment Amount':'Amount';
   document.getElementById('sAmount').placeholder=type==='credit'?'Total bill amount':'Enter amount';
-  document.getElementById('saleTypeHelp').textContent=type==='cash'?'Cash amount received immediately.':type==='online'?'Online payment received through bank, Easypaisa or JazzCash. You can also enter the advance and balance portions below; their combined amount must not exceed this payment amount.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
+  document.getElementById('saleTypeHelp').textContent=type==='cash'?'Cash amount received immediately.':type==='online'?'Enter the full bill amount. Put the amount received online in Advance Payment and the unpaid amount in Balance Payment. Online will show only the received amount.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
   if(type==='balance_payment'){document.getElementById('sAdvance').value='0';document.getElementById('sBalancePayment').value='0';}
 }
 function rebuildBalanceAllocations(customer){
