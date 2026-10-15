@@ -372,7 +372,7 @@ function searchText(x){
     x.customer || '',
     x.desc || '',
     x.type || '',
-    isCredit(x) ? 'credit udhaar customer owes' : '',
+    isCredit(x) ? (customerBalance(x)>0 ? 'credit udhaar customer owes unpaid' : 'paid settled') : '',
     x.type==='balance_payment' ? 'balance payment received' : '',
     x.type==='advance_payment' ? 'advance payment received' : '',
     x.date || '',
@@ -499,6 +499,13 @@ function renderDashboard(){
 function customerBalance(credit){
   return Math.max(0, Number(credit.amount||0)-Number(credit.advance_payment||0)-Number(credit.balance_payment||0));
 }
+function creditPaymentDate(credit){
+  const customer=(credit.customer||'').trim().toLowerCase();
+  if(!customer)return '';
+  const receipts=data.sales.filter(x=>x.type==='balance_payment' && (x.customer||'').trim().toLowerCase()===customer && String(x.date||'')>=String(credit.date||''))
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) || String(a.time||'').localeCompare(String(b.time||'')));
+  return receipts.length ? receipts[receipts.length-1].date : '';
+}
 function renderSales(){
   const date=getSummaryDate();
   const q=(document.getElementById('search').value||'').toLowerCase().trim();
@@ -508,10 +515,20 @@ function renderSales(){
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const total=Number(x.amount||0);
-    const cash=x.type==='cash'?total:0, online=x.type==='online'?total:0, credit=x.type==='credit'?total:0;
+    const cash=x.type==='cash'?total:0, online=x.type==='online'?total:0;
+    const credit=x.type==='credit'?customerBalance(x):0;
     const advance=(x.type==='credit'||x.type==='online')?Number(x.advance_payment||0):(x.type==='advance_payment'?total:0);
     const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(x.type==='balance_payment'?total:0);
-    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${isCredit(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>':''}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${money(total)}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+    const paidDate=x.type==='credit' ? creditPaymentDate(x) : '';
+    const paidDateLabel=paidDate ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${credit<=0.0001?'Paid on':'Last paid'}: ${esc(paidDate)}</div>` : '';
+    const creditStatus=x.type==='credit'
+      ? (credit<=0.0001
+          ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
+          : (credit<total
+              ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel
+              : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>'))
+      : '';
+    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${x.type==='balance_payment'?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${money(total)}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advance?money(advance):'-'}</td><td class="online">${balance?money(balance):'-'}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
