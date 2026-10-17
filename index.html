@@ -83,11 +83,8 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   <div class="stats">
     <div class="stat"><small>Total Cash Sale</small><strong class="cash" id="totalCash">Rs. 750.00</strong></div>
     <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
-    <div class="stat"><small>Total Advance Received</small><strong class="cash" id="totalAdvance">Rs. 0.00</strong></div>
-    <div class="stat"><small>Total Payment Received</small><strong id="totalPaymentReceived">Rs. 0.00</strong></div>
     <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 750.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
-    <div class="stat"><small>Total Balance Payment Received</small><strong class="online" id="totalBalancePayment">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
     <div class="stat onlineBox"><small>Total Online (Including Online Balance)</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
@@ -270,7 +267,7 @@ async function cloudSyncData(){
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
     console.error('Cloud save error:',e);
-    cloudStatus('Cloud save error — check database columns / connection');
+    cloudStatus('Saved on this PC; cloud save failed — check database connection / columns');
   }
 }
 async function cloudDeleteRow(table,id){
@@ -298,14 +295,24 @@ async function cloudLoad(){
     if(se) throw se;
     if(ee) throw ee;
 
-    data.sales=(sales||[]).map(x=>({
+    // Merge cloud rows with the current local copy instead of replacing it.
+    // This prevents a slow initial cloud load from erasing a sale just entered
+    // locally while the request was still in progress.
+    const cloudSales=(sales||[]).map(x=>({
       id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
-      desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
+      desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',
+      advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
-    data.expenses=(expenses||[]).map(x=>({
+    const cloudExpenses=(expenses||[]).map(x=>({
       id:x.id,amount:Number(x.amount||0),desc:x.description||'',
       date:x.expense_date,time:x.expense_time||''
     }));
+    const salesById=new Map(cloudSales.map(x=>[String(x.id),x]));
+    data.sales.forEach(x=>{ if(!salesById.has(String(x.id))) salesById.set(String(x.id),x); });
+    const expensesById=new Map(cloudExpenses.map(x=>[String(x.id),x]));
+    data.expenses.forEach(x=>{ if(!expensesById.has(String(x.id))) expensesById.set(String(x.id),x); });
+    data.sales=[...salesById.values()];
+    data.expenses=[...expensesById.values()];
     localStorage.setItem(KEY,JSON.stringify(data));
     // Always return to the current month after cloud refresh.
     const todayNow=nowLocal();
@@ -338,7 +345,14 @@ function cleanDescription(value){
     .replace(/\\s{2,}/g, ' ')
     .trim();
 }
-function money(n){return 'Rs. '+Number(n||0).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function money(n){
+  const value=Number(n||0);
+  const whole=Math.abs(value-Math.round(value))<0.000001;
+  return 'Rs. '+value.toLocaleString('en-PK',{
+    minimumFractionDigits:whole?0:2,
+    maximumFractionDigits:2
+  });
+}
 function getSummaryDate(){
   const el=document.getElementById('summaryDate');
   return el && el.value ? el.value : nowLocal().date;
@@ -414,7 +428,7 @@ function calculateTotals(filterFn){
   data.sales.forEach(x=>{
     if(!filterFn(x.date))return;
     const amount=Number(x.amount||0);
-    if(x.type==='cash')cash+=amount;
+    if(x.type==='cash')cash+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
     if(x.type==='online')online+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
     if(x.type==='credit'){credit+=amount;advance+=Number(x.advance_payment||0);}
     if(x.type==='advance_payment')advance+=Math.max(0,amount-Number(x.balance_payment||0));
@@ -427,7 +441,13 @@ function calculateTotals(filterFn){
   data.expenses.forEach(x=>{if(filterFn(x.date))expenses+=Number(x.amount||0);});
   const cashInHand=cash+cashBalancePayment-expenses;
   const onlineTotal=online+onlineBalancePayment;
-  return {cash,online:onlineTotal,credit,advance,balancePayment,cashBalancePayment,onlineBalancePayment,expenses,cashInHand,totalSale:cash+online+credit,net:cashInHand+onlineTotal+advance};
+  const totalSale=data.sales.reduce((sum,x)=>{
+    if(!filterFn(x.date))return sum;
+    if(x.type==='cash'||x.type==='online')return sum+Number(x.amount||0);
+    if(x.type==='credit')return sum+Number(x.amount||0);
+    return sum;
+  },0);
+  return {cash,online:onlineTotal,credit,advance,balancePayment,cashBalancePayment,onlineBalancePayment,expenses,cashInHand,totalSale,net:cashInHand+onlineTotal+advance};
 }
 function monthlyTotals(month){return calculateTotals(date=>monthKey(date)===month);}
 
@@ -578,20 +598,21 @@ function renderSales(){
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
-    const cash=(x.type==='cash' || (isBalancePayment(x) && balanceMethod(x)==='cash'))?amount:0;
+    const cashSplit=x.type==='cash' &&
+      (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
     const onlineSplit=x.type==='online' &&
       (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
-    // For split online payments, display the received amount once in the
-    // Advance Payment cell labelled "Online"; keep the Online column blank.
-    const online=(x.type==='online' ? (onlineSplit ? 0 : amount) : (isBalancePayment(x) && balanceMethod(x)==='online' ? amount : 0));
+    const cash=(x.type==='cash' ? (cashSplit ? Number(x.advance_payment||0) : amount) : (isBalancePayment(x) && balanceMethod(x)==='cash' ? amount : 0));
+    const online=(x.type==='online' ? (onlineSplit ? Number(x.advance_payment||0) : amount) : (isBalancePayment(x) && balanceMethod(x)==='online' ? amount : 0));
     const credit=x.type==='credit'?customerBalance(x):0;
-    const advance=(x.type==='credit'||x.type==='online')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
-    const advanceCell=onlineSplit && advance ? `<div style="font-size:10px;color:#1769aa;margin-bottom:2px">Online</div>${money(advance)}` : (advance?money(advance):'-');
-    const balance=(x.type==='credit'||x.type==='online')?Number(x.balance_payment||0):(isBalancePayment(x)?amount:0);
-    // Total Payment shows the full bill amount for split online/credit entries.
-    const total=(x.type==='advance_payment'||isBalancePayment(x))?amount:
-      ((x.type==='credit'||x.type==='online') && (advance>0||balance>0) ? advance+balance :
-      (x.type==='total_payment'?amount:0));
+    const advance=(x.type==='credit'||x.type==='online'||x.type==='cash')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
+    const splitLabel=onlineSplit?'Online':(cashSplit?'Cash':'');
+    const advanceCell=(cashSplit||onlineSplit) && advance ? `<div style="font-size:10px;color:${onlineSplit?'#1769aa':'#198754'};margin-bottom:2px">${splitLabel}</div>${money(advance)}` : (advance?money(advance):'-');
+    const balance=(x.type==='credit'||x.type==='online'||x.type==='cash')?Number(x.balance_payment||0):(isBalancePayment(x)?amount:0);
+    // Total Payment always shows the full entered bill/payment amount.
+    // Advance Payment and Balance Payment are separate breakdown columns;
+    // they must not replace or recalculate the original total bill.
+    const total=(x.type==='advance_payment'||isBalancePayment(x)||x.type==='total_payment'||x.type==='credit'||x.type==='online'||x.type==='cash') ? amount : 0;
     const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : (x.type==='online' ? onlinePaymentInfo(x) : null);
     const onlineDue=Math.max(0,Number(x.balance_payment||0));
     const onlinePaid=!!(x.type==='online' && paymentInfo && onlineDue>0 && paymentInfo.amount>=onlineDue-0.0001);
@@ -622,11 +643,11 @@ function updateSaleFields(){
   show('amountField',true);
   show('balanceMethodField',type==='balance_payment');
   document.getElementById('sCustomer').parentElement.style.display='';
-  show('advanceField',type==='credit'||type==='online');
-  show('balanceField',type==='credit'||type==='online');
+  show('advanceField',type==='credit'||type==='online'||type==='cash');
+  show('balanceField',type==='credit'||type==='online'||type==='cash');
   document.getElementById('amountLabel').textContent=type==='credit'?'Total Bill / Credit Amount':type==='balance_payment'?'Balance Payment Amount':type==='advance_payment'?'Advance Payment Amount':type==='total_payment'?'Total Payment Amount':'Amount';
   document.getElementById('sAmount').placeholder=type==='credit'?'Total bill amount':'Enter amount';
-  document.getElementById('saleTypeHelp').textContent=type==='cash'?'Cash amount received immediately.':type==='online'?'Enter the full bill amount. Put the amount received online in Advance Payment and the unpaid amount in Balance Payment. Online will show only the received amount.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
+  document.getElementById('saleTypeHelp').textContent=type==='cash'?'Enter the full bill amount. Put cash received now in Advance Payment and the remaining unpaid amount in Balance Payment. Cash will show only the amount received now.':type==='online'?'Enter the full bill amount. Put the amount received online in Advance Payment and the unpaid amount in Balance Payment. Online will show only the received amount.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount, any advance and any balance paid today. Remaining amount stays due.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
   if(type==='balance_payment'){document.getElementById('sAdvance').value='0';document.getElementById('sBalancePayment').value='0';}
 }
 function rebuildBalanceAllocations(customer){
@@ -733,15 +754,16 @@ function saveSale(){
   const customer=document.getElementById('sCustomer').value.trim();
   const desc=cleanDescription(document.getElementById('sDesc').value);
   const type=document.getElementById('sType').value;
+  const storedType=type==='balance_payment' ? 'balance_payment_'+document.getElementById('sBalanceMethod').value : type;
   if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
   if(type==='balance_payment' && !customer)return alert('For a balance payment, enter the customer name exactly as it appears on the credit entry.');
   const amountValue=document.getElementById('sAmount').value.trim();
   const amount=amountValue===''?0:Number(amountValue);
-  const advance=(type==='credit'||type==='online')?Number(document.getElementById('sAdvance').value||0):0;
-  const initialBalance=(type==='credit'||type==='online')?Number(document.getElementById('sBalancePayment').value||0):0;
+  const advance=(type==='credit'||type==='online'||type==='cash')?Number(document.getElementById('sAdvance').value||0):0;
+  const initialBalance=(type==='credit'||type==='online'||type==='cash')?Number(document.getElementById('sBalancePayment').value||0):0;
   if(!Number.isFinite(amount)||amount<=0)return alert('Please enter an amount greater than zero.');
   if(!Number.isFinite(advance)||advance<0||!Number.isFinite(initialBalance)||initialBalance<0)return alert('Please enter valid advance and balance amounts.');
-  if((type==='credit'||type==='online') && advance+initialBalance>amount)return alert('Advance + balance amounts cannot exceed the total bill / online payment amount.');
+  if((type==='credit'||type==='online'||type==='cash') && (advance+initialBalance>amount || ((advance>0||initialBalance>0) && Math.abs(advance+initialBalance-amount)>0.0001)))return alert('For a split payment, Advance + Balance must equal the full bill amount.');
   const date=document.getElementById('sDate').value||nowLocal().date;
   const time=document.getElementById('sTime').value||nowLocal().time;
   if(editingSale){
