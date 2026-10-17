@@ -86,7 +86,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 750.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
-    <div class="stat onlineBox"><small>Total Online (Including Online Balance)</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
+    <div class="stat onlineBox"><small>Online Payment</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
   </div>
   <div class="notice" style="margin-top:-5px;margin-bottom:12px">
@@ -447,6 +447,8 @@ function calculateTotals(filterFn){
     if(!filterFn(x.date))return sum;
     if(x.type==='cash'||x.type==='cash_received'||x.type==='online'||x.type==='online_received')return sum+Number(x.amount||0);
     if(x.type==='credit')return sum+Number(x.amount||0);
+    // Balance receipts are money received today and belong in today's total.
+    if(isBalancePayment(x))return sum+Number(x.amount||0);
     return sum;
   },0);
   return {cash,online:onlineTotal,credit,advance,balancePayment,cashBalancePayment,onlineBalancePayment,expenses,cashInHand,totalSale,net:cashInHand+onlineTotal+advance};
@@ -493,7 +495,7 @@ function renderDashboard(){
   document.getElementById('dailyTitle').textContent='Daily Sale Summary — '+date;
 
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=money(val);};
-  set('totalCash',summary.cash);
+  set('totalCash',summary.cash+summary.cashBalancePayment);
   set('totalOnline',summary.online);
   set('totalCredit',summary.credit);
   set('totalAdvance',summary.advance);
@@ -556,11 +558,13 @@ function creditPaymentInfo(credit){
   }
   return info.get(String(credit.id))||null;
 }
-function onlinePaymentInfo(entry){
+function saleBalancePaymentInfo(entry){
   const customer=(entry.customer||'').trim().toLowerCase();
-  if(!customer || entry.type!=='online')return null;
+  if(!customer || !['cash','online'].includes(entry.type))return null;
+  // Cash/online sales store the original unpaid balance in balance_payment.
+  // Later receipts are allocated oldest-due-first without changing the original bill.
   const dueEntries=data.sales
-    .filter(x=>x.type==='online' &&
+    .filter(x=>['cash','online'].includes(x.type) &&
       (x.customer||'').trim().toLowerCase()===customer &&
       Number(x.balance_payment||0)>0)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
@@ -568,24 +572,22 @@ function onlinePaymentInfo(entry){
                  String(a.id||'').localeCompare(String(b.id||'')));
   const receipts=data.sales
     .filter(x=>isBalancePayment(x) &&
-      (x.customer||'').trim().toLowerCase()===customer &&
-      String(x.date||'')>=String(entry.date||''))
+      (x.customer||'').trim().toLowerCase()===customer)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
-  let remainingByEntry=new Map(dueEntries.map(x=>[String(x.id),Number(x.balance_payment||0)]));
-  let infoByEntry=new Map();
+  const remainingByEntry=new Map(dueEntries.map(x=>[String(x.id),Number(x.balance_payment||0)]));
+  const infoByEntry=new Map();
   for(const receipt of receipts){
     let remaining=Math.max(0,Number(receipt.amount||0));
     for(const item of dueEntries){
       if(remaining<=0.0001)break;
-      const key=String(item.id);
-      const due=remainingByEntry.get(key)||0;
+      const key=String(item.id), due=remainingByEntry.get(key)||0;
       if(due<=0.0001)continue;
       const applied=Math.min(due,remaining);
       remainingByEntry.set(key,due-applied);
       remaining-=applied;
-      infoByEntry.set(key,{date:receipt.date||'',amount:applied});
+      infoByEntry.set(key,{date:receipt.date||'',amount:(infoByEntry.get(key)?.amount||0)+applied});
     }
   }
   return infoByEntry.get(String(entry.id))||null;
@@ -611,14 +613,14 @@ function renderSales(){
     const splitLabel=onlineSplit?'Online':(cashSplit?'Cash':'');
     const advanceCell=(cashSplit||onlineSplit) && advance ? `<div style="font-size:10px;color:${onlineSplit?'#1769aa':'#198754'};margin-bottom:2px">${splitLabel}</div>${money(advance)}` : (advance?money(advance):'-');
     const balance=(x.type==='credit'||x.type==='online'||x.type==='cash')?Number(x.balance_payment||0):(isBalancePayment(x)?amount:0);
-    // Total Payment always shows the full entered bill/payment amount.
-    // Advance Payment and Balance Payment are separate breakdown columns;
-    // they must not replace or recalculate the original total bill.
-    const total=(x.type==='advance_payment'||isBalancePayment(x)||x.type==='total_payment'||x.type==='credit'||x.type==='online'||x.type==='cash'||x.type==='cash_received'||x.type==='online_received') ? amount : 0;
-    const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : (x.type==='online' ? onlinePaymentInfo(x) : null);
+    // Show a value in Total Payment only for entries explicitly saved as Total Payment.
+    // All other entries are represented only in their relevant Cash, Online,
+    // Credit, Advance Payment, or Balance Payment columns to avoid duplicate totals.
+    const total=x.type==='total_payment' ? amount : 0;
+    const paymentInfo=x.type==='credit' ? creditPaymentInfo(x) : (['cash','online'].includes(x.type) ? saleBalancePaymentInfo(x) : null);
     const onlineDue=Math.max(0,Number(x.balance_payment||0));
-    const onlinePaid=!!(x.type==='online' && paymentInfo && onlineDue>0 && paymentInfo.amount>=onlineDue-0.0001);
-    const paidDateLabel=paymentInfo ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${(x.type==='online'?onlinePaid:credit<=0.0001)?'PAID on':'Last payment'}: ${esc(paymentInfo.date)} • ${money(paymentInfo.amount)}</div>` : '';
+    const salePaid=!!(['cash','online'].includes(x.type) && paymentInfo && onlineDue>0 && paymentInfo.amount>=onlineDue-0.0001);
+    const paidDateLabel=paymentInfo ? `<div style="font-size:10px;color:#087f5b;margin-top:3px">${(['cash','online'].includes(x.type)?salePaid:credit<=0.0001)?'PAID on':'Last payment'}: ${esc(paymentInfo.date)} • ${money(paymentInfo.amount)}</div>` : '';
     // Keep the new receipt row simple: its existing BALANCE RECEIVED badge
     // is sufficient. The payment date and amount are shown on the old credit row.
     const receiptNote='';
@@ -628,12 +630,12 @@ function renderSales(){
           : (credit<total
               ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel
               : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff0f0;color:#c62828">CREDIT</span>'))
-      : (x.type==='online' && paymentInfo
-          ? (onlinePaid
+      : (['cash','online'].includes(x.type) && paymentInfo
+          ? (salePaid
               ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
               : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel)
           : receiptNote);
-    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advanceCell}</td><td class="online">${(isBalancePayment(x) || (x.type==='online' && onlinePaid))?'-':(balance?money(balance):'-')}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advanceCell}</td><td class="online">${(isBalancePayment(x) || (['cash','online'].includes(x.type) && salePaid))?'-':(balance?money(balance):'-')}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -696,7 +698,24 @@ function applyBalancePayment(customer, amount, paymentDate, paymentTime, payment
     credit.balance_payment=Number(credit.balance_payment||0)+paid;
     remaining-=paid;
   }
-  if(remaining>0.0001) alert('Note: '+money(remaining)+' could not be matched to an unpaid credit for this customer. Check the customer name and old credit entries. The received payment is still saved.');
+  // If no credit entry remains, accept the receipt against older cash/online
+  // sales that have an outstanding balance. Their original bill rows stay intact;
+  // the ledger derives PAID/PARTIALLY PAID and the receipt date from this receipt.
+  const otherDue=data.sales
+    .filter(x=>['cash','online'].includes(x.type) &&
+      (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() &&
+      Number(x.balance_payment||0)>0)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+                 String(a.time||'').localeCompare(String(b.time||'')) ||
+                 String(a.id||'').localeCompare(String(b.id||'')));
+  for(const sale of otherDue){
+    if(remaining<=0.0001)break;
+    const alreadyReceived=saleBalancePaymentInfo(sale)?.amount||0;
+    const due=Math.max(0,Number(sale.balance_payment||0)-alreadyReceived);
+    const applied=Math.min(due,remaining);
+    remaining-=applied;
+  }
+  if(remaining>0.0001) alert('Note: '+money(remaining)+' could not be matched to an unpaid balance for this customer. Check the customer name and old sale entries. The received payment is still saved.');
 }
 function applyAdvancePayment(customer, amount, paymentId){
   let payment=data.sales.find(x=>x.id===paymentId && x.type==='advance_payment');
