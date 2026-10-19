@@ -83,15 +83,13 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   <div class="stats">
     <div class="stat"><small>Total Cash Sale</small><strong class="cash" id="totalCash">Rs. 750.00</strong></div>
     <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
-    <div class="stat"><small>Total Daily Sale</small><strong id="totalSale">Rs. 750.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
     <div class="stat onlineBox"><small>Online Payment</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
   </div>
   <div class="notice" style="margin-top:-5px;margin-bottom:12px">
-    Showing totals for the selected date only. Cash balance payments are added to Cash In Hand. Online balance payments are added to Online Total. Expenses are deducted from cash only.
-    Cash + Online Total = Cash In Hand After Expense + Online Total.
+    Showing totals for the selected date only. Cash receipts are shown under Cash and online receipts (bank / Easypaisa / JazzCash), including balance and advance payments, are shown under Online. Credit bills are not counted as received money. Expenses are deducted from cash only.
   </div>
 
   <div id="expenseLedger"><h2 style="margin-top:18px">Expense / Payment Ledger — 2026-09-27</h2><div class="notice">No expenses for this date.</div></div>
@@ -140,6 +138,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="amountField"><label id="amountLabel">Amount / Total Bill</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0"></div>
   <div id="advanceField"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
+  <div id="advanceMethodField" class="field-hidden"><label>Advance Payment Received By</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="balanceField"><label id="balanceLabel">Balance Due (calculated)</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="Calculated automatically" readonly></div>
   <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Select sale type; fields will adjust automatically.</div>
   <label>Customer Name (Optional)</label><input id="sCustomer" placeholder="e.g. Muhammad Ali">
@@ -432,8 +431,8 @@ function calculateTotals(filterFn){
     if(x.type==='cash')cash+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
     if(x.type==='online_received')online+=amount;
     if(x.type==='online')online+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
-    if(x.type==='credit'){credit+=amount;advance+=Number(x.advance_payment||0);}
-    if(x.type==='advance_payment')advance+=Math.max(0,amount-Number(x.balance_payment||0));
+    if(x.type==='credit'){credit+=Math.max(0,amount-Number(x.advance_payment||0));advance+=Number(x.advance_payment||0);if((x.advance_method||'cash')==='online')online+=Number(x.advance_payment||0);else cash+=Number(x.advance_payment||0);}
+    if(x.type==='advance_payment'){const received=Math.max(0,amount-Number(x.balance_payment||0));advance+=received;if((x.advance_method||'cash')==='online')online+=received;else cash+=received;}
     if(isBalancePayment(x)){
       balancePayment+=amount;
       if(balanceMethod(x)==='online')onlineBalancePayment+=amount;
@@ -443,15 +442,8 @@ function calculateTotals(filterFn){
   data.expenses.forEach(x=>{if(filterFn(x.date))expenses+=Number(x.amount||0);});
   const cashInHand=cash+cashBalancePayment-expenses;
   const onlineTotal=online+onlineBalancePayment;
-  const totalSale=data.sales.reduce((sum,x)=>{
-    if(!filterFn(x.date))return sum;
-    if(x.type==='cash'||x.type==='cash_received'||x.type==='online'||x.type==='online_received')return sum+Number(x.amount||0);
-    if(x.type==='credit')return sum+Number(x.amount||0);
-    // Balance receipts are money received today and belong in today's total.
-    if(isBalancePayment(x))return sum+Number(x.amount||0);
-    return sum;
-  },0);
-  return {cash,online:onlineTotal,credit,advance,balancePayment,cashBalancePayment,onlineBalancePayment,expenses,cashInHand,totalSale,net:cashInHand+onlineTotal+advance};
+
+  return {cash,online:onlineTotal,credit,advance,balancePayment,cashBalancePayment,onlineBalancePayment,expenses,cashInHand,net:cashInHand+onlineTotal+advance};
 }
 function monthlyTotals(month){return calculateTotals(date=>monthKey(date)===month);}
 
@@ -501,7 +493,6 @@ function renderDashboard(){
   set('totalAdvance',summary.advance);
   set('totalBalancePayment',summary.balancePayment);
   set('totalPaymentReceived',summary.cash+summary.cashBalancePayment+summary.online+summary.advance);
-  set('totalSale',summary.totalSale);
   set('totalExpense',summary.expenses);
   set('paymentAfterExpense',summary.cashInHand);
   set('cashOnlineTotal',summary.cashInHand+summary.online);
@@ -646,6 +637,7 @@ function updateSaleFields(){
   show('balanceMethodField',type==='balance_payment');
   document.getElementById('sCustomer').parentElement.style.display='';
   show('advanceField',type==='credit'||type==='online'||type==='cash');
+  show('advanceMethodField',type==='credit'||type==='advance_payment');
   show('balanceField',type==='credit'||type==='online'||type==='cash');
   document.getElementById('amountLabel').textContent=(type==='credit'||type==='online'||type==='cash')?'Total Bill Amount':type==='balance_payment'?'Balance Payment Received':type==='advance_payment'?'Advance Payment Amount':type==='total_payment'?'Total Payment Amount':'Amount';
   document.getElementById('sAmount').placeholder=(type==='credit'||type==='online'||type==='cash')?'Enter full bill amount':'Enter amount';
@@ -771,6 +763,7 @@ function editSale(id){
   document.getElementById('sBalanceMethod').value=balanceMethod(x);
   document.getElementById('sAmount').value=x.amount||0;
   document.getElementById('sAdvance').value=x.advance_payment||0;
+  document.getElementById('sAdvanceMethod').value=x.advance_method||'cash';
   document.getElementById('sBalancePayment').value=x.balance_payment||0;
   document.getElementById('sCustomer').value=x.customer||'';
   document.getElementById('sDesc').value=x.desc||'';
@@ -801,7 +794,7 @@ function saveSale(){
     const oldType=old.type;
     const oldCustomer=(old.customer||'').trim();
     const oldCustomerKey=oldCustomer.toLowerCase();
-    const obj={type:storedType,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
+    const obj={type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:document.getElementById('sAdvanceMethod').value||'cash',balance_payment:initialBalance};
     Object.assign(old,obj);
 
     // Balance receipts remain editable. Recalculate their allocations for the
@@ -811,7 +804,7 @@ function saveSale(){
       if(customer && customer.toLowerCase()!==oldCustomerKey)rebuildBalanceAllocations(customer);
     }
   }else if(type==='credit'){
-    const credit={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,balance_payment:0};
+    const credit={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,advance_method:document.getElementById('sAdvanceMethod').value||'cash',balance_payment:0};
     data.sales.push(credit);
     applyUnallocatedAdvancesToCredit(customer);
     // Record any same-day receipts as separate transactions so daily totals remain accurate.
@@ -820,7 +813,7 @@ function saveSale(){
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
-    const obj={id:uid(),type:storedType,amount,customer,desc,date,time,advance_payment:advance,balance_payment:initialBalance};
+    const obj={id:uid(),type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:document.getElementById('sAdvanceMethod').value||'cash',balance_payment:initialBalance};
     data.sales.push(obj);
     if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
     if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
