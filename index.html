@@ -18,16 +18,28 @@ input,textarea,select{width:100%;padding:10px 12px;border:1px solid #d5dde5;bord
 textarea{resize:vertical}
 button{border:0;border-radius:8px;padding:10px 15px;cursor:pointer}
 .primary{background:#1769aa;color:#fff}.success{background:#198754;color:#fff}.danger{background:#dc3545;color:#fff}.muted{background:#e9eef3}
-.search{margin-bottom:10px}
+.search{margin-bottom:10px}.soft-nav{background:#eaf2f7;color:#536d80;border:1px solid #dce7ef}.soft-nav:hover{background:#dfeaf2}
 .customer{padding:12px;border:1px solid #e1e6eb;border-radius:9px;margin:8px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 .customer:hover,.customer.active{background:#edf6ff;border-color:#9ac7ed}
 .customer b{display:block}.bal{font-weight:bold}.debit{color:#c62828}.credit{color:#087f5b}.online{color:#1769aa}
 .top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.nav-group{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.date-nav-group,.month-nav-group{flex-wrap:nowrap}
+.month-nav-group{margin-left:auto}
+@media(max-width:1050px){.nav-group{gap:5px}.nav-group button{padding:9px 10px}.month-nav-group{margin-left:0}}
+@media(max-width:800px){.date-nav-group,.month-nav-group{width:100%;justify-content:flex-start;flex-wrap:wrap}.month-nav-group{margin-left:0}}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
-.stat{padding:13px;border-radius:9px;background:#f5f8fb}.stat small{display:block;color:#687785}.stat strong{font-size:21px}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #edf0f2;text-align:left}th{background:#f7f9fb}
+.stat{padding:13px;border-radius:9px;background:#f5f8fb}.stat small{display:block;color:#687785}.stat strong{font-size:21px}#cashOnlineTotal,#paymentAfterExpense{animation:summaryBlink 1.15s ease-in-out infinite}@keyframes summaryBlink{0%,100%{opacity:1}50%{opacity:.42}}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #edf0f2;text-align:left}th{background:#f7f9fb}td.cash,td.online,td.debit{white-space:nowrap;min-width:88px}.pay-cell{white-space:nowrap;line-height:1.15}.pay-tag{display:block;font-size:10px;font-weight:700;letter-spacing:.2px;margin-bottom:3px;text-transform:uppercase}.pay-amount{display:block;white-space:nowrap}
 .empty{text-align:center;color:#7b8791;padding:35px}
-.actions button{padding:6px 9px;margin-right:4px}
+
+.actions button{padding:7px 10px;margin-right:5px;min-width:32px;font-weight:700;box-shadow:0 2px 5px #00000014;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.actions button:hover{animation:buttonBlink .65s ease-in-out infinite;transform:translateY(-2px) scale(1.06);box-shadow:0 4px 12px #00000030;filter:brightness(1.12)}
+.actions button:active{transform:scale(.96)}
+@keyframes buttonBlink{0%,100%{opacity:1}50%{opacity:.55}}
+.actions button.muted{background:#e3edf7;color:#17476b}
+.actions button.danger{background:#e52e45;color:#fff}
+
 .modal{display:none;position:fixed;inset:0;background:#0007;align-items:center;justify-content:center;padding:15px}
 .modal .box{background:white;width:min(500px,100%);max-height:90vh;overflow-y:auto;border-radius:12px;padding:20px}.modal .box .field-hidden{display:none!important}.modal label{display:block;font-size:14px;margin-top:2px}.modal input,.modal select{margin-top:5px}.modal .field-hidden{display:none!important}
 .notice{font-size:13px;color:#667}.cash{color:#198754}.expense{color:#dc3545}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.syncbox{font-size:12px;padding:7px 10px;border-radius:8px;background:#f7f9fb;color:#667}.onlineBox{background:#eef7ff}.expenseBox{background:#fff2f2}
@@ -62,34 +74,33 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 0 12px">
-    <div><strong id="dailyTitle">Daily Sale Summary — 2026-09-27</strong><div class="notice">Current month is shown automatically. Previous months remain safely saved and can be opened with Previous Month or searched.</div></div>
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;width:100%;padding:10px 12px;background:#f7f9fb;border-radius:9px">
+      <strong id="dailyTitle" style="color:#1769aa">Daily Sale Summary — 2026-09-27</strong>
+      <strong id="monthTitle" style="color:#198754">Monthly Sale Summary — September 2026</strong>
+    </div>
+    <div class="notice">Current month is shown automatically. Previous months remain safely saved and can be opened with Previous Month or searched.</div>
     <div style="display:flex;align-items:center;gap:8px">
-      <button class="muted" onclick="changeDate(-1)">‹ Previous Date</button>
-      <label for="summaryDate" style="font-weight:bold">Date</label>
-      <input id="summaryDate" type="date" style="width:auto;margin:0" onchange="renderDashboard();renderSales()">
-      <button class="muted" onclick="changeDate(1)">Next Date ›</button>
+      <div class="nav-group date-nav-group">
+        <button class="soft-nav" onclick="changeDate(-1)">‹ Previous Date</button>
+        <label for="summaryDate" style="font-weight:bold">Date</label>
+        <input id="summaryDate" type="date" style="width:auto;margin:0" onchange="renderDashboard();renderSales()">
+        <button class="soft-nav" onclick="changeDate(1)">Next Date ›</button>
+      </div>
+      <div class="nav-group month-nav-group">
+        <button class="soft-nav" onclick="changeMonth(-1)">‹ Previous Month</button>
+        <input id="summaryMonth" type="month" style="width:auto;margin:0" onchange="selectMonth(this.value)">
+        <button class="soft-nav" onclick="changeMonth(1)">Next Month ›</button>
+      </div>
     </div>
   </div>
   <div id="dateHistory" style="display:none;gap:7px;flex-wrap:wrap;margin:-2px 0 14px"><span class="notice" style="padding:7px 4px">Saved dates:</span><button class="primary" style="padding:7px 10px" onclick="selectDate('2026-09-27')">2026-09-27</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-26')">2026-09-26</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-24')">2026-09-24</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-23')">2026-09-23</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-22')">2026-09-22</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-21')">2026-09-21</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-20')">2026-09-20</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-19')">2026-09-19</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-16')">2026-09-16</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-15')">2026-09-15</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-14')">2026-09-14</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-13')">2026-09-13</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-12')">2026-09-12</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-10')">2026-09-10</button><button class="muted" style="padding:7px 10px" onclick="selectDate('2026-09-09')">2026-09-09</button></div>
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px;background:#f7f9fb;border-radius:9px">
-    <div><strong id="monthTitle">Monthly Sale Summary — September 2026</strong><div class="notice">Only the selected/current month is shown normally. Older months stay saved in the cloud and can be viewed with Previous Month or Search.</div></div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <button class="muted" onclick="changeMonth(-1)">‹ Previous Month</button>
-      <input id="summaryMonth" type="month" style="width:auto;margin:0" onchange="selectMonth(this.value)">
-      <button class="muted" onclick="changeMonth(1)">Next Month ›</button>
-    </div>
-  </div>
-
   <div class="stats">
-    <div class="stat"><small>Total Cash Sale</small><strong class="cash" id="totalCash">Rs. 750.00</strong></div>
+    <div class="stat"><small>Cash Payment</small><strong class="cash" id="totalCash">Rs. 750.00</strong></div>
+    <div class="stat onlineBox"><small>Online Payment</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
+    <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
     <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
-    <div class="stat"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
-    <div class="stat onlineBox"><small>Online Payment</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
-  </div>
-  <div class="notice" style="margin-top:-5px;margin-bottom:12px">
-    Showing totals for the selected date only. Cash receipts are shown under Cash and online receipts (bank / Easypaisa / JazzCash), including balance and advance payments, are shown under Online. Credit bills are not counted as received money. Expenses are deducted from cash only.
   </div>
 
   <div id="expenseLedger"><h2 style="margin-top:18px">Expense / Payment Ledger — 2026-09-27</h2><div class="notice">No expenses for this date.</div></div>
@@ -103,7 +114,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
       <button class="muted" style="padding:9px 11px" onclick="clearSearch()">Clear</button>
     </div>
   </div>
-  <div id="salesLedger"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody><tr>
+  <div id="salesLedger"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Total Payment</th><th>Advance Payment</th><th>Balance Payment</th><th>Credit</th><th>Actions</th></tr></thead><tbody><tr>
       <td>2026-09-27 10:57:48</td>
       <td>-</td>
       <td>Color Prints</td>
@@ -136,6 +147,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <option value="balance_payment">Balance Payment Received</option>
   </select>
   <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
+  <div id="totalPaymentMethodField" class="field-hidden"><label>Payment Received By</label><select id="sTotalPaymentMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="amountField"><label id="amountLabel">Amount / Total Bill</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0"></div>
   <div id="advanceField"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
   <div id="advanceMethodField" class="field-hidden"><label>Advance Payment Received By</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
@@ -347,10 +359,16 @@ function cleanDescription(value){
 function money(n){
   const value=Number(n||0);
   const whole=Math.abs(value-Math.round(value))<0.000001;
+  // Show whole rupee amounts without unnecessary .00; preserve paisa when present.
   return 'Rs. '+value.toLocaleString('en-PK',{
+    useGrouping:false,
     minimumFractionDigits:whole?0:2,
     maximumFractionDigits:2
   });
+}
+function paymentCell(label, amount, color){
+  const n=Number(amount||0);
+  return n>0 ? `<div class="pay-cell"><span class="pay-tag" style="color:${color||'#687785'}">${label}</span><span class="pay-amount">${money(n)}</span></div>` : '-';
 }
 function getSummaryDate(){
   const el=document.getElementById('summaryDate');
@@ -428,6 +446,7 @@ function calculateTotals(filterFn){
     if(!filterFn(x.date))return;
     const amount=Number(x.amount||0);
     if(x.type==='cash_received')cash+=amount;
+    if(x.type==='total_payment'){if((x.payment_method||'cash')==='online')online+=amount;else cash+=amount;}
     if(x.type==='cash')cash+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
     if(x.type==='online_received')online+=amount;
     if(x.type==='online')online+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
@@ -591,14 +610,14 @@ function renderSales(){
   rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) || String(b.time||'').localeCompare(String(a.time||'')) || String(b.id).localeCompare(String(a.id)));
   const el=document.getElementById('salesLedger');
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
-  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Payment</th><th>Cash</th><th>Online</th><th>Credit</th><th>Advance Payment</th><th>Balance Payment</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
+  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Total Payment</th><th>Advance Payment</th><th>Balance Payment</th><th>Credit</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
     const cashSplit=x.type==='cash' &&
       (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
     const onlineSplit=x.type==='online' &&
       (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
-    const cash=(x.type==='cash_received' ? amount : (x.type==='cash' ? (cashSplit ? 0 : amount) : (isBalancePayment(x) && balanceMethod(x)==='cash' ? amount : 0)));
-    const online=(x.type==='online_received' ? amount : (x.type==='online' ? (onlineSplit ? 0 : amount) : (isBalancePayment(x) && balanceMethod(x)==='online' ? amount : 0)));
+    const cash=(x.type==='cash_received' ? amount : (x.type==='total_payment' && (x.payment_method||'cash')==='cash' ? amount : (x.type==='cash' ? (cashSplit ? 0 : amount) : (isBalancePayment(x) && balanceMethod(x)==='cash' ? amount : 0))));
+    const online=(x.type==='online_received' ? amount : (x.type==='total_payment' && x.payment_method==='online' ? amount : (x.type==='online' ? (onlineSplit ? 0 : amount) : (isBalancePayment(x) && balanceMethod(x)==='online' ? amount : 0))));
     const credit=x.type==='credit'?customerBalance(x):0;
     const advance=(x.type==='credit'||x.type==='online'||x.type==='cash')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
     const splitLabel=onlineSplit?'Online':(cashSplit?'Cash':'');
@@ -626,7 +645,21 @@ function renderSales(){
               ? ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#e8f7ee;color:#087f5b">PAID</span>' + paidDateLabel
               : ' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#b36b00">PARTIALLY PAID</span>' + paidDateLabel)
           : receiptNote);
-    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td>${total?money(total):'-'}</td><td class="cash">${cash?money(cash):'-'}</td><td class="online">${online?money(online):'-'}</td><td class="debit">${credit?money(credit):'-'}</td><td class="cash">${advanceCell}</td><td class="online">${(isBalancePayment(x) || (['cash','online'].includes(x.type) && salePaid))?'-':(balance?money(balance):'-')}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+    const shownAdvance=(x.type==='credit'||x.type==='online'||x.type==='cash')?Number(x.advance_payment||0):(x.type==='advance_payment'?Math.max(0,amount-Number(x.balance_payment||0)):0);
+    // Show the remaining balance on the original cash/online sale after later
+    // customer receipts have been allocated to it. Keep the stored original
+    // balance unchanged so receipts can be recalculated consistently after edits.
+    const allocatedSalePayments = ['cash','online'].includes(x.type)
+      ? Number(saleBalancePaymentInfo(x)?.amount || 0)
+      : 0;
+    const remainingSaleBalance = Math.max(0, Number(x.balance_payment || 0) - allocatedSalePayments);
+    // Keep credit outstanding only in the Credit column. The Balance Payment
+    // column is reserved for unpaid cash/online bills, so the same due amount
+    // is never displayed in both columns for a credit sale.
+    const shownBalance = ['cash','online'].includes(x.type)
+      ? remainingSaleBalance
+      : 0;
+    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell('Advance',shownAdvance,'#198754')}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828')}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -635,6 +668,7 @@ function updateSaleFields(){
   const show=(id,yes)=>document.getElementById(id).classList.toggle('field-hidden',!yes);
   show('amountField',true);
   show('balanceMethodField',type==='balance_payment');
+  show('totalPaymentMethodField',type==='total_payment');
   document.getElementById('sCustomer').parentElement.style.display='';
   show('advanceField',type==='credit'||type==='online'||type==='cash');
   show('advanceMethodField',type==='credit'||type==='advance_payment');
@@ -643,7 +677,7 @@ function updateSaleFields(){
   document.getElementById('sAmount').placeholder=(type==='credit'||type==='online'||type==='cash')?'Enter full bill amount':'Enter amount';
   document.getElementById('balanceLabel').textContent='Balance Due (calculated)';
   document.getElementById('sBalancePayment').readOnly=true;
-  document.getElementById('saleTypeHelp').textContent=type==='online_received'?'Enter only the online amount received. This will save as an online payment with no balance due.':type==='cash_received'?'Enter only the cash amount received. This will save as a cash sale with no balance due.':type==='cash'?'Enter the full bill amount and the cash received now as Advance Payment. The remaining amount is Balance Due. When the customer pays later, record it separately using Balance Payment Received.':type==='online'?'Enter the full bill amount and the online amount received now as Advance Payment. The remaining amount is Balance Due. Record later payments separately using Balance Payment Received.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the total payment amount received for this entry.':type==='credit'?'Enter the full bill amount and any advance received now. The remaining amount is Balance Due. Record later payments separately using Balance Payment Received.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
+  document.getElementById('saleTypeHelp').textContent=type==='online_received'?'Enter only the online amount received. This will save as an online payment with no balance due.':type==='cash_received'?'Enter only the cash amount received. This will save as a cash sale with no balance due.':type==='cash'?'Enter the full bill amount and the cash received now as Advance Payment. The remaining amount is Balance Due. When the customer pays later, record it separately using Balance Payment Received.':type==='online'?'Enter the full bill amount and the online amount received now as Advance Payment. The remaining amount is Balance Due. Record later payments separately using Balance Payment Received.':type==='advance_payment'?'Record an advance amount received from the customer; it will appear in the Advance Payment column.':type==='total_payment'?'Enter the payment amount and choose whether it was received by cash or online. It will be added to Cash or Online, not Advance Payment.':type==='credit'?'Enter the full bill amount. Advance is optional; leave it at 0 if nothing was received. The unpaid amount will be saved as Credit.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
   if(type==='balance_payment'){document.getElementById('sAdvance').value='0';document.getElementById('sBalancePayment').value='0';}
   updateBalanceDue();
 }
@@ -794,7 +828,7 @@ function saveSale(){
     const oldType=old.type;
     const oldCustomer=(old.customer||'').trim();
     const oldCustomerKey=oldCustomer.toLowerCase();
-    const obj={type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:document.getElementById('sAdvanceMethod').value||'cash',balance_payment:initialBalance};
+    const obj={type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:document.getElementById('sAdvanceMethod').value||'cash',payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
     Object.assign(old,obj);
 
     // Balance receipts remain editable. Recalculate their allocations for the
@@ -813,7 +847,7 @@ function saveSale(){
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
-    const obj={id:uid(),type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:document.getElementById('sAdvanceMethod').value||'cash',balance_payment:initialBalance};
+    const obj={id:uid(),type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:document.getElementById('sAdvanceMethod').value||'cash',payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
     data.sales.push(obj);
     if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
     if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
@@ -889,6 +923,16 @@ document.getElementById('summaryMonth').value=monthKey(todayNow.date);
 summaryMode='date';
 data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;x.desc=cleanDescription(x.desc||'');});
 data.expenses.forEach(x=>{x.desc=cleanDescription(x.desc||'');});
+document.getElementById('saleModal').addEventListener('keydown',function(e){
+  if(e.key==='Enter' && e.target.tagName!=='TEXTAREA'){
+    e.preventDefault(); saveSale();
+  }
+});
+document.getElementById('expenseModal').addEventListener('keydown',function(e){
+  if(e.key==='Enter' && e.target.tagName!=='TEXTAREA'){
+    e.preventDefault(); saveExpense();
+  }
+});
 document.getElementById('sType').addEventListener('change',updateSaleFields);
 document.getElementById('sAmount').addEventListener('input',updateBalanceDue);
 document.getElementById('sAdvance').addEventListener('input',updateBalanceDue);
