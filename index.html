@@ -70,6 +70,10 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     <button class="danger" onclick="newExpense()">＋ Add Expense</button>
     <button class="primary" onclick="exportData()">⬇ Backup</button>
     <button class="muted" onclick="importData()">⬆ Restore</button><button class="muted" onclick="cloudLoad()">↻ Refresh Cloud</button>
+    <label for="branchSelector" style="font-weight:bold;align-self:center">Shop / Branch:</label>
+    <select id="branchSelector" onchange="changeBranch(this.value)" style="width:auto;min-width:190px;margin:0">
+      <option value="1">Head Office</option><option value="2">Bahria Enclave Office</option><option value="all">Combined Report — Both Offices</option>
+    </select>
     <span class="syncbox" id="saveStatus">✓ Cloud saved • shared on all PCs</span>
   </div>
 
@@ -218,8 +222,11 @@ create table if not exists public.fozan_expenses (
 alter table public.fozan_sales enable row level security;
 alter table public.fozan_sales add column if not exists advance_payment numeric not null default 0;
 alter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;
+-- Branch separation migration (run once in Supabase SQL Editor):
+alter table public.fozan_sales add column if not exists branch_id text not null default '1';
 
 alter table public.fozan_expenses enable row level security;
+alter table public.fozan_expenses add column if not exists branch_id text not null default '1';
 
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
@@ -240,6 +247,20 @@ if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
 let editingSale=null;
 let summaryMode='date';
+let activeBranch=localStorage.getItem('fozan_active_branch')||'1';
+if(!['1','2','all'].includes(activeBranch)) activeBranch='1';
+function salesInBranch(branchId){return data.sales.filter(x=>String(x.branch_id||'1')===String(branchId||'1'));}
+function expensesInBranch(branchId){return data.expenses.filter(x=>String(x.branch_id||'1')===String(branchId||'1'));}
+function visibleSales(){return activeBranch==='all'?data.sales:salesInBranch(activeBranch);}
+function visibleExpenses(){return activeBranch==='all'?data.expenses:expensesInBranch(activeBranch);}
+function changeBranch(value){
+  if(!['1','2','all'].includes(value)) value='1';
+  activeBranch=value; localStorage.setItem('fozan_active_branch',value);
+  const sel=document.getElementById('branchSelector'); if(sel)sel.value=value;
+  const combined=value==='all';
+  document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=combined);
+  renderDateHistory();renderDashboard();renderSales();
+}
 
 function cloudStatus(msg, ok=false){
   const s=document.getElementById('saveStatus');
@@ -252,6 +273,7 @@ async function cloudSyncData(){
   try{
     const salesRows = data.sales.map(x=>({
       id:String(x.id),
+      branch_id:String(x.branch_id||'1'),
       type:x.type,
       amount:Number(x.amount||0),
       customer:x.customer||'',
@@ -263,6 +285,7 @@ async function cloudSyncData(){
     }));
     const expenseRows = data.expenses.map(x=>({
       id:String(x.id),
+      branch_id:String(x.branch_id||'1'),
       amount:Number(x.amount||0),
       description:cleanDescription(x.desc||''),
       expense_date:x.date,
@@ -279,7 +302,7 @@ async function cloudSyncData(){
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
     console.error('Cloud save error:',e);
-    cloudStatus('Saved on this PC; cloud save failed — check database connection / columns');
+    cloudStatus('Cloud save failed — run the branch_id SQL migration in the app comments, then refresh');
   }
 }
 async function cloudDeleteRow(table,id){
@@ -311,12 +334,12 @@ async function cloudLoad(){
     // This prevents a slow initial cloud load from erasing a sale just entered
     // locally while the request was still in progress.
     const cloudSales=(sales||[]).map(x=>({
-      id:x.id,type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
+      id:x.id,branch_id:String(x.branch_id||'1'),type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
       desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',
       advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
     const cloudExpenses=(expenses||[]).map(x=>({
-      id:x.id,amount:Number(x.amount||0),desc:x.description||'',
+      id:x.id,branch_id:String(x.branch_id||'1'),amount:Number(x.amount||0),desc:x.description||'',
       date:x.expense_date,time:x.expense_time||''
     }));
     const salesById=new Map(cloudSales.map(x=>[String(x.id),x]));
@@ -443,7 +466,7 @@ function changeMonth(step){
 }
 function calculateTotals(filterFn){
   let cash=0,online=0,credit=0,advance=0,balancePayment=0,cashBalancePayment=0,onlineBalancePayment=0,expenses=0;
-  data.sales.forEach(x=>{
+  visibleSales().forEach(x=>{
     if(!filterFn(x.date))return;
     const amount=Number(x.amount||0);
     if(x.type==='cash_received')cash+=amount;
@@ -459,7 +482,7 @@ function calculateTotals(filterFn){
       else cashBalancePayment+=amount;
     }
   });
-  data.expenses.forEach(x=>{if(filterFn(x.date))expenses+=Number(x.amount||0);});
+  visibleExpenses().forEach(x=>{if(filterFn(x.date))expenses+=Number(x.amount||0);});
   const cashInHand=cash+cashBalancePayment-expenses;
   const onlineTotal=online+onlineBalancePayment;
 
@@ -472,8 +495,8 @@ function renderDateHistory(){
   if(!el)return;
   el.style.display='none';
   const dates=[...new Set([
-    ...data.sales.map(x=>x.date).filter(Boolean),
-    ...data.expenses.map(x=>x.date).filter(Boolean)
+    ...visibleSales().map(x=>x.date).filter(Boolean),
+    ...visibleExpenses().map(x=>x.date).filter(Boolean)
   ])].sort().reverse();
   if(!dates.length){el.innerHTML='';return;}
   const current=getSummaryDate();
@@ -503,8 +526,8 @@ function renderDashboard(){
   const month=getSummaryMonth(), mt=monthlyTotals(month);
   const summary=summaryMode==='month' ? mt : t;
   document.getElementById('summaryMonth').value=month;
-  document.getElementById('monthTitle').textContent='Monthly Sale Summary — '+monthLabel(month);
-  document.getElementById('dailyTitle').textContent='Daily Sale Summary — '+date;
+  document.getElementById('monthTitle').textContent=(activeBranch==='all'?'Combined Monthly Summary':activeBranch==='2'?'Bahria Enclave Office Monthly Summary':'Head Office Monthly Summary')+' — '+monthLabel(month);
+  document.getElementById('dailyTitle').textContent=(activeBranch==='all'?'Combined Daily Summary':activeBranch==='2'?'Bahria Enclave Office Daily Summary':'Head Office Daily Summary')+' — '+date;
 
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=money(val);};
   set('totalCash',summary.cash+summary.cashBalancePayment);
@@ -518,14 +541,14 @@ function renderDashboard(){
   set('cashOnlineTotal',summary.cashInHand+summary.online);
 
   const el=document.getElementById('expenseLedger');
-  const dayExpenses=data.expenses.filter(x=>x.date===date);
+  const dayExpenses=visibleExpenses().filter(x=>x.date===date);
   if(!dayExpenses.length){
     el.innerHTML='';
     return;
   }
   const rows=[...dayExpenses].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
   el.innerHTML='<h2 style="margin-top:18px">Expense</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
-    rows.map(x=>`<tr><td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions"><button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button></td></tr>`).join('')+
+    rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${activeBranch==='all'?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
     '</tbody></table>';
 }
 
@@ -538,12 +561,13 @@ function creditPaymentInfo(credit){
 
   // Rebuild the receipt-to-credit allocation in the same oldest-unpaid-first
   // order used when a balance payment is received.
-  const credits=data.sales
+  const branchSales=salesInBranch(credit.branch_id||'1');
+  const credits=branchSales
     .filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===customer)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
-  const receipts=data.sales
+  const receipts=branchSales
     .filter(x=>isBalancePayment(x) && (x.customer||'').trim().toLowerCase()===customer)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
@@ -574,14 +598,15 @@ function saleBalancePaymentInfo(entry){
   if(!customer || !['cash','online'].includes(entry.type))return null;
   // Cash/online sales store the original unpaid balance in balance_payment.
   // Later receipts are allocated oldest-due-first without changing the original bill.
-  const dueEntries=data.sales
+  const branchSales=salesInBranch(entry.branch_id||'1');
+  const dueEntries=branchSales
     .filter(x=>['cash','online'].includes(x.type) &&
       (x.customer||'').trim().toLowerCase()===customer &&
       Number(x.balance_payment||0)>0)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
-  const receipts=data.sales
+  const receipts=branchSales
     .filter(x=>isBalancePayment(x) &&
       (x.customer||'').trim().toLowerCase()===customer)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
@@ -607,11 +632,11 @@ function saleBalancePaymentInfo(entry){
 function renderSales(){
   const date=getSummaryDate();
   const q=(document.getElementById('search').value||'').toLowerCase().trim();
-  let rows=q ? data.sales.filter(x=>searchText(x).includes(q)) : data.sales.filter(x=>x.date===date);
+  let rows=q ? visibleSales().filter(x=>searchText(x).includes(q)) : visibleSales().filter(x=>x.date===date);
   rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) || String(b.time||'').localeCompare(String(a.time||'')) || String(b.id).localeCompare(String(a.id)));
   const el=document.getElementById('salesLedger');
-  if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
-  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Total Payment</th><th>Advance Payment</th><th>Balance Payment</th><th>Credit</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
+  if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+' in '+(activeBranch==='all'?'either branch':activeBranch==='2'?'Bahria Enclave Office':'Head Office')+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
+  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr>'+(activeBranch==='all'?'<th>Branch</th>':'')+'<th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Cash</th><th>Online</th><th>Total Payment</th><th>Advance Payment</th><th>Balance Payment</th><th>Credit</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
     const cashSplit=x.type==='cash' &&
       (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
@@ -670,7 +695,7 @@ function renderSales(){
     const shownBalance = ['cash','online'].includes(x.type)
       ? remainingSaleBalance
       : 0;
-    return `<tr><td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions"><button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button></td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${activeBranch==='all'?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -728,7 +753,7 @@ function rebuildBalanceAllocations(customer){
 }
 function applyBalancePayment(customer, amount, paymentDate, paymentTime, paymentId){
   let remaining=Number(amount||0);
-  const matches=data.sales.filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
+  const matches=salesInBranch(activeBranch).filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.id||'').localeCompare(String(b.id||'')));
   for(const credit of matches){
     if(remaining<=0)break;
@@ -739,7 +764,7 @@ function applyBalancePayment(customer, amount, paymentDate, paymentTime, payment
   // If no credit entry remains, accept the receipt against older cash/online
   // sales that have an outstanding balance. Their original bill rows stay intact;
   // the ledger derives PAID/PARTIALLY PAID and the receipt date from this receipt.
-  const otherDue=data.sales
+  const otherDue=salesInBranch(activeBranch)
     .filter(x=>['cash','online'].includes(x.type) &&
       (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() &&
       Number(x.balance_payment||0)>0)
@@ -756,10 +781,10 @@ function applyBalancePayment(customer, amount, paymentDate, paymentTime, payment
   if(remaining>0.0001) alert('Note: '+money(remaining)+' could not be matched to an unpaid balance for this customer. Check the customer name and old sale entries. The received payment is still saved.');
 }
 function applyAdvancePayment(customer, amount, paymentId){
-  let payment=data.sales.find(x=>x.id===paymentId && x.type==='advance_payment');
+  let payment=salesInBranch(activeBranch).find(x=>x.id===paymentId && x.type==='advance_payment');
   if(!payment)return;
   let remaining=Math.max(0,Number(amount||0)-Number(payment.balance_payment||0));
-  const matches=data.sales.filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
+  const matches=salesInBranch(activeBranch).filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.id||'').localeCompare(String(b.id||'')));
   for(const credit of matches){
     if(remaining<=0)break;
@@ -770,9 +795,9 @@ function applyAdvancePayment(customer, amount, paymentId){
   }
 }
 function applyUnallocatedAdvancesToCredit(customer){
-  const credits=data.sales.filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
+  const credits=salesInBranch(activeBranch).filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.id||'').localeCompare(String(b.id||'')));
-  const receipts=data.sales.filter(x=>x.type==='advance_payment' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && Number(x.amount||0)>Number(x.balance_payment||0))
+  const receipts=salesInBranch(activeBranch).filter(x=>x.type==='advance_payment' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && Number(x.amount||0)>Number(x.balance_payment||0))
     .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||'')));
   for(const receipt of receipts){
     let remaining=Number(receipt.amount||0)-Number(receipt.balance_payment||0);
@@ -787,6 +812,7 @@ function applyUnallocatedAdvancesToCredit(customer){
   }
 }
 function newSale(){
+  if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add a sale.');
   editingSale=null;
   document.getElementById('saleModalTitle').textContent='New Daily Sale';
   document.getElementById('sType').value='cash';
@@ -802,6 +828,7 @@ function newSale(){
   document.getElementById('saleModal').style.display='flex';
 }
 function editSale(id){
+  if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
   const x=data.sales.find(s=>s.id===id); if(!x)return;
   editingSale=id;
   document.getElementById('saleModalTitle').textContent='Edit Daily Sale';
@@ -819,6 +846,8 @@ function editSale(id){
   document.getElementById('saleModal').style.display='flex';
 }
 function saveSale(){
+  if(activeBranch==='all' && !editingSale)return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office before saving a new sale.');
+  if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a sale.');
   const customer=document.getElementById('sCustomer').value.trim();
   const desc=cleanDescription(document.getElementById('sDesc').value);
   const type=document.getElementById('sType').value;
@@ -850,16 +879,16 @@ function saveSale(){
       if(customer && customer.toLowerCase()!==oldCustomerKey)rebuildBalanceAllocations(customer);
     }
   }else if(type==='credit'){
-    const credit={id:uid(),type,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),balance_payment:0};
+    const credit={id:uid(),branch_id:activeBranch,type,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),balance_payment:0};
     data.sales.push(credit);
     applyUnallocatedAdvancesToCredit(customer);
     // Record any same-day receipts as separate transactions so daily totals remain accurate.
     if(initialBalance>0){
-      const payment={id:uid(),type:'balance_payment',amount:initialBalance,customer,desc:'Balance received for '+desc,date,time,advance_payment:0,balance_payment:0};
+      const payment={id:uid(),branch_id:activeBranch,type:'balance_payment',amount:initialBalance,customer,desc:'Balance received for '+desc,date,time,advance_payment:0,balance_payment:0};
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
-    const obj={id:uid(),type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
+    const obj={id:uid(),branch_id:activeBranch,type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
     data.sales.push(obj);
     if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
     if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
@@ -868,6 +897,7 @@ function saveSale(){
 }
 
 function deleteSale(id){
+  if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');
   if(!confirm('Delete this sale?'))return;
   data.sales=data.sales.filter(x=>x.id!==id);
   cloudDeleteRow('fozan_sales',id);
@@ -877,6 +907,7 @@ function deleteSale(id){
 function closeSaleModal(){document.getElementById('saleModal').style.display='none';editingSale=null}
 
 function newExpense(){
+  if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add an expense.');
   window._editingExpense=null;
   document.getElementById('eAmount').value='';
   document.getElementById('eDesc').value='';
@@ -886,17 +917,19 @@ function newExpense(){
   document.getElementById('expenseModal').style.display='flex';
 }
 function saveExpense(){
+  if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before saving an expense.');
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
   const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
   const id=window._editingExpense;
   if(id){
     const x=data.expenses.find(e=>e.id===id); if(x)Object.assign(x,obj);
-  }else data.expenses.push({id:uid(),...obj});
+  }else data.expenses.push({id:uid(),branch_id:activeBranch,...obj});
   persist();closeExpenseModal();renderDashboard();renderSales();
 }
-function deleteExpense(id){if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
+function deleteExpense(id){if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
 function editExpense(id){
+  if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
   const x=data.expenses.find(e=>e.id===id);if(!x)return;
   document.getElementById('eAmount').value=x.amount;
   document.getElementById('eDesc').value=x.desc||'';
@@ -922,6 +955,7 @@ function importData(){
         const x=JSON.parse(r.result);
         if(!x.sales)throw 0;
         data=x;if(!data.expenses)data.expenses=[];
+        data.sales.forEach(v=>{v.branch_id=String(v.branch_id||'1')});data.expenses.forEach(v=>{v.branch_id=String(v.branch_id||'1')});
         persist();renderDashboard();renderSales();alert('Backup restored successfully.');
       }catch(e){alert('Invalid Daily Sale backup file.')}
     };r.readAsText(f);
@@ -933,8 +967,10 @@ const todayNow=nowLocal();
 summaryDate.value=todayNow.date;
 document.getElementById('summaryMonth').value=monthKey(todayNow.date);
 summaryMode='date';
-data.sales.forEach(x=>{if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;x.desc=cleanDescription(x.desc||'');});
-data.expenses.forEach(x=>{x.desc=cleanDescription(x.desc||'');});
+data.sales.forEach(x=>{x.branch_id=String(x.branch_id||'1');if(x.advance_payment==null)x.advance_payment=0;if(x.balance_payment==null)x.balance_payment=0;x.desc=cleanDescription(x.desc||'');});
+data.expenses.forEach(x=>{x.branch_id=String(x.branch_id||'1');x.desc=cleanDescription(x.desc||'');});
+document.getElementById('branchSelector').value=activeBranch;
+if(activeBranch==='all')document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=true);
 document.getElementById('saleModal').addEventListener('keydown',function(e){
   if(e.key==='Enter' && e.target.tagName!=='TEXTAREA'){
     e.preventDefault(); saveSale();
