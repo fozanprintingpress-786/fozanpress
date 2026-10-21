@@ -30,7 +30,7 @@ button{border:0;border-radius:8px;padding:10px 15px;cursor:pointer}
 @media(max-width:800px){.date-nav-group,.month-nav-group{width:100%;justify-content:flex-start;flex-wrap:wrap}.month-nav-group{margin-left:0;padding-left:0}}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
 .stat{padding:13px;border-radius:9px;background:#f5f8fb}.stat small{display:block;color:#687785}.stat strong{font-size:21px}#cashOnlineTotal,#paymentAfterExpense{animation:summaryBlink 1.15s ease-in-out infinite}@keyframes summaryBlink{0%,100%{opacity:1}50%{opacity:.42}}
-table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #edf0f2;text-align:left}th{background:#f7f9fb}td.cash,td.online,td.debit{white-space:nowrap;min-width:88px} table th:nth-child(4),table td:nth-child(4){background:#effaf2} table th:nth-child(5),table td:nth-child(5){background:#eef6ff} table th:nth-child(6),table td:nth-child(6){background:#f3f0ff} table th:nth-child(7),table td:nth-child(7){background:#fff8e6} table th:nth-child(8),table td:nth-child(8){background:#e9f8fb} table th:nth-child(9),table td:nth-child(9){background:#fff0f0}.pay-cell{white-space:nowrap;line-height:1.15}.pay-tag{display:block;font-size:10px;font-weight:700;letter-spacing:.2px;margin-bottom:3px;text-transform:uppercase}.pay-amount{display:block;white-space:nowrap}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #edf0f2;text-align:left}th{background:#f7f9fb}td.cash,td.online,td.debit{white-space:nowrap;min-width:88px} table th:nth-child(4),table td:nth-child(4),table th:nth-child(5),table td:nth-child(5),table th:nth-child(6),table td:nth-child(6),table th:nth-child(7),table td:nth-child(7),table th:nth-child(8),table td:nth-child(8),table th:nth-child(9),table td:nth-child(9){background:#fff}.pay-cell{white-space:nowrap;line-height:1.15}.pay-tag{display:block;font-size:10px;font-weight:700;letter-spacing:.2px;margin-bottom:3px;text-transform:uppercase}.pay-amount{display:block;white-space:nowrap}
 .empty{text-align:center;color:#7b8791;padding:35px}
 
 .actions button{padding:7px 10px;margin-right:5px;min-width:32px;font-weight:700;box-shadow:0 2px 5px #00000014;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
@@ -524,7 +524,7 @@ function renderDashboard(){
     return;
   }
   const rows=[...dayExpenses].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
-  el.innerHTML='<h2 style="margin-top:18px">Expense / Payment Ledger — '+date+'</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
+  el.innerHTML='<h2 style="margin-top:18px">Expense</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
     rows.map(x=>`<tr><td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions"><button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button></td></tr>`).join('')+
     '</tbody></table>';
 }
