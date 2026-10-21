@@ -838,8 +838,16 @@ function applyUnallocatedAdvancesToCredit(customer){
     }
   }
 }
+function requireActionPassword(){
+  if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔');return false;}
+  const pw=prompt(branchName(activeBranch)+' میں Sale شامل/تبدیل/ڈیلیٹ کرنے کے لیے password درج کریں:');
+  if(pw!==BRANCH_PASSWORDS[activeBranch]){alert('Incorrect password.');return false;}
+  authorizedBranches.add(activeBranch);
+  return true;
+}
+
 function newSale(){
-  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
+  if(!requireActionPassword())return;
   if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add a sale.');
   editingSale=null;
   document.getElementById('saleModalTitle').textContent='New Daily Sale';
@@ -857,7 +865,8 @@ function newSale(){
 }
 function editSale(id){
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
-  const x=data.sales.find(s=>s.id===id); if(!canMutateRecord(x))return;
+  const x=data.sales.find(s=>s.id===id); if(!x || String(x.branch_id||'1')!==activeBranch)return alert('یہ ریکارڈ دوسرے آفس کا ہے۔');
+  if(!requireActionPassword())return;
   editingSale=id;
   document.getElementById('saleModalTitle').textContent='Edit Daily Sale';
   document.getElementById('sType').value=isBalancePayment(x)?'balance_payment':x.type;
@@ -927,7 +936,8 @@ function saveSale(){
 
 function deleteSale(id){
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');
-  const record=data.sales.find(x=>x.id===id);if(!canMutateRecord(record))return;
+  const record=data.sales.find(x=>x.id===id);if(!record || String(record.branch_id||'1')!==activeBranch)return alert('یہ ریکارڈ دوسرے آفس کا ہے۔');
+  if(!requireActionPassword())return;
   if(!confirm('Delete this sale?'))return;
   data.sales=data.sales.filter(x=>x.id!==id && String(x.branch_id||'1')===activeBranch || x.id!==id);
   cloudDeleteRow('fozan_sales',id);
