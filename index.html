@@ -57,7 +57,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
       <div style="font-size:14px;margin-top:3px">Printing &amp; Digital Services</div>
     </div>
   </div>
-  <div style="text-align:right;font-size:13px;line-height:1.7">
+  <div id="branchContact" style="text-align:right;font-size:13px;line-height:1.7">
     <div>📍 Plaza # 17, Backside D-Eatson Medical Store, Main PWD Society Road, Islamabad</div>
     <strong>◉ 0330-5003388 &nbsp; | &nbsp; 0333-5465626</strong>
   </div>
@@ -247,19 +247,46 @@ if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
 let editingSale=null;
 let summaryMode='date';
+const BRANCH_PASSWORDS={'1':'PWD92','2':'bahria786'};
 let activeBranch=localStorage.getItem('fozan_active_branch')||'1';
 if(!['1','2','all'].includes(activeBranch)) activeBranch='1';
+let authorizedBranches=new Set();
 function salesInBranch(branchId){return data.sales.filter(x=>String(x.branch_id||'1')===String(branchId||'1'));}
 function expensesInBranch(branchId){return data.expenses.filter(x=>String(x.branch_id||'1')===String(branchId||'1'));}
 function visibleSales(){return activeBranch==='all'?data.sales:salesInBranch(activeBranch);}
 function visibleExpenses(){return activeBranch==='all'?data.expenses:expensesInBranch(activeBranch);}
+function branchName(id){return String(id)==='2'?'Bahria Enclave Office':'Head Office';}
+function updateBranchContact(){
+  const el=document.getElementById('branchContact'); if(!el)return;
+  if(activeBranch==='2') el.innerHTML='📍 Basement Sahara Arcade, Urban Boulevard, Sector A, Bahria Enclave, Islamabad<br><strong>◉ +92 335 4007700 &nbsp; | &nbsp; +92 333 5465626</strong>';
+  else if(activeBranch==='all') el.innerHTML='📍 Head Office: Plaza # 17, Backside D-Eatson Medical Store, Main PWD Society Road, Islamabad<br><strong>◉ 0330-5003388 &nbsp; | &nbsp; 0333-5465626</strong><br>📍 Bahria Enclave: Basement Sahara Arcade, Urban Boulevard, Sector A, Islamabad<br><strong>◉ +92 335 4007700 &nbsp; | &nbsp; +92 333 5465626</strong>';
+  else el.innerHTML='📍 Plaza # 17, Backside D-Eatson Medical Store, Main PWD Society Road, Islamabad<br><strong>◉ 0330-5003388 &nbsp; | &nbsp; 0333-5465626</strong>';
+}
 function changeBranch(value){
   if(!['1','2','all'].includes(value)) value='1';
+  const previous=activeBranch;
+  if(value==='all'){
+    for(const id of ['1','2']) if(!authorizedBranches.has(id)){
+      const pw=prompt('Combined Report دیکھنے کے لیے '+branchName(id)+' کا password درج کریں:');
+      if(pw!==BRANCH_PASSWORDS[id]){alert('Incorrect password. Branch was not changed.');document.getElementById('branchSelector').value=previous;return;}
+      authorizedBranches.add(id);
+    }
+  }else if(!authorizedBranches.has(value)){
+    const pw=prompt(branchName(value)+' کا password درج کریں:');
+    if(pw!==BRANCH_PASSWORDS[value]){alert('Incorrect password. Branch was not changed.');document.getElementById('branchSelector').value=previous;return;}
+    authorizedBranches.add(value);
+  }
   activeBranch=value; localStorage.setItem('fozan_active_branch',value);
   const sel=document.getElementById('branchSelector'); if(sel)sel.value=value;
   const combined=value==='all';
   document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=combined);
-  renderDateHistory();renderDashboard();renderSales();
+  updateBranchContact();renderDateHistory();renderDashboard();renderSales();
+}
+function canMutateRecord(record, kind='sale'){
+  if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔');return false;}
+  if(!record || String(record.branch_id||'1')!==activeBranch){alert('یہ ریکارڈ دوسرے آفس کا ہے۔ آپ اسے تبدیل یا ڈیلیٹ نہیں کر سکتے۔');return false;}
+  if(!authorizedBranches.has(activeBranch)){alert('اس آفس میں داخل ہونے کے لیے دوبارہ branch password درج کریں۔');return false;}
+  return true;
 }
 
 function cloudStatus(msg, ok=false){
@@ -812,6 +839,7 @@ function applyUnallocatedAdvancesToCredit(customer){
   }
 }
 function newSale(){
+  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add a sale.');
   editingSale=null;
   document.getElementById('saleModalTitle').textContent='New Daily Sale';
@@ -829,7 +857,7 @@ function newSale(){
 }
 function editSale(id){
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
-  const x=data.sales.find(s=>s.id===id); if(!x)return;
+  const x=data.sales.find(s=>s.id===id); if(!canMutateRecord(x))return;
   editingSale=id;
   document.getElementById('saleModalTitle').textContent='Edit Daily Sale';
   document.getElementById('sType').value=isBalancePayment(x)?'balance_payment':x.type;
@@ -846,6 +874,7 @@ function editSale(id){
   document.getElementById('saleModal').style.display='flex';
 }
 function saveSale(){
+  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all' && !editingSale)return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office before saving a new sale.');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a sale.');
   const customer=document.getElementById('sCustomer').value.trim();
@@ -865,7 +894,7 @@ function saveSale(){
   const time=document.getElementById('sTime').value||nowLocal().time;
   if(editingSale){
     const old=data.sales.find(x=>x.id===editingSale);
-    if(!old)return;
+    if(!canMutateRecord(old))return;
     const oldType=old.type;
     const oldCustomer=(old.customer||'').trim();
     const oldCustomerKey=oldCustomer.toLowerCase();
@@ -898,8 +927,9 @@ function saveSale(){
 
 function deleteSale(id){
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');
+  const record=data.sales.find(x=>x.id===id);if(!canMutateRecord(record))return;
   if(!confirm('Delete this sale?'))return;
-  data.sales=data.sales.filter(x=>x.id!==id);
+  data.sales=data.sales.filter(x=>x.id!==id && String(x.branch_id||'1')===activeBranch || x.id!==id);
   cloudDeleteRow('fozan_sales',id);
   persist();renderDashboard();renderSales();
 }
@@ -907,6 +937,7 @@ function deleteSale(id){
 function closeSaleModal(){document.getElementById('saleModal').style.display='none';editingSale=null}
 
 function newExpense(){
+  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add an expense.');
   window._editingExpense=null;
   document.getElementById('eAmount').value='';
@@ -917,20 +948,21 @@ function newExpense(){
   document.getElementById('expenseModal').style.display='flex';
 }
 function saveExpense(){
+  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before saving an expense.');
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
   const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
   const id=window._editingExpense;
   if(id){
-    const x=data.expenses.find(e=>e.id===id); if(x)Object.assign(x,obj);
+    const x=data.expenses.find(e=>e.id===id); if(!canMutateRecord(x,'expense'))return;Object.assign(x,obj);
   }else data.expenses.push({id:uid(),branch_id:activeBranch,...obj});
   persist();closeExpenseModal();renderDashboard();renderSales();
 }
-function deleteExpense(id){if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
+function deleteExpense(id){if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');const record=data.expenses.find(x=>x.id===id);if(!canMutateRecord(record,'expense'))return;if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
 function editExpense(id){
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
-  const x=data.expenses.find(e=>e.id===id);if(!x)return;
+  const x=data.expenses.find(e=>e.id===id);if(!canMutateRecord(x,'expense'))return;
   document.getElementById('eAmount').value=x.amount;
   document.getElementById('eDesc').value=x.desc||'';
   document.getElementById('eDate').value=x.date;
