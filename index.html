@@ -852,7 +852,10 @@ function applyUnallocatedAdvancesToCredit(customer){
 function requireActionPassword(){
   if(previewMode){alert('Preview mode صرف دیکھنے کے لیے ہے۔');return false;}
   if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔');return false;}
-  const pw=prompt(branchName(activeBranch)+' میں Sale شامل/تبدیل/ڈیلیٹ کرنے کے لیے password درج کریں:');
+  // Branch password is requested once per page session, when selecting the branch.
+  // Once authenticated, allow sale add/edit/delete without asking again.
+  if(authorizedBranches.has(activeBranch)) return true;
+  const pw=prompt(branchName(activeBranch)+' میں داخل ہونے کے لیے password درج کریں:');
   if(pw!==BRANCH_PASSWORDS[activeBranch]){alert('Incorrect password.');return false;}
   authorizedBranches.add(activeBranch);
   return true;
