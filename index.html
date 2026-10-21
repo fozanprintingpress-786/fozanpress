@@ -66,13 +66,13 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 <div class="container">
 <section class="card" style="margin-bottom:18px">
   <div class="toolbar">
-    <button class="success" onclick="newSale()">＋ Add Daily Sale</button>
-    <button class="danger" onclick="newExpense()">＋ Add Expense</button>
-    <button class="primary" onclick="exportData()">⬇ Backup</button>
-    <button class="muted" onclick="importData()">⬆ Restore</button><button class="muted" onclick="cloudLoad()">↻ Refresh Cloud</button>
+    <button class="success mutation-control" onclick="newSale()">＋ Add Daily Sale</button>
+    <button class="danger mutation-control" onclick="newExpense()">＋ Add Expense</button>
+    <button class="primary mutation-control" onclick="exportData()">⬇ Backup</button>
+    <button class="muted mutation-control" onclick="importData()">⬆ Restore</button><button class="muted" onclick="cloudLoad()">↻ Refresh Cloud</button>
     <label for="branchSelector" style="font-weight:bold;align-self:center">Shop / Branch:</label>
     <select id="branchSelector" onchange="changeBranch(this.value)" style="width:auto;min-width:190px;margin:0">
-      <option value="1">Head Office</option><option value="2">Bahria Enclave Office</option><option value="all">Combined Report — Both Offices</option>
+      <option value="1">Head Office</option><option value="2">Bahria Enclave Office</option><option value="all">Combined Report — Both Offices</option><option value="preview">🔎 Preview (Password: ikram)</option>
     </select>
     <span class="syncbox" id="saveStatus">✓ Cloud saved • shared on all PCs</span>
   </div>
@@ -248,6 +248,7 @@ if(!Array.isArray(data.expenses)) data.expenses=[];
 let editingSale=null;
 let summaryMode='date';
 const BRANCH_PASSWORDS={'1':'PWD92','2':'bahria786'};
+let previewMode=false;
 let activeBranch=localStorage.getItem('fozan_active_branch')||'1';
 if(!['1','2','all'].includes(activeBranch)) activeBranch='1';
 let authorizedBranches=new Set();
@@ -263,15 +264,25 @@ function updateBranchContact(){
   else el.innerHTML='📍 Plaza # 17, Backside D-Eatson Medical Store, Main PWD Society Road, Islamabad<br><strong>◉ 0330-5003388 &nbsp; | &nbsp; 0333-5465626</strong>';
 }
 function changeBranch(value){
-  if(!['1','2','all'].includes(value)) value='1';
   const previous=activeBranch;
-  if(value==='all'){
+  if(value==='preview'){
+    const pw=prompt('Preview mode password درج کریں:');
+    if(pw!=='ikram'){alert('Incorrect password.');document.getElementById('branchSelector').value=previous;return;}
+    previewMode=true;
+    document.querySelectorAll('.mutation-control').forEach(el=>el.style.display='none');
+    document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=true);
+    alert('Preview mode فعال ہے۔ اب کسی بھی branch کو منتخب کرکے صرف تفصیل دیکھ سکتے ہیں؛ Sale یا Expense شامل/ڈیلیٹ نہیں ہو سکے گی۔');
+    document.getElementById('branchSelector').value=previous;
+    return;
+  }
+  if(!['1','2','all'].includes(value)) value='1';
+  if(!previewMode && value==='all'){
     for(const id of ['1','2']) if(!authorizedBranches.has(id)){
       const pw=prompt('Combined Report دیکھنے کے لیے '+branchName(id)+' کا password درج کریں:');
       if(pw!==BRANCH_PASSWORDS[id]){alert('Incorrect password. Branch was not changed.');document.getElementById('branchSelector').value=previous;return;}
       authorizedBranches.add(id);
     }
-  }else if(!authorizedBranches.has(value)){
+  }else if(!previewMode && !authorizedBranches.has(value)){
     const pw=prompt(branchName(value)+' کا password درج کریں:');
     if(pw!==BRANCH_PASSWORDS[value]){alert('Incorrect password. Branch was not changed.');document.getElementById('branchSelector').value=previous;return;}
     authorizedBranches.add(value);
@@ -279,7 +290,7 @@ function changeBranch(value){
   activeBranch=value; localStorage.setItem('fozan_active_branch',value);
   const sel=document.getElementById('branchSelector'); if(sel)sel.value=value;
   const combined=value==='all';
-  document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=combined);
+  document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=combined||previewMode);
   updateBranchContact();renderDateHistory();renderDashboard();renderSales();
 }
 function canMutateRecord(record, kind='sale'){
@@ -575,7 +586,7 @@ function renderDashboard(){
   }
   const rows=[...dayExpenses].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
   el.innerHTML='<h2 style="margin-top:18px">Expense</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
-    rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${activeBranch==='all'?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
+    rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
     '</tbody></table>';
 }
 
@@ -722,7 +733,7 @@ function renderSales(){
     const shownBalance = ['cash','online'].includes(x.type)
       ? remainingSaleBalance
       : 0;
-    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${activeBranch==='all'?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -839,6 +850,7 @@ function applyUnallocatedAdvancesToCredit(customer){
   }
 }
 function requireActionPassword(){
+  if(previewMode){alert('Preview mode صرف دیکھنے کے لیے ہے۔');return false;}
   if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔');return false;}
   const pw=prompt(branchName(activeBranch)+' میں Sale شامل/تبدیل/ڈیلیٹ کرنے کے لیے password درج کریں:');
   if(pw!==BRANCH_PASSWORDS[activeBranch]){alert('Incorrect password.');return false;}
@@ -864,6 +876,7 @@ function newSale(){
   document.getElementById('saleModal').style.display='flex';
 }
 function editSale(id){
+  if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
   const x=data.sales.find(s=>s.id===id); if(!x || String(x.branch_id||'1')!==activeBranch)return alert('یہ ریکارڈ دوسرے آفس کا ہے۔');
   if(!requireActionPassword())return;
@@ -883,6 +896,7 @@ function editSale(id){
   document.getElementById('saleModal').style.display='flex';
 }
 function saveSale(){
+  if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all' && !editingSale)return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office before saving a new sale.');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a sale.');
@@ -935,6 +949,7 @@ function saveSale(){
 }
 
 function deleteSale(id){
+  if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');
   const record=data.sales.find(x=>x.id===id);if(!record || String(record.branch_id||'1')!==activeBranch)return alert('یہ ریکارڈ دوسرے آفس کا ہے۔');
   if(!requireActionPassword())return;
@@ -947,6 +962,7 @@ function deleteSale(id){
 function closeSaleModal(){document.getElementById('saleModal').style.display='none';editingSale=null}
 
 function newExpense(){
+  if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add an expense.');
   window._editingExpense=null;
@@ -958,6 +974,7 @@ function newExpense(){
   document.getElementById('expenseModal').style.display='flex';
 }
 function saveExpense(){
+  if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before saving an expense.');
   const amount=+document.getElementById('eAmount').value;
@@ -969,8 +986,9 @@ function saveExpense(){
   }else data.expenses.push({id:uid(),branch_id:activeBranch,...obj});
   persist();closeExpenseModal();renderDashboard();renderSales();
 }
-function deleteExpense(id){if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');const record=data.expenses.find(x=>x.id===id);if(!canMutateRecord(record,'expense'))return;if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
+function deleteExpense(id){if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');const record=data.expenses.find(x=>x.id===id);if(!canMutateRecord(record,'expense'))return;if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
 function editExpense(id){
+  if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
   const x=data.expenses.find(e=>e.id===id);if(!canMutateRecord(x,'expense'))return;
   document.getElementById('eAmount').value=x.amount;
