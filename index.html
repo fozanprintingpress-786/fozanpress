@@ -12,7 +12,8 @@ header h1{margin:0;font-size:25px} header span{opacity:.85}
 .container{max-width:1600px;margin:22px auto;padding:0 16px}
 .main-layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(320px,1fr);gap:18px;align-items:start}
 .main-left{min-width:0}
-.monthly-dues-panel{position:sticky;top:12px;height:calc(100vh - 24px);min-height:420px;overflow-y:auto;border:1px solid #d7dde3;border-radius:18px;background:#fff;padding:18px;box-shadow:0 3px 14px #0000000d}
+.monthly-dues-panel{position:sticky;top:12px;height:calc(100vh - 24px);min-height:120px;overflow-y:auto;border:1px solid #d7dde3;border-radius:18px;background:#fff;padding:14px;box-shadow:0 3px 14px #0000000d;transition:width .2s ease,padding .2s ease}
+.monthly-dues-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.monthly-dues-head h2{margin:0;font-size:18px}.dues-toggle{flex:0 0 auto;background:#eaf2f7;color:#123b5d;font-weight:bold;padding:7px 11px;font-size:18px;line-height:1}.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) 48px}.monthly-dues-panel.collapsed{height:auto;min-height:0;padding:8px;overflow:hidden}.monthly-dues-panel.collapsed .monthly-dues-content{display:none}.monthly-dues-panel.collapsed .monthly-dues-head{margin:0;justify-content:center}.monthly-dues-panel.collapsed .monthly-dues-head h2{display:none}
 .monthly-dues-panel h2{margin:0 0 5px;color:#123b5d}
 .dues-subtitle{font-size:12px;color:#687785;margin-bottom:12px}
 .due-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
@@ -31,7 +32,7 @@ header h1{margin:0;font-size:25px} header span{opacity:.85}
 .due-status{display:inline-block;font-size:10px;font-weight:700;padding:3px 6px;border-radius:10px;background:#fff0f0;color:#c62828;margin-top:6px}
 .due-item.partial .due-status{background:#fff7e6;color:#a66a00}
 .due-item.paid .due-status{background:#e8f7ee;color:#087f5b}
-@media(max-width:900px){.main-layout{grid-template-columns:1fr}.monthly-dues-panel{position:relative;top:auto;height:auto;max-height:70vh;min-height:300px}}
+@media(max-width:900px){.main-layout{grid-template-columns:minmax(0,1fr) 44px}.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) 44px}.monthly-dues-panel{position:relative;top:auto;height:auto;max-height:70vh;min-height:120px}.monthly-dues-panel:not(.collapsed){grid-column:1 / -1;grid-row:2}.monthly-dues-panel.collapsed{grid-column:2;grid-row:1}}
 .grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
 .card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 3px 14px #00000012}
 h2{margin:0 0 15px;font-size:19px}
@@ -46,10 +47,11 @@ button{border:0;border-radius:8px;padding:10px 15px;cursor:pointer}
 .customer b{display:block}.bal{font-weight:bold}.debit{color:#c62828}.credit{color:#087f5b}.online{color:#1769aa}
 .top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
 .nav-group{display:flex;align-items:center;gap:8px;white-space:nowrap}
-.date-nav-group,.month-nav-group{flex-wrap:nowrap}
+.date-nav-group,.month-nav-group{flex-wrap:nowrap;flex:0 0 auto}
+.summary-nav-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}.summary-nav-row>div{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;flex:0 0 auto}
 .month-nav-group{margin-left:auto;padding-left:12px}
 @media(max-width:1050px){.nav-group{gap:5px}.nav-group button{padding:9px 10px}.month-nav-group{margin-left:0;padding-left:12px}}
-@media(max-width:800px){.date-nav-group,.month-nav-group{width:100%;justify-content:flex-start;flex-wrap:wrap}.month-nav-group{margin-left:0;padding-left:0}}
+@media(max-width:800px){.date-nav-group,.month-nav-group{width:auto;justify-content:flex-start;flex-wrap:nowrap}.month-nav-group{margin-left:0;padding-left:0}.summary-nav-row{justify-content:flex-start}}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
 .stat{padding:13px;border-radius:9px;background:#f5f8fb}.stat small{display:block;color:#687785}.stat strong{font-size:21px}#cashOnlineTotal,#paymentAfterExpense{animation:summaryBlink 1.15s ease-in-out infinite}@keyframes summaryBlink{0%,100%{opacity:1}50%{opacity:.42}}
 table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #edf0f2;text-align:left}th{background:#f7f9fb}td.cash,td.online,td.debit{white-space:nowrap;min-width:88px} table th:nth-child(4),table td:nth-child(4),table th:nth-child(5),table td:nth-child(5),table th:nth-child(6),table td:nth-child(6),table th:nth-child(7),table td:nth-child(7),table th:nth-child(8),table td:nth-child(8),table th:nth-child(9),table td:nth-child(9){background:#fff}.pay-cell{white-space:nowrap;line-height:1.15}.pay-tag{display:block;font-size:10px;font-weight:700;letter-spacing:.2px;margin-bottom:3px;text-transform:uppercase}.pay-amount{display:block;white-space:nowrap}
@@ -106,7 +108,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
       <strong id="monthTitle" style="color:#198754">Monthly Sale Summary — September 2026</strong>
     </div>
     <div class="notice">Current month is shown automatically. Previous months remain safely saved and can be opened with Previous Month or searched.</div>
-    <div style="display:flex;align-items:center;gap:8px">
+    <div class="summary-nav-row">
       <div class="nav-group date-nav-group">
         <button class="soft-nav" onclick="changeDate(-1)">‹ Previous Date</button>
         <label for="summaryDate" style="font-weight:bold;color:#fff;background:linear-gradient(135deg,#1769aa,#5b4bdb);padding:9px 12px;border-radius:8px">Date</label>
@@ -161,10 +163,10 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     </tr></tbody></table></div>
 </section>
 </div>
-<aside class="monthly-dues-panel" aria-label="Monthly credit and balance status">
-  <h2>Monthly Credit &amp; Balance</h2>
-  <div class="dues-subtitle" id="duesMonthLabel">Customer-wise outstanding for selected month</div>
-  <div id="monthlyDues"><div class="empty">Loading monthly balances…</div></div>
+<aside class="monthly-dues-panel" id="monthlyDuesPanel" aria-label="Monthly credit and balance status">
+  <div class="monthly-dues-head"><h2>Monthly Credit &amp; Balance</h2><button class="dues-toggle" id="duesToggle" type="button" aria-label="Collapse monthly credit and balance" title="Collapse / expand" onclick="toggleMonthlyDues()">◀</button></div>
+  <div class="monthly-dues-content"><div class="dues-subtitle" id="duesMonthLabel">Customer-wise outstanding for selected month</div>
+  <div id="monthlyDues"><div class="empty">Loading monthly balances…</div></div></div>
 </aside></div>
 </div>
 
@@ -588,6 +590,18 @@ function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 
 function totals(date){return calculateTotals(d=>!date || d===date);}
 
+function toggleMonthlyDues(){
+  const panel=document.getElementById('monthlyDuesPanel');
+  const layout=document.querySelector('.main-layout');
+  const button=document.getElementById('duesToggle');
+  if(!panel||!layout||!button)return;
+  const collapsed=panel.classList.toggle('collapsed');
+  layout.classList.toggle('dues-collapsed',collapsed);
+  button.textContent=collapsed?'▶':'◀';
+  button.setAttribute('aria-label',collapsed?'Expand monthly credit and balance':'Collapse monthly credit and balance');
+  button.title=collapsed?'Expand monthly credit and balance':'Collapse monthly credit and balance';
+}
+
 function renderMonthlyDues(){
   const host=document.getElementById('monthlyDues');
   if(!host)return;
@@ -600,7 +614,7 @@ function renderMonthlyDues(){
     const due=x.type==='credit' ? customerBalance(x) : Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
     const paid=Math.max(0,originalDue-due);
     return {x,due,paid,originalDue,status:due<=0.0001?'PAID':paid>0.0001?'PARTIALLY PAID':'DUE'};
-  }).filter(e=>e.originalDue>0.0001);
+  }).filter(e=>e.originalDue>0.0001 && e.due>0.0001);
   const outstanding=entries.reduce((sum,e)=>sum+e.due,0);
   const paidCount=entries.filter(e=>e.status==='PAID').length;
   document.getElementById('duesMonthLabel').textContent=monthLabel(month)+' • '+(activeBranch==='all'?'Both Offices':branchName(activeBranch));
@@ -609,7 +623,7 @@ function renderMonthlyDues(){
     const rank=e=>e.status==='DUE'?0:e.status==='PARTIALLY PAID'?1:2;
     return rank(a)-rank(b)||String(b.x.date||'').localeCompare(String(a.x.date||''))||String(b.x.time||'').localeCompare(String(a.x.time||''));
   });
-  host.innerHTML='<div class="due-summary"><div><small>Total Outstanding</small><strong style="color:#c62828">'+money(outstanding)+'</strong></div><div><small>Paid Entries</small><strong style="color:#198754">'+paidCount+' / '+entries.length+'</strong></div></div>'+sorted.map(({x,due,paid,originalDue,status})=>{
+  host.innerHTML='<div class="due-summary"><div><small>Total Outstanding</small><strong style="color:#c62828">'+money(outstanding)+'</strong></div><div><small>Open Entries</small><strong style="color:#1769aa">'+entries.length+'</strong></div></div>'+sorted.map(({x,due,paid,originalDue,status})=>{
     const typeLabel=x.type==='credit'?'Credit Sale':'Balance Due';
     const branch=activeBranch==='all'?'<div class="due-meta">'+esc(branchName(x.branch_id||'1'))+'</div>':'';
     return '<div class="due-item '+(status==='PAID'?'paid':status==='PARTIALLY PAID'?'partial':'')+'"><div class="due-item-head"><div><div class="due-customer">'+esc(x.customer||'Customer not named')+'</div><div class="due-product">'+esc(x.desc||'Product detail not entered')+'</div></div><div class="due-amount">'+money(due)+'</div></div><div class="due-meta">'+esc(x.date||'')+' • '+typeLabel+' • Bill/Due '+money(originalDue)+'</div>'+(paid>0.0001?'<div class="due-meta">Received: '+money(paid)+'</div>':'')+branch+'<span class="due-status">'+status+'</span></div>';
