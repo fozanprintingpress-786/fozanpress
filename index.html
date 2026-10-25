@@ -44,35 +44,6 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 .modal .box{background:white;width:min(500px,100%);max-height:90vh;overflow-y:auto;border-radius:12px;padding:20px}.modal .box .field-hidden{display:none!important}.modal label{display:block;font-size:14px;margin-top:2px}.modal input,.modal select{margin-top:5px}.modal .field-hidden{display:none!important}
 .notice{font-size:13px;color:#667}.cash{color:#198754}.expense{color:#dc3545}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.syncbox{font-size:12px;padding:7px 10px;border-radius:8px;background:#f7f9fb;color:#667}.onlineBox{background:#eef7ff}.expenseBox{background:#fff2f2}.afterExpenseBox{background:#fff0e6;border:1px solid #f3c7a8}.afterExpenseBox small{color:#a64b12}.afterExpenseBox strong{color:#c45a13}.cashOnlineBox{background:#e8f5e9;border:1px solid #a5d6a7}.cashOnlineBox small{color:#256b2b}.cashOnlineBox strong{color:#198754}
 @media(max-width:800px){header{flex-direction:column;align-items:flex-start;gap:10px}header>div:last-child{text-align:left!important}.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
-
-/* Date/month navigation layout fix: keep every control inside the card */
-.summary-navigation{width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.date-nav-group,.month-nav-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
-.month-nav-group{margin-left:0;padding-left:0}
-.date-nav-group button,.month-nav-group button{padding:9px 10px;white-space:nowrap}
-.date-nav-group input,.month-nav-group input{max-width:170px;min-width:135px}
-@media(min-width:801px){
-  .summary-navigation{justify-content:flex-start}
-  .date-nav-group,.month-nav-group{flex:0 1 auto}
-}
-@media(max-width:1050px){
-  .summary-navigation{align-items:flex-start}
-  .date-nav-group,.month-nav-group{width:100%;flex-wrap:wrap}
-}
-@media(max-width:800px){
-  .summary-navigation{gap:10px}
-  .date-nav-group,.month-nav-group{width:100%;padding:0;margin:0}
-  .date-nav-group button,.month-nav-group button{flex:0 1 auto}
-  .date-nav-group input,.month-nav-group input{flex:1 1 145px;min-width:120px}
-}
-/* Compact summary navigation: keep all five navigation buttons on one line */
-.summary-navigation{display:flex;flex-wrap:nowrap;align-items:center;gap:4px;width:100%;min-width:0;overflow-x:auto;white-space:nowrap}
-.summary-navigation .date-nav-group,.summary-navigation .month-nav-group{display:flex;flex-wrap:nowrap;align-items:center;gap:4px;width:auto;min-width:max-content;margin:0;padding:0}
-.summary-navigation .date-nav-group button,.summary-navigation .month-nav-group button{font-size:11px;padding:5px 6px;white-space:nowrap;flex:0 0 auto}
-.summary-navigation .date-nav-group label,.summary-navigation .month-nav-group label{font-size:11px;padding:5px 7px!important;flex:0 0 auto}
-.summary-navigation .date-nav-group input,.summary-navigation .month-nav-group input{font-size:11px;padding:5px 4px;width:112px!important;min-width:112px;max-width:112px;flex:0 0 112px;margin:0}
-#lastTwoDatesBtn{font-size:11px;padding:5px 6px}
-@media(max-width:800px){.summary-navigation{gap:4px;overflow-x:auto}.summary-navigation .date-nav-group,.summary-navigation .month-nav-group{width:auto;flex-wrap:nowrap}.summary-navigation .date-nav-group input,.summary-navigation .month-nav-group input{flex:0 0 112px}}
 </style>
 </head>
 <body>
@@ -112,13 +83,12 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
       <strong id="monthTitle" style="color:#198754">Monthly Sale Summary — September 2026</strong>
     </div>
     <div class="notice">Current month is shown automatically. Previous months remain safely saved and can be opened with Previous Month or searched.</div>
-    <div class="summary-navigation">
+    <div style="display:flex;align-items:center;gap:8px">
       <div class="nav-group date-nav-group">
         <button class="soft-nav" onclick="changeDate(-1)">‹ Previous Date</button>
         <label for="summaryDate" style="font-weight:bold;color:#fff;background:linear-gradient(135deg,#1769aa,#5b4bdb);padding:9px 12px;border-radius:8px">Date</label>
         <input id="summaryDate" type="date" style="width:auto;margin:0" onchange="renderDashboard();renderSales()">
         <button class="soft-nav" onclick="changeDate(1)">Next Date ›</button>
-        <button id="lastTwoDatesBtn" class="success" onclick="toggleLastTwoDates()">Last 2 Dates Together</button>
       </div>
       <div class="nav-group month-nav-group">
         <button class="soft-nav" onclick="changeMonth(-1)">‹ Previous Month</button>
@@ -174,12 +144,12 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   <h2 id="saleModalTitle">New Daily Sale</h2>
   <label>Sale Type</label>
   <select id="sType" onchange="updateSaleFields()">
-    <option value="cash">Cash Sale (Bill + Balance)</option><option value="cash_received">Just Cash Received</option>
-    <option value="online">Online Sale (Bill + Balance)</option><option value="online_received">Just Online Received</option>
+    <option value="cash">Cash Bill + Due</option><option value="cash_received">Cash Received Only</option>
+    <option value="online">Online Bill + Due</option><option value="online_received">Online Received Only</option>
     <option value="total_payment">Total Payment</option>
-    <option value="advance_payment">Advance Payment Received</option>
-    <option value="credit">Credit Sale / Customer Owes</option>
-    <option value="balance_payment">Balance Payment Received</option>
+    <option value="advance_payment">Advance Received</option>
+    <option value="credit">Credit Sale (Due)</option>
+    <option value="balance_payment">Old Balance Received</option>
   </select>
   <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="totalPaymentMethodField" class="field-hidden"><label>Payment Received By</label><select id="sTotalPaymentMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
@@ -558,25 +528,6 @@ function calculateTotals(filterFn){
 }
 function monthlyTotals(month){return calculateTotals(date=>monthKey(date)===month);}
 
-let showLastTwoDates=false;
-function lastTwoSavedDates(){
-  const dates=[...new Set([
-    ...visibleSales().map(x=>x.date).filter(Boolean),
-    ...visibleExpenses().map(x=>x.date).filter(Boolean)
-  ])].sort().reverse();
-  return dates.slice(0,2);
-}
-function isSelectedSummaryDate(date){
-  return showLastTwoDates ? lastTwoSavedDates().includes(date) : date===getSummaryDate();
-}
-function toggleLastTwoDates(){
-  showLastTwoDates=!showLastTwoDates;
-  const btn=document.getElementById('lastTwoDatesBtn');
-  if(btn)btn.textContent=showLastTwoDates?'Show Single Date':'Last 2 Dates Together';
-  summaryMode='date';
-  renderDashboard();
-  renderSales();
-}
 function renderDateHistory(){
   const el=document.getElementById('dateHistory');
   if(!el)return;
@@ -606,7 +557,7 @@ function selectDate(date){
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 
-function totals(date){return calculateTotals(d=>showLastTwoDates ? lastTwoSavedDates().includes(d) : (!date || d===date));}
+function totals(date){return calculateTotals(d=>!date || d===date);}
 
 function renderDashboard(){
   const date=getSummaryDate(), t=totals(date);
@@ -614,7 +565,7 @@ function renderDashboard(){
   const summary=summaryMode==='month' ? mt : t;
   document.getElementById('summaryMonth').value=month;
   document.getElementById('monthTitle').textContent=(activeBranch==='all'?'Combined Monthly Summary':activeBranch==='2'?'Bahria Enclave Office Monthly Summary':'Head Office Monthly Summary')+' — '+monthLabel(month);
-  document.getElementById('dailyTitle').textContent=(activeBranch==='all'?'Combined Daily Summary':activeBranch==='2'?'Bahria Enclave Office Daily Summary':'Head Office Daily Summary')+' — '+(showLastTwoDates ? lastTwoSavedDates().join(' + ') : date);
+  document.getElementById('dailyTitle').textContent=(activeBranch==='all'?'Combined Daily Summary':activeBranch==='2'?'Bahria Enclave Office Daily Summary':'Head Office Daily Summary')+' — '+date;
 
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=money(val);};
   set('totalCash',summary.cash+summary.cashBalancePayment);
@@ -628,7 +579,7 @@ function renderDashboard(){
   set('cashOnlineTotal',summary.cashInHand+summary.online);
 
   const el=document.getElementById('expenseLedger');
-  const dayExpenses=visibleExpenses().filter(x=>isSelectedSummaryDate(x.date));
+  const dayExpenses=visibleExpenses().filter(x=>x.date===date);
   if(!dayExpenses.length){
     el.innerHTML='';
     return;
@@ -719,7 +670,7 @@ function saleBalancePaymentInfo(entry){
 function renderSales(){
   const date=getSummaryDate();
   const q=(document.getElementById('search').value||'').toLowerCase().trim();
-  let rows=q ? visibleSales().filter(x=>searchText(x).includes(q)) : visibleSales().filter(x=>isSelectedSummaryDate(x.date));
+  let rows=q ? visibleSales().filter(x=>searchText(x).includes(q)) : visibleSales().filter(x=>x.date===date);
   rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) || String(b.time||'').localeCompare(String(a.time||'')) || String(b.id).localeCompare(String(a.id)));
   const el=document.getElementById('salesLedger');
   if(!rows.length){el.innerHTML=q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+' in '+(activeBranch==='all'?'either branch':activeBranch==='2'?'Bahria Enclave Office':'Head Office')+'. Click “Add Daily Sale” to enter a sale.</div>';return;}
