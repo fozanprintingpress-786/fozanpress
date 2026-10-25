@@ -13,7 +13,7 @@ header h1{margin:0;font-size:25px} header span{opacity:.85}
 .main-layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(320px,1fr);gap:18px;align-items:start}
 .main-left{min-width:0}
 .monthly-dues-panel{position:sticky;top:12px;height:calc(100vh - 24px);min-height:120px;overflow-y:auto;border:1px solid #d7dde3;border-radius:18px;background:#fff;padding:14px;box-shadow:0 3px 14px #0000000d;transition:width .2s ease,padding .2s ease}
-.monthly-dues-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.monthly-dues-head h2{margin:0;font-size:18px}.dues-toggle{flex:0 0 auto;background:#eaf2f7;color:#123b5d;font-weight:bold;padding:7px 11px;font-size:18px;line-height:1}.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) 48px}.monthly-dues-panel.collapsed{height:auto;min-height:0;padding:8px;overflow:hidden}.monthly-dues-panel.collapsed .monthly-dues-content{display:none}.monthly-dues-panel.collapsed .monthly-dues-head{margin:0;justify-content:center}.monthly-dues-panel.collapsed .monthly-dues-head h2{display:none}
+.monthly-dues-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.monthly-dues-head h2{margin:0;font-size:18px}.dues-toggle{flex:0 0 auto;background:#eaf2f7;color:#123b5d;font-weight:bold;padding:7px 11px;font-size:18px;line-height:1}.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) 190px}.monthly-dues-panel.collapsed{height:auto;min-height:0;padding:10px;overflow:hidden;border:2px solid #dc3545;background:#fff8f8}.monthly-dues-panel.collapsed .monthly-dues-content{display:none}.monthly-dues-panel.collapsed .monthly-dues-head{margin:0;justify-content:space-between;gap:8px}.monthly-dues-panel.collapsed .monthly-dues-head h2{display:block;font-size:12px;line-height:1.25;color:#c62828;animation:creditTitleBlink 1s ease-in-out infinite}.monthly-dues-panel.collapsed .dues-toggle{font-size:15px;padding:8px 10px;background:#dc3545;color:#fff;animation:creditTitleBlink 1s ease-in-out infinite}.due-item:not(.paid){animation:creditItemBlink 1.15s ease-in-out infinite}@keyframes creditTitleBlink{0%,100%{opacity:1}50%{opacity:.45}}@keyframes creditItemBlink{0%,100%{box-shadow:0 0 0 0 #dc354500}50%{box-shadow:0 0 0 3px #dc354533}}
 .monthly-dues-panel h2{margin:0 0 5px;color:#123b5d}
 .dues-subtitle{font-size:12px;color:#687785;margin-bottom:12px}
 .due-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
@@ -32,7 +32,7 @@ header h1{margin:0;font-size:25px} header span{opacity:.85}
 .due-status{display:inline-block;font-size:10px;font-weight:700;padding:3px 6px;border-radius:10px;background:#fff0f0;color:#c62828;margin-top:6px}
 .due-item.partial .due-status{background:#fff7e6;color:#a66a00}
 .due-item.paid .due-status{background:#e8f7ee;color:#087f5b}
-@media(max-width:900px){.main-layout{grid-template-columns:minmax(0,1fr) 44px}.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) 44px}.monthly-dues-panel{position:relative;top:auto;height:auto;max-height:70vh;min-height:120px}.monthly-dues-panel:not(.collapsed){grid-column:1 / -1;grid-row:2}.monthly-dues-panel.collapsed{grid-column:2;grid-row:1}}
+@media(max-width:900px){.main-layout{grid-template-columns:minmax(0,1fr) 44px}.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) 190px}.monthly-dues-panel{position:relative;top:auto;height:auto;max-height:70vh;min-height:120px}.monthly-dues-panel:not(.collapsed){grid-column:1 / -1;grid-row:2}.monthly-dues-panel.collapsed{grid-column:2;grid-row:1}}
 .grid{display:grid;grid-template-columns:340px 1fr;gap:18px}
 .card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 3px 14px #00000012}
 h2{margin:0 0 15px;font-size:19px}
@@ -597,7 +597,7 @@ function toggleMonthlyDues(){
   if(!panel||!layout||!button)return;
   const collapsed=panel.classList.toggle('collapsed');
   layout.classList.toggle('dues-collapsed',collapsed);
-  button.textContent=collapsed?'▶':'◀';
+  button.textContent=collapsed?'▶ Open':'◀';
   button.setAttribute('aria-label',collapsed?'Expand monthly credit and balance':'Collapse monthly credit and balance');
   button.title=collapsed?'Expand monthly credit and balance':'Collapse monthly credit and balance';
 }
