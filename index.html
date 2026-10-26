@@ -89,6 +89,18 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 @media(max-width:520px){.bill-date-grid{grid-template-columns:1fr}.bill-paper{padding:16px}}
 .bill-generate-btn{width:100%;font-weight:700;color:#fff;background:linear-gradient(115deg,#123b5d,#1769aa 55%,#20a4a8);box-shadow:0 6px 14px #1769aa30;transition:transform .2s,box-shadow .2s}
 .bill-generate-btn:hover{transform:translateY(-2px);box-shadow:0 9px 18px #1769aa40}
+
+.bill-custom-toggle,.custom-add-item{width:100%;margin-top:9px;padding:10px 12px;border:1px solid #b9d9e8;border-radius:10px;background:linear-gradient(120deg,#fff7ed,#eefaff);color:#123b5d;font-weight:800;cursor:pointer;box-shadow:0 4px 10px #123b5d0a}
+.bill-custom-toggle:hover,.custom-add-item:hover{filter:brightness(.98);transform:translateY(-1px)}
+.custom-bill-builder{margin-top:12px;padding:12px;border:1px dashed #20a4a8;border-radius:12px;background:linear-gradient(145deg,#f0fbfb,#fff)}
+.custom-bill-note{font-size:11px;line-height:1.45;color:#52616d;background:#e6f7f5;padding:8px;border-radius:8px;margin-bottom:8px}
+.custom-bill-builder>label{display:block;font-size:11px;font-weight:800;color:#52616d;margin:9px 0 3px}
+.custom-bill-builder input{width:100%;min-width:0;padding:8px;border:1px solid #cbd9e6;border-radius:8px;background:#fff;margin:3px 0 5px;font-size:12px}
+.custom-bill-item{padding:9px;background:#fff;border:1px solid #e0e9ef;border-radius:9px;margin:8px 0}
+.custom-item-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 30px;gap:6px;align-items:end}
+.custom-item-fields label{display:block;font-size:10px;color:#687785;font-weight:700}
+.custom-remove-item{height:32px;border:0;border-radius:8px;background:#fff0f0;color:#c62828;font-size:20px;cursor:pointer}
+.custom-generate-btn{margin-top:10px;background:linear-gradient(115deg,#16804a,#20a4a8)}
 #billModal{z-index:9999}
 #billModal .box{width:min(760px,100%);padding:0;overflow:hidden;border-radius:16px}
 .bill-paper{padding:28px;background:#fff;color:#17212b}
@@ -149,6 +161,34 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 .bill-generate-btn:hover{transform:translateY(-2px);box-shadow:0 9px 18px #1769aa40}
 @media(max-width:1250px){.main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) minmax(275px,320px)}.main-left{grid-column:1;grid-row:1 / span 2}.monthly-dues-panel{grid-column:2;grid-row:1;position:relative;top:auto;max-height:52vh}.bill-generator-panel{grid-column:2;grid-row:2;position:relative;top:auto}}
 @media(max-width:800px){.main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr)}.main-left,.monthly-dues-panel,.bill-generator-panel{grid-column:1;grid-row:auto}.main-left{grid-row:auto}.monthly-dues-panel{max-height:none;height:auto}.bill-date-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+
+
+/* Refined Monthly Credit & Balance + collapsible Bill Generator */
+.monthly-dues-panel{border:1px solid #d5e4ef;border-top:5px solid #f58220;border-radius:18px;background:linear-gradient(155deg,#fff 0%,#f5faff 58%,#fffaf4 100%);box-shadow:0 10px 26px #123b5d12;padding:15px}
+.monthly-dues-head{padding:11px 12px;margin:-1px -1px 12px;border:1px solid #e0ebf4;border-radius:12px;background:linear-gradient(110deg,#123b5d,#1769aa 68%,#20a4a8);box-shadow:0 5px 14px #123b5d18}
+.monthly-dues-head h2{color:#fff!important;font-size:16px!important;font-weight:800;letter-spacing:.1px}
+.monthly-dues-head .dues-toggle{background:#fff!important;color:#123b5d!important;border:1px solid #d9e8f3;min-width:38px;height:36px;border-radius:10px;box-shadow:0 3px 8px #001b2b25}
+.monthly-dues-panel.collapsed .monthly-dues-head{background:linear-gradient(110deg,#a92336,#e64b5e);border-color:#f4c8ce;margin:0}
+.monthly-dues-panel.collapsed .monthly-dues-head h2{color:#fff!important;font-size:13px!important;animation:none}
+.monthly-dues-panel.collapsed .dues-toggle{background:#fff!important;color:#a92336!important;animation:none}
+.dues-subtitle{padding:8px 10px;border-radius:9px;background:#eef6fc;color:#526a7b;font-weight:600;border-left:3px solid #20a4a8;margin-bottom:12px}
+.due-summary{gap:9px}
+.due-summary>div{padding:12px;border:1px solid #e0eaf2;border-radius:11px;background:linear-gradient(145deg,#edf6ff,#fff);box-shadow:0 3px 9px #123b5d08}
+.due-summary small{font-size:11px;font-weight:700;letter-spacing:.15px}
+.due-summary strong{display:block;margin-top:3px;font-size:17px}
+.due-item{padding:12px;background:linear-gradient(110deg,#fff,#fffafa);border-left-width:5px;border-radius:12px}
+.bill-generator-panel{transition:box-shadow .2s,border-color .2s}
+.bill-generator-panel:hover{box-shadow:0 12px 28px #123b5d18}
+.bill-generator-title{width:100%;padding:10px;border:1px solid #dce9f2;border-radius:12px;background:linear-gradient(110deg,#edf6ff,#f1fbfb);margin-bottom:12px}
+.bill-generator-title .bill-title-copy{flex:1;min-width:0}
+.bill-panel-toggle{flex:0 0 36px;width:36px;height:36px;padding:0;border-radius:10px;background:linear-gradient(135deg,#123b5d,#1769aa);color:#fff;font-size:23px;font-weight:700;line-height:1;box-shadow:0 4px 10px #1769aa30}
+.bill-panel-toggle:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.bill-generator-panel.bill-collapsed{padding:10px;border-top-color:#f58220;background:linear-gradient(145deg,#fff,#f5fbff)}
+.bill-generator-panel.bill-collapsed .bill-generator{padding:0;border:0;background:transparent;box-shadow:none}
+.bill-generator-panel.bill-collapsed .bill-generator-title{margin:0}
+.bill-generator-panel.bill-collapsed .bill-generator-content{display:none}
+.bill-generator-panel.bill-collapsed .bill-panel-toggle{background:linear-gradient(135deg,#16804a,#20a4a8)}
+@media(max-width:800px){.monthly-dues-head{margin:0 0 12px}.bill-generator-title{gap:8px}.monthly-dues-panel.collapsed{grid-column:1;grid-row:auto}}
 
 </style>
 </head>
@@ -253,15 +293,29 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 </aside>
 <aside class="bill-generator-panel" id="billGeneratorPanel" aria-label="Customer bill generator">
   <div class="bill-generator">
-    <div class="bill-generator-title"><span class="bill-icon">▣</span><div><h3>Customer Bill Generator</h3><p>Saved customer ka date-wise bill banayein</p></div></div>
+    <div class="bill-generator-title"><span class="bill-icon">▣</span><div class="bill-title-copy"><h3>Customer Bill Generator</h3><p>Saved customer ka date-wise bill banayein</p></div><button class="bill-panel-toggle" id="billPanelToggle" type="button" aria-label="Close Customer Bill Generator" title="Close / open bill generator" onclick="toggleBillGenerator()">−</button></div>
+    <div class="bill-generator-content" id="billGeneratorContent">
     <label for="billCustomer">Customer Name</label>
     <input id="billCustomer" list="billCustomerList" placeholder="Customer ka naam likhein…" autocomplete="off">
     <datalist id="billCustomerList"></datalist>
     <div class="bill-date-grid">
-      <div><label for="billFromDate">From Date (اختیاری)</label><input id="billFromDate" type="date"></div>
-      <div><label for="billToDate">To Date (اختیاری)</label><input id="billToDate" type="date"></div>
+      <div><label for="billFromDate">From Date</label><input id="billFromDate" type="date"></div>
+      <div><label for="billToDate">To Date</label><input id="billToDate" type="date"></div>
     </div>
-    <button type="button" class="bill-generate-btn" onclick="generateCustomerBill()"><span>▣</span> Generate Customer Bill</button>
+    <button type="button" class="bill-generate-btn" onclick="generateCustomerBill()"><span>▣</span> Generate Saved Customer Bill</button>
+    <button type="button" class="bill-custom-toggle" onclick="toggleCustomBillBuilder()"><span>＋</span> Create New / Custom Bill</button>
+    <div id="customBillBuilder" class="custom-bill-builder" style="display:none">
+      <div class="custom-bill-note">New customer? Enter the name and add your own items and prices. This bill does not require a saved customer record.</div>
+      <label for="customBillDate">Bill Date</label><input id="customBillDate" type="date">
+      <div id="customBillItems">
+        <div class="custom-bill-item"><input class="custom-item-desc" placeholder="Item / service description" aria-label="Item description"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div></div>
+      </div>
+      <button type="button" class="custom-add-item" onclick="addCustomBillItem()">＋ Add Another Item</button>
+      <label for="customBillReceived">Advance / Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0">
+      <label for="customBillNotes">Notes (optional)</label><input id="customBillNotes" placeholder="Extra details / instructions">
+      <button type="button" class="bill-generate-btn custom-generate-btn" onclick="generateCustomBill()">✦ Generate Custom Bill</button>
+    </div>
+    </div>
   </div>
 </aside></div>
 </div>
@@ -703,6 +757,18 @@ function toggleMonthlyDues(){
   button.textContent=collapsed?'▶ Open':'◀';
   button.setAttribute('aria-label',collapsed?'Expand monthly credit and balance':'Collapse monthly credit and balance');
   button.title=collapsed?'Expand monthly credit and balance':'Collapse monthly credit and balance';
+}
+
+function toggleBillGenerator(){
+  const panel=document.getElementById('billGeneratorPanel');
+  const content=document.getElementById('billGeneratorContent');
+  const button=document.getElementById('billPanelToggle');
+  if(!panel||!content||!button)return;
+  const collapsed=panel.classList.toggle('bill-collapsed');
+  content.style.display=collapsed?'none':'';
+  button.textContent=collapsed?'+':'−';
+  button.setAttribute('aria-label',collapsed?'Open Customer Bill Generator':'Close Customer Bill Generator');
+  button.title=collapsed?'Open bill generator':'Close bill generator';
 }
 
 function renderMonthlyDues(){
@@ -1199,7 +1265,7 @@ function generateCustomerBill(){
     .filter(x=>(x.customer||'').trim().toLowerCase()===key);
   const records=allCustomerRecords.filter(x=>(!fromDate||String(x.date||'')>=fromDate)&&(!toDate||String(x.date||'')<=toDate))
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||'')));
-  if(!allCustomerRecords.length){alert('Is naam ka saved customer record nahi mila. Naam check karein ya pehle sale save karein.');return;}
+  if(!allCustomerRecords.length){const builder=document.getElementById('customBillBuilder');if(builder)builder.style.display='block';const customDate=document.getElementById('customBillDate');if(customDate&&!customDate.value)customDate.value=nowLocal().date;alert('Is customer ka saved record nahi mila. Aap neeche Create New / Custom Bill se apni items aur rates add karke bill bana sakte hain.');return;}
   if(!records.length){alert('Is customer ka selected date range mein koi record nahi mila. Dates check karein.');return;}
   const isReceipt=x=>isBalancePayment(x)||['advance_payment','total_payment','cash_received','online_received'].includes(x.type);
   const billRows=records.filter(x=>!isReceipt(x));
@@ -1224,6 +1290,65 @@ function generateCustomerBill(){
     '<table class="bill-table"><thead><tr><th>Date</th><th>Type</th><th>Description / Item</th><th style="text-align:right">Amount</th><th style="text-align:right">Balance Due</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="bill-total-row"><div class="bill-total-card"><div class="bill-total-line"><span>Total Bills (period)</span><strong>'+money(billTotal)+'</strong></div><div class="bill-total-line"><span>Received / Payments (period)</span><strong style="color:#198754">'+money(received)+'</strong></div><div class="bill-total-line due"><span>Outstanding*</span><strong>'+money(due)+'</strong></div></div></div>'+
     '<div class="bill-footer">*Outstanding reflects saved balance data for the listed transactions.<br>Thank you for choosing Fozan Printing Press.<br>Please contact us if any detail needs correction.</div>';
+  document.getElementById('billModal').style.display='flex';
+}
+function toggleCustomBillBuilder(){
+  const builder=document.getElementById('customBillBuilder');
+  if(!builder)return;
+  const opening=builder.style.display==='none'||!builder.style.display;
+  builder.style.display=opening?'block':'none';
+  if(opening){
+    const date=document.getElementById('customBillDate');
+    if(date&&!date.value)date.value=nowLocal().date;
+    const name=document.getElementById('billCustomer');
+    if(name)name.focus();
+  }
+}
+function addCustomBillItem(){
+  const wrap=document.getElementById('customBillItems');if(!wrap)return;
+  const row=document.createElement('div');row.className='custom-bill-item';
+  row.innerHTML='<input class="custom-item-desc" placeholder="Item / service description" aria-label="Item description"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div>';
+  wrap.appendChild(row);
+}
+function removeCustomBillItem(button){
+  const wrap=document.getElementById('customBillItems');const rows=wrap?wrap.querySelectorAll('.custom-bill-item'):[];
+  if(rows.length<=1){const row=rows[0];if(row){row.querySelector('.custom-item-desc').value='';row.querySelector('.custom-item-qty').value='1';row.querySelector('.custom-item-rate').value='';}return;}
+  button.closest('.custom-bill-item').remove();
+}
+function generateCustomBill(){
+  const name=(document.getElementById('billCustomer').value||'').trim();
+  if(!name){alert('Pehle Customer Name likhein.');document.getElementById('billCustomer').focus();return;}
+  const date=document.getElementById('customBillDate').value||nowLocal().date;
+  const itemEls=[...document.querySelectorAll('#customBillItems .custom-bill-item')];
+  const items=[];
+  for(const el of itemEls){
+    const desc=(el.querySelector('.custom-item-desc').value||'').trim();
+    const qty=Number(el.querySelector('.custom-item-qty').value||0);
+    const rate=Number(el.querySelector('.custom-item-rate').value||0);
+    if(!desc&&!rate)continue;
+    if(!desc){alert('Har item ki description likhein.');el.querySelector('.custom-item-desc').focus();return;}
+    if(!(qty>0)||rate<0||!Number.isFinite(rate)){alert('Quantity aur rate check karein.');return;}
+    items.push({desc,qty,rate,total:qty*rate});
+  }
+  if(!items.length){alert('Kam az kam aik item/service aur us ka rate add karein.');return;}
+  const subtotal=items.reduce((sum,x)=>sum+x.total,0);
+  const received=Math.max(0,Number(document.getElementById('customBillReceived').value||0));
+  if(received>subtotal){if(!confirm('Received amount bill total se zyada hai. Kya aap phir bhi bill generate karna chahte hain?'))return;}
+  const balance=subtotal-received;
+  const notes=(document.getElementById('customBillNotes').value||'').trim();
+  const branchLabel=activeBranch==='all'?'Combined Report':branchName(activeBranch);
+  const fmtDate=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB'):'—';
+  const logoMatch=generateCustomerBill.toString().match(/src="(data:image\/png;base64,[^"]+)"/);
+  const logoSrc=logoMatch?logoMatch[1]:'';
+  const rows=items.map(x=>'<tr><td>'+esc(x.desc)+'</td><td style="text-align:right">'+esc(String(x.qty))+'</td><td style="text-align:right">'+money(x.rate)+'</td><td style="text-align:right">'+money(x.total)+'</td></tr>').join('');
+  const generated=new Date().toLocaleDateString('en-GB');
+  document.getElementById('billContent').innerHTML=
+    '<div class="bill-head"><div class="bill-brand-row">'+(logoSrc?'<img class="bill-logo" src="'+logoSrc+'" alt="Fozan Printing Logo">':'')+'<div><div class="bill-brand">FOZAN PRINTING</div><div class="bill-sub">Printing &amp; Digital Services</div><div class="bill-sub">'+esc(branchLabel)+'</div></div></div><div style="text-align:right"><span class="bill-pill">CUSTOM BILL</span><div class="bill-sub" style="margin-top:8px">Bill Date: '+esc(fmtDate(date))+'</div><div class="bill-sub">Generated: '+generated+'</div></div></div>'+
+    '<div class="bill-customer"><div style="font-size:11px;color:#687785;margin-bottom:4px">CUSTOMER NAME</div><strong>'+esc(name)+'</strong><div class="bill-sub">Custom bill • manually entered items</div></div>'+
+    '<table class="bill-table"><thead><tr><th>Description / Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="bill-total-row"><div class="bill-total-card"><div class="bill-total-line"><span>Subtotal</span><strong>'+money(subtotal)+'</strong></div><div class="bill-total-line"><span>Received</span><strong style="color:#198754">'+money(received)+'</strong></div><div class="bill-total-line due"><span>Balance Due</span><strong>'+money(balance)+'</strong></div></div></div>'+
+    (notes?'<div class="bill-range"><strong>Notes:</strong> '+esc(notes)+'</div>':'')+
+    '<div class="bill-footer">Thank you for choosing Fozan Printing Press.<br>Please contact us if any detail needs correction.</div>';
   document.getElementById('billModal').style.display='flex';
 }
 function closeBillModal(){document.getElementById('billModal').style.display='none'}
