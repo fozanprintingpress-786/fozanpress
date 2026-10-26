@@ -1180,6 +1180,10 @@ function saveSale(){
   }else if(type==='credit'){
     const credit={id:uid(),branch_id:activeBranch,type,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),balance_payment:0};
     data.sales.push(credit);
+    // Immediately show the month of the newly added credit in Monthly Credit & Balance.
+    // Otherwise an old month selected in the summary can make the new credit appear missing.
+    const monthlyCreditMonth=document.getElementById('summaryMonth');
+    if(monthlyCreditMonth) monthlyCreditMonth.value=monthKey(date);
     applyUnallocatedAdvancesToCredit(customer);
     // Record any same-day receipts as separate transactions so daily totals remain accurate.
     if(initialBalance>0){
