@@ -190,6 +190,170 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 .bill-generator-panel.bill-collapsed .bill-panel-toggle{background:linear-gradient(135deg,#16804a,#20a4a8)}
 @media(max-width:800px){.monthly-dues-head{margin:0 0 12px}.bill-generator-title{gap:8px}.monthly-dues-panel.collapsed{grid-column:1;grid-row:auto}}
 
+
+/* User-requested layout: keep Monthly Credit & Balance and Bill Generator side-by-side */
+@media(min-width:801px){
+  .main-layout,.main-layout.dues-collapsed{
+    grid-template-columns:minmax(0,1fr) minmax(520px,620px)!important;
+    gap:16px!important;align-items:start!important
+  }
+  .main-left{grid-column:1!important;grid-row:1!important}
+  .monthly-dues-panel{
+    grid-column:2!important;grid-row:1!important;
+    display:flex;flex-direction:column;
+    height:calc(100vh - 24px)!important;max-height:calc(100vh - 24px)!important;
+    min-height:0!important;overflow:hidden!important;position:sticky!important;top:12px!important
+  }
+  .monthly-dues-content{overflow-y:auto!important;min-height:0;flex:1}
+  .bill-generator-panel{
+    grid-column:2!important;grid-row:1!important;
+    position:sticky!important;top:12px!important;margin-top:0!important;
+    width:100%!important;max-height:calc(100vh - 24px);overflow-y:auto
+  }
+  /* Use a two-panel right-side row */
+  .main-layout{grid-template-areas:"main side"!important}
+  .main-left{grid-area:main!important}
+  .monthly-dues-panel{grid-area:side!important;width:calc(50% - 6px)!important;justify-self:start}
+  .bill-generator-panel{grid-area:side!important;width:calc(50% - 6px)!important;justify-self:end}
+  .monthly-dues-head h2{font-size:14px!important}
+  .monthly-dues-head{gap:5px!important;padding:8px!important}
+  .dues-toggle{padding:7px!important}
+}
+@media(min-width:801px) and (max-width:1250px){
+  .main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) minmax(460px,500px)!important}
+  .monthly-dues-panel,.bill-generator-panel{width:calc(50% - 5px)!important}
+}
+@media(max-width:800px){
+  .main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr)!important}
+  .main-left,.monthly-dues-panel,.bill-generator-panel{grid-column:1!important;grid-row:auto!important}
+  .monthly-dues-panel{position:relative!important;top:auto!important;height:auto!important;max-height:65vh!important;overflow:hidden!important}
+  .monthly-dues-content{max-height:55vh;overflow-y:auto!important}
+  .bill-generator-panel{position:relative!important;top:auto!important;margin-top:0!important}
+}
+#overduePopup{display:none;position:fixed;inset:0;z-index:10001;background:#071827b8;align-items:center;justify-content:center;padding:18px}
+#overduePopup .overdue-box{width:min(460px,100%);background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 18px 60px #0005;border-top:6px solid #f58220}
+#overduePopup .overdue-head{padding:16px 18px;background:linear-gradient(110deg,#123b5d,#1769aa);color:#fff}
+#overduePopup .overdue-body{padding:20px}
+#overduePopup .overdue-name{font-size:22px;font-weight:800;color:#123b5d;overflow-wrap:anywhere}
+#overduePopup .overdue-amount{font-size:26px;font-weight:800;color:#c62828;margin:10px 0}
+#overduePopup .overdue-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0 20px 18px}
+#overduePopup .overdue-actions button{font-weight:700}
+#overduePopup .overdue-next{background:#123b5d;color:#fff}
+#overduePopup .overdue-close{background:#e9eef3;color:#123b5d}
+
+
+/* Final requested layout: Monthly Credit & Balance above Bill Generator in one side column */
+@media(min-width:801px){
+  .main-layout,.main-layout.dues-collapsed{
+    grid-template-columns:minmax(0,1fr) minmax(290px,330px)!important;
+    grid-template-areas:"main dues" "main bill"!important;
+    gap:14px 16px!important;align-items:start!important
+  }
+  .main-left{grid-area:main!important;grid-column:1!important;grid-row:1 / span 2!important;min-width:0!important}
+  .monthly-dues-panel{
+    grid-area:dues!important;grid-column:2!important;grid-row:1!important;
+    width:100%!important;max-width:100%!important;justify-self:stretch!important;
+    position:sticky!important;top:10px!important;height:calc(57vh - 12px)!important;
+    max-height:calc(57vh - 12px)!important;min-height:220px!important;
+    overflow:hidden!important;display:flex!important;flex-direction:column!important
+  }
+  .monthly-dues-content{flex:1!important;min-height:0!important;overflow-y:auto!important}
+  .bill-generator-panel{
+    grid-area:bill!important;grid-column:2!important;grid-row:2!important;
+    position:relative!important;top:auto!important;margin-top:0!important;
+    width:100%!important;max-width:100%!important;max-height:none!important;overflow:visible!important;
+    justify-self:stretch!important
+  }
+}
+@media(min-width:801px) and (max-width:1100px){
+  .main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr) minmax(265px,290px)!important}
+}
+@media(max-width:800px){
+  .main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"main" "dues" "bill"!important}
+  .main-left{grid-area:main!important;grid-column:1!important;grid-row:auto!important}
+  .monthly-dues-panel{grid-area:dues!important;grid-column:1!important;grid-row:auto!important;position:relative!important;top:auto!important;height:auto!important;max-height:65vh!important;overflow:hidden!important}
+  .bill-generator-panel{grid-area:bill!important;grid-column:1!important;grid-row:auto!important;position:relative!important;top:auto!important;margin-top:0!important;width:100%!important}
+}
+/* Keep customer and item details on one line where possible */
+#salesLedger td:nth-child(2),#salesLedger td:nth-child(3){white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.bill-table td:nth-child(3){white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
+.bill-customer strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+/* Always-visible close control for generated customer statements and custom bills */
+#billModal .box{position:relative!important}
+#billModal .bill-modal-close-top{
+  position:sticky;float:right;top:8px;margin:8px 8px -42px 0;z-index:10002;
+  border:0;border-radius:9px;background:#e62946;color:#fff;font-size:16px;font-weight:800;
+  min-width:38px;height:36px;cursor:pointer;box-shadow:0 2px 8px #0002
+}
+#billModal .bill-modal-close-top:hover{filter:brightness(.92)}
+
+
+/* Non-blocking overdue reminder: keep it at the side, never dim/lock the work area */
+#overduePopup{
+  display:none;position:fixed;inset:auto 16px 16px auto;z-index:10001;
+  background:transparent!important;align-items:flex-end!important;justify-content:flex-end!important;
+  padding:0!important;width:min(340px,calc(100vw - 24px));pointer-events:none!important
+}
+#overduePopup .overdue-box{
+  width:100%!important;max-width:340px!important;max-height:38vh;overflow-y:auto!important;
+  border-radius:14px!important;box-shadow:0 8px 28px #0003!important;
+  border-top:4px solid #f58220!important;pointer-events:auto!important
+}
+#overduePopup .overdue-head{padding:10px 13px!important}
+#overduePopup .overdue-body{padding:12px 14px!important}
+#overduePopup .overdue-name{font-size:18px!important}
+#overduePopup .overdue-amount{font-size:22px!important;margin:6px 0!important}
+#overduePopup .overdue-actions{padding:0 14px 12px!important}
+#overduePopup .overdue-actions button{padding:8px 11px!important}
+@media(max-width:800px){
+  #overduePopup{inset:auto 10px 10px auto!important;width:min(320px,calc(100vw - 20px))!important}
+  #overduePopup .overdue-box{max-height:34vh!important}
+}
+
+
+/* Avoid overlap: reminder sits at bottom-left, away from the right-side panels */
+#overduePopup{
+  inset:auto auto 14px 14px!important;
+  width:min(390px,calc(100vw - 28px))!important;
+  padding:0!important;
+  display:none;
+  background:transparent!important;
+  align-items:stretch!important;
+  justify-content:flex-end!important;
+  z-index:10001!important;
+  pointer-events:none!important;
+}
+#overduePopup .overdue-box{
+  width:100%!important;
+  max-width:390px!important;
+  max-height:min(42vh,340px)!important;
+  overflow:auto!important;
+  pointer-events:auto!important;
+  box-shadow:0 8px 28px #0003!important;
+}
+#overduePopup .overdue-head{padding:10px 14px!important}
+#overduePopup .overdue-body{padding:12px 15px!important}
+#overduePopup .overdue-name{font-size:18px!important}
+#overduePopup .overdue-amount{font-size:22px!important;margin:6px 0!important}
+#overduePopup .overdue-actions{padding:0 15px 12px!important}
+@media(max-width:800px){
+  #overduePopup{
+    left:10px!important;bottom:10px!important;
+    width:min(340px,calc(100vw - 20px))!important;
+  }
+  #overduePopup .overdue-box{max-height:38vh!important}
+}
+
+
+/* Final layout: reminder, Monthly Credit & Balance, and Bill Generator stacked in one sidebar */
+.main-layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(290px,330px)!important;gap:16px!important;align-items:start!important}
+.right-sidebar-stack{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:14px;min-width:0;width:100%;align-self:start}
+.main-left{grid-column:1;grid-row:1;min-width:0}
+.monthly-dues-panel,.bill-generator-panel{position:relative!important;inset:auto!important;width:100%!important;max-width:none!important;margin:0!important;min-width:0!important}
+#overduePopup{position:relative!important;inset:auto!important;z-index:1!important;width:100%!important;max-width:none!important;height:auto!important;min-height:0!important;padding:0!important;margin:0!important;background:transparent!important;align-items:stretch!important;justify-content:stretch!important;pointer-events:auto!important}
+#overduePopup .overdue-box{width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin:0!important;box-sizing:border-box!important}
+@media(max-width:1000px){.main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr)!important}.main-left{grid-column:1;grid-row:auto}.right-sidebar-stack{grid-column:1;grid-row:auto;width:100%}}
+
 </style>
 </head>
 <body>
@@ -285,6 +449,20 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     </tr></tbody></table></div>
 </section>
 </div>
+<div class="right-sidebar-stack">
+<div id="overduePopup" role="dialog" aria-modal="true" aria-label="Overdue customer balance reminder">
+  <div class="overdue-box">
+    <div class="overdue-head"><strong>⚠ Customer Payment Reminder</strong><div id="overdueCounter" style="font-size:12px;margin-top:4px;opacity:.9"></div></div>
+    <div class="overdue-body">
+      <div class="overdue-name" id="overdueName"></div>
+      <div id="overdueDescription" style="color:#52616d;margin-top:5px"></div>
+      <div class="overdue-amount" id="overdueAmount"></div>
+      <div id="overdueDays" style="font-weight:700;color:#c62828"></div>
+      <div id="overdueBranch" style="font-size:12px;color:#687785;margin-top:7px"></div>
+    </div>
+    <div class="overdue-actions"><button class="overdue-close" type="button" onclick="closeOverduePopup()">Close</button><button class="overdue-next" type="button" onclick="nextOverduePopup()">Next Customer →</button></div>
+  </div>
+</div>
 <aside class="monthly-dues-panel" id="monthlyDuesPanel" aria-label="Monthly credit and balance status">
   <div class="monthly-dues-head"><h2>Monthly Credit &amp; Balance</h2><button class="dues-toggle" id="duesToggle" type="button" aria-label="Collapse monthly credit and balance" title="Collapse / expand" onclick="toggleMonthlyDues()">◀</button></div>
   <div class="monthly-dues-content"><div class="dues-subtitle" id="duesMonthLabel">Customer-wise outstanding for selected month</div>
@@ -317,8 +495,10 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     </div>
     </div>
   </div>
-</aside></div>
+</aside>
+</div><!-- right-sidebar-stack --></div>
 </div>
+
 
 <div class="modal" id="saleModal" style="display: none;">
 <div class="box">
@@ -362,8 +542,9 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   </div>
 </div></div>
 
-<div class="modal" id="billModal" aria-modal="true" role="dialog">
+<div class="modal" id="billModal" aria-modal="true" role="dialog" onclick="if(event.target===this)closeBillModal()">
   <div class="box">
+    <button class="bill-modal-close-top" type="button" aria-label="Close bill" onclick="closeBillModal()">✕</button>
     <div id="billContent" class="bill-paper"></div>
     <div class="bill-modal-actions"><button class="muted" onclick="closeBillModal()">Close</button><button class="primary" onclick="window.print()">⎙ Print / Save PDF</button></div>
   </div>
@@ -696,11 +877,19 @@ function calculateTotals(filterFn){
     if(!filterFn(x.date))return;
     const amount=Number(x.amount||0);
     if(x.type==='cash_received')cash+=amount;
-    if(x.type==='total_payment'){if((x.payment_method||'cash')==='online')online+=amount;else cash+=amount;}
-    if(x.type==='cash')cash+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
+    // Total Payment entries appear only in the Daily Sales ledger.
+    // They must not change Cash Payment, Online Payment, Cash In Hand,
+    // Total Credit Sale, Total Expenses, or Cash + Online Total.
+    if(x.type==='cash'){
+      cash+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
+      credit+=Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
+    }
     if(x.type==='online_received')online+=amount;
-    if(x.type==='online')online+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
-    if(x.type==='credit'){credit+=Math.max(0,amount-Number(x.advance_payment||0));advance+=Number(x.advance_payment||0);if((x.advance_method||'cash')==='online')online+=Number(x.advance_payment||0);else cash+=Number(x.advance_payment||0);}
+    if(x.type==='online'){
+      online+=(Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0) ? Number(x.advance_payment||0) : amount;
+      credit+=Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
+    }
+    if(x.type==='credit'){credit+=customerBalance(x);advance+=Number(x.advance_payment||0);if((x.advance_method||'cash')==='online')online+=Number(x.advance_payment||0);else cash+=Number(x.advance_payment||0);}
     if(x.type==='advance_payment'){const received=Math.max(0,amount-Number(x.balance_payment||0));advance+=received;if((x.advance_method||'cash')==='online')online+=received;else cash+=received;}
     if(isBalancePayment(x)){
       balancePayment+=amount;
@@ -1361,6 +1550,7 @@ function generateCustomBill(){
   document.getElementById('billModal').style.display='flex';
 }
 function closeBillModal(){document.getElementById('billModal').style.display='none'}
+document.addEventListener('keydown',function(event){if(event.key==='Escape'){const modal=document.getElementById('billModal');if(modal&&modal.style.display==='flex')closeBillModal();}});
 
 function exportData(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -1410,6 +1600,68 @@ updateSaleFields();
 updateBalanceDue();
 renderDateHistory();renderDashboard();renderSales();refreshBillCustomerList();
 cloudLoad();
+
+let overduePopupQueue=[];
+let overduePopupIndex=0;
+let overduePopupTimer=null;
+function getOverdueCustomerEntries(){
+  const today=new Date();today.setHours(0,0,0,0);
+  return visibleSales().filter(x=>!String(x.type||'').startsWith('balance_payment') && ['credit','cash','online'].includes(x.type)).map(x=>{
+    const originalDue=x.type==='credit'
+      ? Math.max(0,Number(x.amount||0)-Number(x.advance_payment||0))
+      : Math.max(0,Number(x.balance_payment||0));
+    const due=x.type==='credit' ? customerBalance(x) : Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
+    const dt=new Date(String(x.date||'')+'T00:00:00');
+    const days=Math.floor((today-dt)/86400000);
+    return {x,due,originalDue,days};
+  }).filter(e=>e.due>0.0001 && e.originalDue>0.0001 && Number.isFinite(e.days) && e.days>=10)
+    .sort((a,b)=>b.days-a.days);
+}
+function showOverduePopup(){
+  const popup=document.getElementById('overduePopup');
+  if(!popup)return;
+  overduePopupQueue=getOverdueCustomerEntries();
+  overduePopupIndex=0;
+  if(!overduePopupQueue.length){popup.style.display='none';return;}
+  renderOverduePopupItem();
+  popup.style.display='flex';
+  if(overduePopupTimer)clearInterval(overduePopupTimer);
+  overduePopupTimer=setInterval(()=>{
+    if(document.getElementById('overduePopup')?.style.display==='flex') nextOverduePopup();
+  },10000);
+}
+function renderOverduePopupItem(){
+  const e=overduePopupQueue[overduePopupIndex];if(!e)return;
+  document.getElementById('overdueName').textContent=e.x.customer||'Customer not named';
+  document.getElementById('overdueDescription').textContent=(e.x.desc||'Outstanding payment')+' • '+(e.x.type==='credit'?'Credit':'Balance');
+  document.getElementById('overdueAmount').textContent=money(e.due);
+  document.getElementById('overdueDays').textContent='Unpaid for '+e.days+' days';
+  document.getElementById('overdueBranch').textContent=activeBranch==='all'?branchName(e.x.branch_id||'1'):'';
+  document.getElementById('overdueCounter').textContent='Customer '+(overduePopupIndex+1)+' of '+overduePopupQueue.length;
+}
+function nextOverduePopup(){
+  if(!overduePopupQueue.length)return closeOverduePopup();
+  overduePopupIndex++;
+  if(overduePopupIndex>=overduePopupQueue.length){closeOverduePopup();return;}
+  renderOverduePopupItem();
+}
+function closeOverduePopup(){
+  const popup=document.getElementById('overduePopup');if(popup)popup.style.display='none';
+  if(overduePopupTimer){clearInterval(overduePopupTimer);overduePopupTimer=null;}
+}
+function startMonthlyDuesAutoScroll(){
+  const host=document.getElementById('monthlyDues');
+  if(!host)return;
+  if(window.monthlyDuesScrollTimer)clearInterval(window.monthlyDuesScrollTimer);
+  window.monthlyDuesScrollTimer=setInterval(()=>{
+    const panel=document.querySelector('.monthly-dues-content');
+    if(!panel || panel.scrollHeight<=panel.clientHeight+8)return;
+    const atBottom=panel.scrollTop+panel.clientHeight>=panel.scrollHeight-5;
+    panel.scrollTo({top:atBottom?0:panel.scrollTop+Math.max(80,panel.clientHeight*0.55),behavior:'smooth'});
+  },4000);
+}
+
+window.addEventListener('load',()=>{setTimeout(showOverduePopup,1800);setTimeout(startMonthlyDuesAutoScroll,2500);});
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
 </script>
 
