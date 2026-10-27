@@ -274,9 +274,15 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
   .monthly-dues-panel{grid-area:dues!important;grid-column:1!important;grid-row:auto!important;position:relative!important;top:auto!important;height:auto!important;max-height:65vh!important;overflow:hidden!important}
   .bill-generator-panel{grid-area:bill!important;grid-column:1!important;grid-row:auto!important;position:relative!important;top:auto!important;margin-top:0!important;width:100%!important}
 }
-/* Keep customer and item details on one line where possible */
-#salesLedger td:nth-child(2),#salesLedger td:nth-child(3){white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
-.bill-table td:nth-child(3){white-space:nowrap;max-width:360px;overflow:hidden;text-overflow:ellipsis}
+/* Show complete customer and item descriptions; wrap long details instead of cutting them off */
+#salesLedger{width:100%;min-width:0}
+#salesLedger table{table-layout:auto;width:100%}
+#salesLedger th,#salesLedger td{vertical-align:top}
+#salesLedger td:nth-child(2){white-space:normal;min-width:110px;max-width:220px;overflow-wrap:anywhere}
+#salesLedger td:nth-child(3){white-space:normal;min-width:220px;max-width:420px;overflow-wrap:anywhere;word-break:normal;line-height:1.45}
+#salesLedger .item-description{display:block;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+#salesLedger .balance-received-badge{display:block;width:max-content;max-width:100%;white-space:normal;margin-top:6px;line-height:1.35}
+.bill-table td:nth-child(3){white-space:normal;max-width:360px;overflow-wrap:anywhere}
 .bill-customer strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 /* Always-visible close control for generated customer statements and custom bills */
 #billModal .box{position:relative!important}
@@ -1166,7 +1172,7 @@ function renderSales(){
     const shownBalance = ['cash','online'].includes(x.type)
       ? remainingSaleBalance
       : 0;
-    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td>${esc(x.desc||'-')}${creditStatus}${isBalancePayment(x)?' <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fff7e6;color:#e67e00">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
