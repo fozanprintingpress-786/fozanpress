@@ -360,6 +360,139 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 #overduePopup .overdue-box{width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;margin:0!important;box-sizing:border-box!important}
 @media(max-width:1000px){.main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr)!important}.main-left{grid-column:1;grid-row:auto}.right-sidebar-stack{grid-column:1;grid-row:auto;width:100%}}
 
+
+/* FOZAN CRM-inspired orange / charcoal dashboard */
+:root{--fo-orange:#f58220;--fo-orange2:#ff9b38;--fo-ink:#111827;--fo-panel:#182235;--fo-line:#2d3a50;--fo-muted:#aeb9ca}
+body{background:#eef1f5;color:#182235;font-family:Inter,Arial,Tahoma,sans-serif}
+header{background:linear-gradient(110deg,#101827 0%,#202b3d 72%,#30394b 100%);border-bottom:4px solid var(--fo-orange);padding:15px 24px;box-shadow:0 8px 25px #11182720}
+header h1{letter-spacing:1.3px;font-size:24px!important}header img{border-radius:12px!important}
+.container{max-width:1800px;margin:20px auto;padding:0 18px}
+.main-layout{grid-template-columns:minmax(0,1fr) minmax(320px,390px)!important;gap:18px!important}
+.card{background:#fff;border:1px solid #e1e5eb;border-radius:16px;box-shadow:0 8px 24px #1720330c;padding:20px}
+h2{color:#202b3d}.toolbar{align-items:center}
+button{transition:transform .18s,box-shadow .18s,filter .18s}
+button:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 5px 14px #11182718}
+.primary,.bill-generate-btn{background:linear-gradient(115deg,#e96e12,#ff982f)!important;color:#fff!important}
+.success{background:#202b3d!important;color:#fff}.danger{background:#c93636!important}
+.muted,.soft-nav{background:#f1f3f6!important;color:#354052!important;border:1px solid #e0e4ea}
+.stat{background:#f7f8fa;border:1px solid #e8ebef;border-radius:12px;padding:15px}
+.stat small{font-weight:700;letter-spacing:.25px}.stat strong{font-size:20px}
+.stats{gap:12px}
+table{font-size:13px}th{background:#f3f5f8;color:#283447}td,th{padding:11px 9px}
+input,textarea,select{border-color:#dce1e8;border-radius:9px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color:var(--fo-orange)}
+.side-column{min-width:0;display:flex;flex-direction:column;gap:12px;grid-column:2;grid-row:1}.fozan-sidebar{background:linear-gradient(180deg,#151e2d,#202b3d);border:1px solid #303c50;border-radius:17px;padding:16px 12px;color:#fff;box-shadow:0 12px 30px #11182724;position:relative;top:auto;min-height:0;display:flex;flex-direction:column}
+.sidebar-brand{display:flex;align-items:center;gap:11px;padding:5px 8px 18px;border-bottom:1px solid #344054}
+.brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#ff9c37,#e85d0b);font-size:25px;font-weight:900;color:#111827;box-shadow:0 5px 15px #f5822040}
+.sidebar-brand strong{display:block;font-size:17px;letter-spacing:1.5px}.sidebar-brand small{display:block;color:#9eabba;font-size:11px;margin-top:3px}
+.sidebar-caption{font-size:10px;font-weight:800;letter-spacing:1.4px;color:#8491a4;padding:22px 10px 9px}
+.side-menu{display:grid;gap:7px}
+.side-link{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:13px 11px;border-radius:11px;background:transparent;color:#c6cfdb;border:1px solid transparent}
+.side-link span{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#29364a;color:#ff9b38;font-size:17px}
+.side-link b{font-size:12px;flex:1}.side-link em{font-style:normal;color:#8e9aad}
+.side-link:hover,.side-link.active{background:linear-gradient(105deg,#f58220,#ed7116);color:#fff;border-color:#ffad63;box-shadow:0 7px 17px #f5822033}
+.side-link.active span,.side-link:hover span{background:#fff2e5;color:#d85d08}
+.side-link.active em{color:#fff}
+.sidebar-foot{margin-top:auto;border-top:1px solid #344054;padding:16px 8px 4px;color:#dce3ec;font-size:11px}
+.sidebar-foot small{display:block;color:#8997aa;margin:5px 0 0 14px}.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#36c58b;margin-right:6px;box-shadow:0 0 0 4px #36c58b20}
+.right-sidebar-stack{min-width:0;width:100%}
+.side-view{display:none;animation:sideIn .22s ease}.side-view.active{display:block}
+@keyframes sideIn{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:none}}
+.monthly-dues-panel,.bill-generator-panel,.report-panel{width:100%!important;max-width:none!important;max-height:calc(100vh - 28px)!important;height:auto!important;min-height:0!important;position:relative!important;top:auto!important;overflow:auto!important;border:1px solid #e1e5eb!important;border-top:4px solid var(--fo-orange)!important;border-radius:15px!important;background:#fff!important;padding:14px!important;box-shadow:0 8px 24px #17203310!important}
+.monthly-dues-head{background:#202b3d!important;border:0!important;border-radius:10px!important;padding:11px!important;margin:0 0 12px!important}
+.monthly-dues-head h2{color:#fff!important}
+.monthly-dues-head .dues-toggle{color:#202b3d!important}
+.dues-subtitle{background:#fff4e9!important;border-left-color:var(--fo-orange)!important}
+.due-summary>div{background:#f7f8fa!important}
+.due-item{background:#fff!important}
+.bill-generator{padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.bill-generator-title{background:#f5f6f8!important;border-color:#e7e9ed!important}
+.bill-generator-title .bill-icon{background:linear-gradient(135deg,#f58220,#d95e0b)!important}
+.bill-generator h3{color:#202b3d!important}
+.bill-generator-panel .bill-generate-btn{background:linear-gradient(115deg,#e96e12,#ff982f)!important}
+#overduePopup{width:100%!important;position:relative!important;inset:auto!important;background:transparent!important;padding:0!important}
+#overduePopup .overdue-box{width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important;border:1px solid #f1d7c3!important;border-top:5px solid var(--fo-orange)!important;border-radius:14px!important;box-shadow:0 8px 22px #1720330c!important}
+#overduePopup .overdue-head{background:#202b3d!important}
+#overduePopup .overdue-name{color:#202b3d!important}
+.overdue-empty-note{margin-top:12px;padding:12px;border-radius:10px;background:#fff4e9;color:#8b4a16;font-size:12px;line-height:1.5}
+.report-panel{padding:17px!important}
+.report-heading{display:flex;align-items:center;gap:11px;margin-bottom:17px}
+.report-icon{width:42px;height:42px;display:grid;place-items:center;background:#fff0e2;color:#e66e13;border-radius:12px;font-size:23px}
+.report-heading h2{margin:0;font-size:17px}.report-heading p{margin:4px 0 0;color:#778294;font-size:11px}
+.report-kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.report-kpis>div{background:#f6f7f9;border:1px solid #e9ebef;border-radius:10px;padding:12px;min-width:0}
+.report-kpis small{display:block;color:#788394;font-size:10px;font-weight:700}.report-kpis strong{display:block;color:#202b3d;font-size:15px;margin-top:6px;overflow-wrap:anywhere}
+.report-kpis .report-net{grid-column:1/-1;background:#fff3e8;border-color:#f7d7bd}.report-kpis .report-net strong{color:#d7650c;font-size:20px}
+.report-hint{font-size:11px;color:#7b8492;line-height:1.5;margin:13px 0}
+@media(max-width:1000px){.main-layout,.main-layout.dues-collapsed{grid-template-columns:minmax(0,1fr)!important}.side-column{grid-column:1;grid-row:auto}.fozan-sidebar{position:relative;min-height:0}.sidebar-foot{margin-top:15px}.side-menu{grid-template-columns:repeat(2,minmax(0,1fr))}.main-left{grid-column:1!important;grid-row:auto!important}}
+@media(max-width:560px){header{padding:13px 15px}.container{padding:0 10px}.side-menu{grid-template-columns:1fr 1fr}.side-link{padding:11px 8px;gap:7px}.side-link b{font-size:11px}.stats{grid-template-columns:1fr 1fr}.card{padding:13px}.report-kpis{grid-template-columns:1fr 1fr}}
+
+/* Navigation refinement: sections stay closed until selected */
+.sidebar-menu-head{display:flex;align-items:center;gap:11px;padding:5px 8px 17px;border-bottom:1px solid #344054;margin-bottom:4px}
+.sidebar-menu-mark{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#ff9b38,#ed6b12);color:#172033;font-size:22px;font-weight:900;box-shadow:0 6px 16px #f5822038}
+.sidebar-menu-head strong{display:block;color:#fff;font-size:12px;letter-spacing:1.15px}
+.sidebar-menu-head small{display:block;color:#98a5b8;font-size:10px;margin-top:4px}
+.sidebar-caption{padding-top:17px}
+.fozan-sidebar{padding:15px 12px 13px;border-radius:18px;background:linear-gradient(155deg,#111a29 0%,#202d42 100%);border:1px solid #35435a}
+.side-menu{gap:8px}
+.side-link{min-height:49px;padding:11px 12px;border-radius:12px;gap:12px;background:#ffffff08;border:1px solid #ffffff0b;transition:all .2s ease}
+.side-link span{width:30px;height:30px;border-radius:9px;background:#ffffff10;color:#ff9b38;font-size:17px}
+.side-link b{font-size:12px;letter-spacing:.1px}
+.side-link em{font-size:15px;color:#8e9caf}
+.side-link:hover{transform:translateX(2px);background:#ffffff12;border-color:#f5822055;box-shadow:none}
+.side-link.active{background:linear-gradient(105deg,#f58220,#f99a3a);border-color:#ffbd7b;color:#fff;box-shadow:0 8px 20px #f5822038}
+.side-link.active span{background:#fff2e6;color:#d85d08}
+.side-link.active em{color:#fff}
+.sidebar-foot{padding-top:13px}
+.monthly-dues-panel{border-top-width:4px!important}
+.monthly-dues-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;padding:10px 11px!important}
+.dues-heading-copy{display:flex;align-items:center;gap:9px;min-width:0}
+.dues-heading-icon{width:31px;height:31px;display:grid;place-items:center;flex:0 0 31px;border-radius:9px;background:#ffffff18;color:#ffad63;font-size:17px}
+.monthly-dues-head h2{font-size:14px!important;letter-spacing:.1px}
+.monthly-dues-head .dues-toggle{width:30px!important;height:30px!important;min-width:30px!important;padding:0!important;border-radius:9px!important;background:#ffffff18!important;color:#fff!important;border:1px solid #ffffff24!important;font-size:19px!important;line-height:1!important}
+.monthly-dues-head .dues-toggle:hover{background:#f58220!important;color:#fff!important}
+.side-view.active{animation:sideIn .24s ease both}
+@media(max-width:1000px){.sidebar-menu-head{padding-bottom:12px}.fozan-sidebar{padding:13px}.side-link{min-height:44px}}
+
+
+/* Full-screen CRM-style Monthly Report */
+#fullMonthlyReport{display:none;position:fixed;inset:0;z-index:10050;background:#111827;color:#e8eef8;overflow:auto;padding:22px}
+#fullMonthlyReport.open{display:block}
+#fullMonthlyReport .mr-shell{max-width:1500px;margin:0 auto}
+#fullMonthlyReport .mr-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px;background:#17243a;border:1px solid #34445f;border-radius:16px;margin-bottom:18px}
+#fullMonthlyReport .mr-brand{display:flex;align-items:center;gap:12px}
+#fullMonthlyReport .mr-mark{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f58220,#ffad42);display:grid;place-items:center;color:#17243a;font-weight:900;font-size:24px;box-shadow:0 5px 16px #f5822038}
+#fullMonthlyReport h1{font-size:22px;margin:0;color:#fff}
+#fullMonthlyReport .mr-sub{font-size:12px;color:#9fb0c8;margin-top:4px}
+#fullMonthlyReport .mr-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#fullMonthlyReport select,#fullMonthlyReport input{background:#0e1b30;color:#f4f7fb;border:1px solid #3b4d68;border-radius:9px;padding:10px 12px;margin:0;min-width:145px}
+#fullMonthlyReport button{background:#f58220;color:#17243a;font-weight:800;border-radius:9px;padding:10px 14px}
+#fullMonthlyReport .mr-close{background:#2a3951;color:#fff;border:1px solid #465873}
+#fullMonthlyReport .mr-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+#fullMonthlyReport .mr-card{background:#17243a;border:1px solid #34445f;border-radius:14px;padding:17px;min-width:0;box-shadow:0 8px 22px #0002}
+#fullMonthlyReport .mr-card small{display:block;color:#9fb0c8;font-size:12px;margin-bottom:8px}
+#fullMonthlyReport .mr-card strong{font-size:24px;color:#fff;overflow-wrap:anywhere}
+#fullMonthlyReport .mr-card .mr-accent{color:#ff9b36}
+#fullMonthlyReport .mr-middle{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-bottom:16px}
+#fullMonthlyReport .mr-card h3{margin:0 0 15px;color:#fff;font-size:16px}
+#fullMonthlyReport .mr-progress-row{display:grid;grid-template-columns:100px 1fr 105px;gap:10px;align-items:center;margin:13px 0;font-size:12px;color:#bdc9da}
+#fullMonthlyReport .mr-track{height:10px;background:#263b5b;border-radius:20px;overflow:hidden}
+#fullMonthlyReport .mr-fill{height:100%;background:linear-gradient(90deg,#f58220,#ffb04e);border-radius:20px}
+#fullMonthlyReport .mr-stat-line{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #2a3a54;color:#b8c5d8;font-size:13px}
+#fullMonthlyReport .mr-stat-line b{color:#fff}
+#fullMonthlyReport .mr-table-wrap{overflow:auto}
+#fullMonthlyReport table{margin:0;color:#dce5f1;min-width:720px}
+#fullMonthlyReport th{background:#f58220;color:#17243a;position:sticky;top:0}
+#fullMonthlyReport td{border-bottom:1px solid #2a3a54}
+#fullMonthlyReport .mr-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 10px}
+#fullMonthlyReport .mr-section-head h2{margin:0;color:#fff;font-size:18px}
+#fullMonthlyReport .mr-muted{color:#9fb0c8;font-size:12px}
+#fullMonthlyReport .mr-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#fullMonthlyReport .mr-empty{padding:25px;text-align:center;color:#9fb0c8}
+@media(max-width:900px){#fullMonthlyReport .mr-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#fullMonthlyReport .mr-middle{grid-template-columns:1fr}}
+@media(max-width:600px){#fullMonthlyReport{padding:10px}#fullMonthlyReport .mr-top{align-items:flex-start;flex-direction:column}#fullMonthlyReport .mr-grid{grid-template-columns:1fr 1fr;gap:8px}#fullMonthlyReport .mr-card{padding:12px}#fullMonthlyReport .mr-card strong{font-size:18px}#fullMonthlyReport .mr-progress-row{grid-template-columns:75px 1fr 82px;gap:6px}}
+@media print{body>*:not(#fullMonthlyReport){display:none!important}#fullMonthlyReport{display:block!important;position:static;background:#fff;color:#111;padding:0}#fullMonthlyReport .mr-top,#fullMonthlyReport .mr-card{background:#fff;color:#111;border:1px solid #ccc;box-shadow:none}#fullMonthlyReport h1,#fullMonthlyReport .mr-card h3,#fullMonthlyReport .mr-card strong{color:#111}#fullMonthlyReport .mr-tools button{display:none}}
+
 </style>
 </head>
 <body>
@@ -455,56 +588,106 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
     </tr></tbody></table></div>
 </section>
 </div>
+<div class="side-column">
+<aside class="fozan-sidebar">
+  <div class="sidebar-menu-head"><span class="sidebar-menu-mark">▦</span><div><strong>MANAGEMENT MENU</strong><small>Navigate your workspace</small></div></div>
+  <nav class="side-menu" aria-label="Management sections">
+    <button class="side-link" data-panel="credit" onclick="showSidePanel('credit')"><span>◉</span><b>Credit Balance</b><em id="creditNavCount">›</em></button>
+    <button class="side-link" data-panel="bill" onclick="showSidePanel('bill')"><span>▤</span><b>Bill Generate</b><em>›</em></button>
+    <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Credit Over 20 Days</b><em id="overdueNavCount">›</em></button>
+    <button class="side-link" data-panel="report" onclick="showSidePanel('report')"><span>▥</span><b>Monthly Report</b><em>›</em></button>
+  </nav>
+  <div class="sidebar-foot"><span class="live-dot"></span> Fozan Daily Sale <small>Management System</small></div>
+</aside>
 <div class="right-sidebar-stack">
-<div id="overduePopup" role="dialog" aria-modal="true" aria-label="Overdue customer balance reminder">
-  <div class="overdue-box">
-    <div class="overdue-head"><strong>⚠ Customer Payment Reminder</strong><div id="overdueCounter" style="font-size:12px;margin-top:4px;opacity:.9"></div></div>
-    <div class="overdue-body">
-      <div class="overdue-name" id="overdueName"></div>
-      <div id="overdueDescription" style="color:#52616d;margin-top:5px"></div>
-      <div class="overdue-amount" id="overdueAmount"></div>
-      <div id="overdueDays" style="font-weight:700;color:#c62828"></div>
-      <div id="overdueBranch" style="font-size:12px;color:#687785;margin-top:7px"></div>
-    </div>
-    <div class="overdue-actions"><button class="overdue-close" type="button" onclick="closeOverduePopup()">Close</button><button class="overdue-next" type="button" onclick="nextOverduePopup()">Next Customer →</button></div>
-  </div>
-</div>
-<aside class="monthly-dues-panel" id="monthlyDuesPanel" aria-label="Monthly credit and balance status">
-  <div class="monthly-dues-head"><h2>Monthly Credit &amp; Balance</h2><button class="dues-toggle" id="duesToggle" type="button" aria-label="Collapse monthly credit and balance" title="Collapse / expand" onclick="toggleMonthlyDues()">◀</button></div>
-  <div class="monthly-dues-content"><div class="dues-subtitle" id="duesMonthLabel">Customer-wise outstanding for selected month</div>
-  <div id="monthlyDues"><div class="empty">Loading monthly balances…</div></div></div>
-  
-</aside>
-<aside class="bill-generator-panel" id="billGeneratorPanel" aria-label="Customer bill generator">
-  <div class="bill-generator">
-    <div class="bill-generator-title"><span class="bill-icon">▣</span><div class="bill-title-copy"><h3>Customer Bill Generator</h3><p>Saved customer ka date-wise bill banayein</p></div><button class="bill-panel-toggle" id="billPanelToggle" type="button" aria-label="Close Customer Bill Generator" title="Close / open bill generator" onclick="toggleBillGenerator()">−</button></div>
-    <div class="bill-generator-content" id="billGeneratorContent">
-    <label for="billCustomer">Customer Name</label>
-    <input id="billCustomer" list="billCustomerList" placeholder="Customer ka naam likhein…" autocomplete="off">
-    <datalist id="billCustomerList"></datalist>
-    <div class="bill-date-grid">
-      <div><label for="billFromDate">From Date</label><input id="billFromDate" type="date"></div>
-      <div><label for="billToDate">To Date</label><input id="billToDate" type="date"></div>
-    </div>
-    <button type="button" class="bill-generate-btn" onclick="generateCustomerBill()"><span>▣</span> Generate Saved Customer Bill</button>
-    <button type="button" class="bill-custom-toggle" onclick="toggleCustomBillBuilder()"><span>＋</span> Create New / Custom Bill</button>
-    <div id="customBillBuilder" class="custom-bill-builder" style="display:none">
-      <div class="custom-bill-note">New customer? Enter the name and add your own items and prices. This bill does not require a saved customer record.</div>
-      <label for="customBillDate">Bill Date</label><input id="customBillDate" type="date">
-      <div id="customBillItems">
-        <div class="custom-bill-item"><input class="custom-item-desc" placeholder="Item / service description" aria-label="Item description"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div></div>
+  <section class="side-view" id="side-credit">
+    <aside class="monthly-dues-panel" id="monthlyDuesPanel" aria-label="Monthly credit and balance status">
+      <div class="monthly-dues-head"><div class="dues-heading-copy"><span class="dues-heading-icon">◉</span><h2>Monthly Credit &amp; Balance</h2></div><button class="dues-toggle" id="duesToggle" type="button" aria-label="Close monthly credit and balance" title="Close section" onclick="showSidePanel('credit')">×</button></div>
+      <div class="monthly-dues-content"><div class="dues-subtitle" id="duesMonthLabel">Customer-wise outstanding for selected month</div>
+      <div id="monthlyDues"><div class="empty">Loading monthly balances…</div></div></div>
+    </aside>
+  </section>
+  <section class="side-view" id="side-bill">
+    <aside class="bill-generator-panel" id="billGeneratorPanel" aria-label="Customer bill generator">
+      <div class="bill-generator">
+        <div class="bill-generator-title"><span class="bill-icon">▣</span><div class="bill-title-copy"><h3>Customer Bill Generator</h3><p>Create a saved customer's date-wise bill</p></div><button class="bill-panel-toggle" id="billPanelToggle" type="button" aria-label="Close Customer Bill Generator" title="Close / open bill generator" onclick="toggleBillGenerator()">−</button></div>
+        <div class="bill-generator-content" id="billGeneratorContent">
+          <label for="billCustomer">Customer Name</label><input id="billCustomer" list="billCustomerList" placeholder="Enter customer name…" autocomplete="off"><datalist id="billCustomerList"></datalist>
+          <div class="bill-date-grid"><div><label for="billFromDate">From Date</label><input id="billFromDate" type="date"></div><div><label for="billToDate">To Date</label><input id="billToDate" type="date"></div></div>
+          <button type="button" class="bill-generate-btn" onclick="generateCustomerBill()"><span>▣</span> Generate Saved Customer Bill</button>
+          <button type="button" class="bill-custom-toggle" onclick="toggleCustomBillBuilder()"><span>＋</span> Create New / Custom Bill</button>
+          <div id="customBillBuilder" class="custom-bill-builder" style="display:none">
+            <div class="custom-bill-note">New customer? Enter the name and add your own items and prices. This bill does not require a saved customer record.</div>
+            <label for="customBillDate">Bill Date</label><input id="customBillDate" type="date">
+            <div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" placeholder="Item / service description" aria-label="Item description"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
+            <button type="button" class="custom-add-item" onclick="addCustomBillItem()">＋ Add Another Item</button>
+            <label for="customBillReceived">Advance / Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0">
+            <label for="customBillNotes">Notes (optional)</label><input id="customBillNotes" placeholder="Extra details / instructions">
+            <button type="button" class="bill-generate-btn custom-generate-btn" onclick="generateCustomBill()">✦ Generate Custom Bill</button>
+          </div>
+        </div>
       </div>
-      <button type="button" class="custom-add-item" onclick="addCustomBillItem()">＋ Add Another Item</button>
-      <label for="customBillReceived">Advance / Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0">
-      <label for="customBillNotes">Notes (optional)</label><input id="customBillNotes" placeholder="Extra details / instructions">
-      <button type="button" class="bill-generate-btn custom-generate-btn" onclick="generateCustomBill()">✦ Generate Custom Bill</button>
+    </aside>
+  </section>
+  <section class="side-view" id="side-overdue">
+    <div id="overduePopup" role="dialog" aria-label="Overdue customer balance reminder">
+      <div class="overdue-box"><div class="overdue-head"><strong>⚠ Credit Over 20 Days</strong><div id="overdueCounter" style="font-size:12px;margin-top:4px;opacity:.9"></div></div>
+        <div class="overdue-body"><div class="overdue-name" id="overdueName"></div><div id="overdueDescription" style="color:#52616d;margin-top:5px"></div><div class="overdue-amount" id="overdueAmount"></div><div id="overdueDays" style="font-weight:700;color:#c62828"></div><div id="overdueBranch" style="font-size:12px;color:#687785;margin-top:7px"></div></div>
+        <div class="overdue-actions"><button class="overdue-close" type="button" onclick="closeOverduePopup()">Close</button><button class="overdue-next" type="button" onclick="nextOverduePopup()">Next Customer →</button></div>
+      </div>
     </div>
+    <div class="overdue-empty-note">Customers with outstanding credit older than 20 days will appear here when available.</div>
+  </section>
+  <section class="side-view" id="side-report">
+    <div class="report-panel">
+      <div class="report-heading"><span class="report-icon">▥</span><div><h2>Monthly Report</h2><p id="sideReportMonth">Selected month summary</p></div></div>
+      <div class="report-kpis">
+        <div><small>Cash Received</small><strong id="sideReportCash">—</strong></div>
+        <div><small>Online Received</small><strong id="sideReportOnline">—</strong></div>
+        <div><small>Credit Sales</small><strong id="sideReportCredit">—</strong></div>
+        <div><small>Total Expenses</small><strong id="sideReportExpense">—</strong></div>
+        <div class="report-net"><small>Cash in Hand</small><strong id="sideReportNet">—</strong></div>
+      </div>
+      <p class="report-hint">Monthly figures update automatically according to the selected branch and month.</p>
+      <button class="bill-generate-btn" type="button" onclick="document.getElementById('summaryMonth').scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('summaryMonth').focus()">Open Full Monthly Report ↗</button>
     </div>
-  </div>
-</aside>
-</div><!-- right-sidebar-stack --></div>
+  </section>
+</div></div>
 </div>
 
+
+
+<div id="fullMonthlyReport" aria-hidden="true">
+ <div class="mr-shell">
+  <div class="mr-top">
+   <div class="mr-brand"><div class="mr-mark">F</div><div><h1>FOZAN PRINTING — Monthly Report</h1><div class="mr-sub" id="mrBranchLabel">Management Dashboard • Monthly Performance</div></div></div>
+   <div class="mr-tools">
+    <label class="mr-muted" for="mrMonth">Report Month</label><input type="month" id="mrMonth" onchange="changeFullReportMonth(this.value)">
+    <button type="button" onclick="window.print()">Print Report</button>
+    <button type="button" class="mr-close" onclick="closeFullMonthlyReport()">✕ Close</button>
+   </div>
+  </div>
+  <div class="mr-section-head"><h2 id="mrTitle">Monthly Overview</h2><span class="mr-muted">Live figures • Selected branch</span></div>
+  <div class="mr-grid">
+   <div class="mr-card"><small>Total Cash Received</small><strong id="mrCash" class="mr-accent">Rs. 0</strong></div>
+   <div class="mr-card"><small>Online Received</small><strong id="mrOnline">Rs. 0</strong></div>
+   <div class="mr-card"><small>Credit Sales / Due</small><strong id="mrCredit">Rs. 0</strong></div>
+   <div class="mr-card"><small>Total Expenses</small><strong id="mrExpenses">Rs. 0</strong></div>
+   <div class="mr-card"><small>Cash in Hand After Expense</small><strong id="mrCashHand" class="mr-accent">Rs. 0</strong></div>
+   <div class="mr-card"><small>Cash + Online</small><strong id="mrCashOnline">Rs. 0</strong></div>
+   <div class="mr-card"><small>Advance Received</small><strong id="mrAdvance">Rs. 0</strong></div>
+   <div class="mr-card"><small>Balance Payments</small><strong id="mrBalance">Rs. 0</strong></div>
+  </div>
+  <div class="mr-middle">
+   <div class="mr-card"><h3>Payment &amp; Expense Breakdown</h3><div id="mrBreakdown"></div></div>
+   <div class="mr-card"><h3>Monthly Performance</h3><div class="mr-stat-line"><span>Sales Entries</span><b id="mrSalesCount">0</b></div><div class="mr-stat-line"><span>Expense Entries</span><b id="mrExpenseCount">0</b></div><div class="mr-stat-line"><span>Average Cash per Sale</span><b id="mrAverage">Rs. 0</b></div><div class="mr-stat-line"><span>Branch</span><b id="mrBranch">Head Office</b></div></div>
+  </div>
+  <div class="mr-two">
+   <div class="mr-card"><div class="mr-section-head"><h3>Sales Activity</h3><span class="mr-muted">Selected month</span></div><div class="mr-table-wrap" id="mrSalesTable"></div></div>
+   <div class="mr-card"><div class="mr-section-head"><h3>Expense Details</h3><span class="mr-muted">Selected month</span></div><div class="mr-table-wrap" id="mrExpenseTable"></div></div>
+  </div>
+ </div>
+</div>
 
 <div class="modal" id="saleModal" style="display: none;">
 <div class="box">
@@ -994,6 +1177,86 @@ function renderMonthlyDues(){
   }).join('');
 }
 
+function showSidePanel(name){
+  if(name==='report'){
+    const report=document.getElementById('fullMonthlyReport');
+    const alreadyOpen=!!(report && report.classList.contains('open'));
+    document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
+    document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',!alreadyOpen && el.dataset.panel==='report'));
+    if(alreadyOpen){closeFullMonthlyReport();return;}
+    openFullMonthlyReport();
+    return;
+  }
+  const current=document.querySelector('.side-view.active');
+  const alreadyOpen=!!(current && current.id==='side-'+name);
+  const target=alreadyOpen?'':name;
+  document.querySelectorAll('.side-view').forEach(el=>el.classList.toggle('active',!!target && el.id==='side-'+target));
+  document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',!!target && el.dataset.panel===target));
+  if(target==='overdue' && typeof showOverduePopup==='function'){
+    const count=document.getElementById('overdueNavCount');
+    if(count)count.textContent=String(getOverdueCustomerEntries().length);
+    showOverduePopup();
+  }
+}
+function openFullMonthlyReport(){
+  const report=document.getElementById('fullMonthlyReport');
+  if(!report)return;
+  report.classList.add('open');report.setAttribute('aria-hidden','false');
+  const month=document.getElementById('mrMonth');
+  if(month)month.value=getSummaryMonth();
+  renderFullMonthlyReport();
+}
+function closeFullMonthlyReport(){
+  const report=document.getElementById('fullMonthlyReport');
+  if(report){report.classList.remove('open');report.setAttribute('aria-hidden','true');}
+  document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
+}
+function changeFullReportMonth(month){
+  if(!month)return;
+  document.getElementById('summaryMonth').value=month;
+  summaryMode='month';
+  const date=document.getElementById('summaryDate');
+  if(date && monthKey(date.value)!==month)date.value=month+'-01';
+  renderDashboard();renderSales();renderFullMonthlyReport();
+}
+function renderFullMonthlyReport(){
+  const month=(document.getElementById('mrMonth')||{}).value||getSummaryMonth();
+  const mt=monthlyTotals(month);
+  const sales=visibleSales().filter(x=>monthKey(x.date)===month);
+  const expenses=visibleExpenses().filter(x=>monthKey(x.date)===month);
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  set('mrTitle','Monthly Overview — '+monthLabel(month));
+  set('mrBranchLabel',(activeBranch==='all'?'Combined Branches':branchName(activeBranch))+' • Monthly Performance');
+  set('mrBranch',activeBranch==='all'?'Combined Branches':branchName(activeBranch));
+  set('mrCash',money(mt.cash+mt.cashBalancePayment));set('mrOnline',money(mt.online));
+  set('mrCredit',money(mt.credit));set('mrExpenses',money(mt.expenses));
+  set('mrCashHand',money(mt.cashInHand));set('mrCashOnline',money(mt.cashInHand+mt.online));
+  set('mrAdvance',money(mt.advance));set('mrBalance',money(mt.balancePayment));
+  set('mrSalesCount',String(sales.length));set('mrExpenseCount',String(expenses.length));
+  set('mrAverage',money(sales.length?(mt.cash+mt.online)/sales.length:0));
+  const max=Math.max(mt.cash+mt.cashBalancePayment,mt.online,mt.credit,mt.expenses,1);
+  const bars=[['Cash Received',mt.cash+mt.cashBalancePayment],['Online Received',mt.online],['Credit Sales',mt.credit],['Expenses',mt.expenses]];
+  const breakdown=document.getElementById('mrBreakdown');
+  if(breakdown)breakdown.innerHTML=bars.map(([label,value])=>`<div class="mr-progress-row"><span>${label}</span><div class="mr-track"><div class="mr-fill" style="width:${Math.max(0,Math.min(100,value/max*100))}%"></div></div><b>${money(value)}</b></div>`).join('');
+  const salesHost=document.getElementById('mrSalesTable');
+  if(salesHost){
+    const rows=[...sales].sort((a,b)=>(String(b.date)+' '+String(b.time||'')).localeCompare(String(a.date)+' '+String(a.time||'')));
+    salesHost.innerHTML=rows.length?'<table><thead><tr><th>Date</th><th>Customer</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.customer||'Walk-in')}</td><td>${esc(x.desc||'—')}</td><td>${esc(String(x.type||'').replace(/_/g,' '))}</td><td>${money(x.amount||0)}</td></tr>`).join('')+'</tbody></table>':'<div class="mr-empty">No sales recorded for this month.</div>';
+  }
+  const expenseHost=document.getElementById('mrExpenseTable');
+  if(expenseHost){
+    const rows=[...expenses].sort((a,b)=>(String(b.date)+' '+String(b.time||'')).localeCompare(String(a.date)+' '+String(a.time||'')));
+    expenseHost.innerHTML=rows.length?'<table><thead><tr><th>Date</th><th>Description</th><th>Amount</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.desc||'—')}</td><td>${money(x.amount||0)}</td></tr>`).join('')+'</tbody></table>':'<div class="mr-empty">No expenses recorded for this month.</div>';
+  }
+}
+function updateSidebarReport(){
+  const month=getSummaryMonth(), mt=monthlyTotals(month);
+  const title=document.getElementById('monthTitle'), label=document.getElementById('sideReportMonth');
+  if(label)label.textContent=title?title.textContent:'Selected month summary';
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=money(value);};
+  set('sideReportCash',mt.cash+mt.cashBalancePayment);set('sideReportOnline',mt.online);
+  set('sideReportCredit',mt.credit);set('sideReportExpense',mt.expenses);set('sideReportNet',mt.cashInHand);
+}
 function renderDashboard(){
   renderMonthlyDues();
   const date=getSummaryDate(), t=totals(date);
@@ -1013,6 +1276,8 @@ function renderDashboard(){
   set('totalExpense',summary.expenses);
   set('paymentAfterExpense',summary.cashInHand);
   set('cashOnlineTotal',summary.cashInHand+summary.online);
+  updateSidebarReport();
+  if(document.getElementById('fullMonthlyReport')?.classList.contains('open'))renderFullMonthlyReport();
 
   const el=document.getElementById('expenseLedger');
   const dayExpenses=visibleExpenses().filter(x=>x.date===date);
@@ -1024,6 +1289,7 @@ function renderDashboard(){
   el.innerHTML='<h2 style="margin-top:18px">Expense</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
     rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
     '</tbody></table>';
+  updateSidebarReport();
 }
 
 function customerBalance(credit){
@@ -1620,7 +1886,7 @@ function getOverdueCustomerEntries(){
     const dt=new Date(String(x.date||'')+'T00:00:00');
     const days=Math.floor((today-dt)/86400000);
     return {x,due,originalDue,days};
-  }).filter(e=>e.due>0.0001 && e.originalDue>0.0001 && Number.isFinite(e.days) && e.days>=10)
+  }).filter(e=>e.due>0.0001 && e.originalDue>0.0001 && Number.isFinite(e.days) && e.days>=20)
     .sort((a,b)=>b.days-a.days);
 }
 function showOverduePopup(){
