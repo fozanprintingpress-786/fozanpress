@@ -493,6 +493,56 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
 @media(max-width:600px){#fullMonthlyReport{padding:10px}#fullMonthlyReport .mr-top{align-items:flex-start;flex-direction:column}#fullMonthlyReport .mr-grid{grid-template-columns:1fr 1fr;gap:8px}#fullMonthlyReport .mr-card{padding:12px}#fullMonthlyReport .mr-card strong{font-size:18px}#fullMonthlyReport .mr-progress-row{grid-template-columns:75px 1fr 82px;gap:6px}}
 @media print{body>*:not(#fullMonthlyReport){display:none!important}#fullMonthlyReport{display:block!important;position:static;background:#fff;color:#111;padding:0}#fullMonthlyReport .mr-top,#fullMonthlyReport .mr-card{background:#fff;color:#111;border:1px solid #ccc;box-shadow:none}#fullMonthlyReport h1,#fullMonthlyReport .mr-card h3,#fullMonthlyReport .mr-card strong{color:#111}#fullMonthlyReport .mr-tools button{display:none}}
 
+/* Separate Credit and Balance filters and live outstanding totals */
+.dues-filter-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:10px 0}
+.dues-filter-tabs button{min-width:0;padding:9px 5px;border:1px solid #e1e6ed;border-radius:9px;background:#f4f6f9;color:#344054;font-size:12px;font-weight:800}
+.dues-filter-tabs button b{display:block;font-size:10px;margin-top:3px;color:#758195}
+.dues-filter-tabs button.active{background:linear-gradient(110deg,#f58220,#f99a3a);border-color:#f58220;color:#fff;box-shadow:0 4px 10px #f5822030}
+.dues-filter-tabs button.active b{color:#fff}
+.dues-three-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+.dues-three-summary>div{padding:9px 7px!important;min-width:0}
+.dues-three-summary small{font-size:10px!important}
+.dues-three-summary strong{font-size:13px!important;overflow-wrap:anywhere}
+.dues-filter-caption{font-size:11px;color:#788394;margin:4px 2px 8px}
+@media(max-width:420px){.dues-three-summary{grid-template-columns:1fr 1fr!important}.dues-three-summary>div:last-child{grid-column:1/-1}}
+
+/* Monthly report polish: chronological listing, premium dashboard cards and readable tables */
+#fullMonthlyReport{background:radial-gradient(ellipse at 8% 0%,#253957 0%,#111827 48%,#0b1220 100%)}
+#fullMonthlyReport .mr-top{background:linear-gradient(115deg,#1c2d47,#17243a 65%,#26354c);border-color:#465a78;box-shadow:0 12px 30px #0003}
+#fullMonthlyReport .mr-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#1b2b43,#152238);border-color:#3b506d;box-shadow:0 10px 26px #0003;transition:transform .2s ease,border-color .2s ease}
+#fullMonthlyReport .mr-card:hover{transform:translateY(-2px);border-color:#f58220}
+#fullMonthlyReport .mr-grid .mr-card:nth-child(4n+1){border-top:3px solid #f58220}
+#fullMonthlyReport .mr-grid .mr-card:nth-child(4n+2){border-top:3px solid #2795d2}
+#fullMonthlyReport .mr-grid .mr-card:nth-child(4n+3){border-top:3px solid #28a879}
+#fullMonthlyReport .mr-grid .mr-card:nth-child(4n){border-top:3px solid #b47be5}
+#fullMonthlyReport .mr-card small{color:#b7c7dc}
+#fullMonthlyReport .mr-card strong{font-variant-numeric:tabular-nums;letter-spacing:.2px}
+#fullMonthlyReport .mr-table-wrap{border:1px solid #344963;border-radius:11px;background:#142238}
+#fullMonthlyReport .mr-table-wrap table{width:100%;min-width:680px;border-collapse:separate;border-spacing:0}
+#fullMonthlyReport .mr-table-wrap th{background:linear-gradient(100deg,#f58220,#ffad42);color:#17243a;padding:12px 11px;font-size:12px;letter-spacing:.25px}
+#fullMonthlyReport .mr-table-wrap td{background:#17263d;color:#e4edf8;padding:11px;border-bottom:1px solid #2d405b;font-size:12px}
+#fullMonthlyReport .mr-table-wrap tbody tr:nth-child(even) td{background:#1b2d47}
+#fullMonthlyReport .mr-table-wrap tbody tr:hover td{background:#263c59}
+#fullMonthlyReport .mr-table-wrap th:first-child{border-radius:10px 0 0 0}
+#fullMonthlyReport .mr-table-wrap th:last-child{border-radius:0 10px 0 0}
+#fullMonthlyReport .mr-table-wrap td:last-child{text-align:right;font-weight:800;color:#ffbd76;white-space:nowrap}
+#fullMonthlyReport .mr-progress-row b{color:#fff;font-variant-numeric:tabular-nums}
+#fullMonthlyReport .mr-track{background:#304561}
+#fullMonthlyReport .mr-stat-line{border-bottom-color:#344963}
+#fullMonthlyReport .mr-section-head{padding:0 2px}
+#salesLedger table{background:#17263d;color:#e4edf8;border:1px solid #344963;border-radius:10px;overflow:hidden}
+#salesLedger table th{background:#263a55!important;color:#ffbd76!important;border-bottom:1px solid #435a78!important}
+#salesLedger table td{background:#17263d!important;color:#e4edf8!important;border-bottom:1px solid #2c405b!important}
+#salesLedger table tbody tr:nth-child(even) td{background:#1c2d46!important}
+#salesLedger table tbody tr:hover td{background:#263c59!important}
+#salesLedger table td.cash .pay-amount{color:#69d6a0!important}
+#salesLedger table td.online .pay-amount{color:#80c8ff!important}
+#salesLedger table td.debit .pay-amount{color:#ff8f8f!important}
+#salesLedger table .pay-tag{opacity:.95}
+#salesLedger table td.actions{color:#e4edf8!important}
+
+
+.mr-taken-summary{margin:14px 0}.mr-taken-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mr-taken-grid>div{background:linear-gradient(145deg,#172337,#24344d);border:1px solid #3a4a62;border-radius:12px;padding:15px}.mr-taken-grid small{display:block;color:#bdc9d8;font-size:12px;margin-bottom:7px}.mr-taken-grid strong{display:block;color:#ff9b45;font-size:21px;font-weight:800}@media(max-width:650px){.mr-taken-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -682,6 +732,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
    <div class="mr-card"><h3>Payment &amp; Expense Breakdown</h3><div id="mrBreakdown"></div></div>
    <div class="mr-card"><h3>Monthly Performance</h3><div class="mr-stat-line"><span>Sales Entries</span><b id="mrSalesCount">0</b></div><div class="mr-stat-line"><span>Expense Entries</span><b id="mrExpenseCount">0</b></div><div class="mr-stat-line"><span>Average Cash per Sale</span><b id="mrAverage">Rs. 0</b></div><div class="mr-stat-line"><span>Branch</span><b id="mrBranch">Head Office</b></div></div>
   </div>
+  <div class="mr-card mr-taken-summary"><div class="mr-section-head"><h3>Monthly Expense — Taken By</h3><span class="mr-muted">Who received / took the amount</span></div><div class="mr-taken-grid"><div><small>Bykia</small><strong id="mrTakenBykia">Rs. 0</strong></div><div><small>Rahij</small><strong id="mrTakenRahij">Rs. 0</strong></div><div><small>Fozan</small><strong id="mrTakenFozan">Rs. 0</strong></div><div><small>Other / Not Assigned</small><strong id="mrTakenOther">Rs. 0</strong></div></div></div>
   <div class="mr-two">
    <div class="mr-card"><div class="mr-section-head"><h3>Sales Activity</h3><span class="mr-muted">Selected month</span></div><div class="mr-table-wrap" id="mrSalesTable"></div></div>
    <div class="mr-card"><div class="mr-section-head"><h3>Expense Details</h3><span class="mr-muted">Selected month</span></div><div class="mr-table-wrap" id="mrExpenseTable"></div></div>
@@ -724,6 +775,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
   <h2>Add Expense / Payment</h2>
   <label>Amount</label><input id="eAmount" type="number" min="0" step="0.01" placeholder="0">
   <label>Description</label><input id="eDesc" placeholder="e.g. Paper purchase / Staff payment" dir="ltr">
+  <label>Taken By</label><select id="eTakenBy"><option value="Bykia">Bykia</option><option value="Rahij">Rahij</option><option value="Fozan">Fozan</option><option value="Other">Other</option></select>
   <label>Date</label><input id="eDate" type="date">
   <label>Time</label><input id="eTime" type="time" step="1">
   <div style="display:flex;gap:8px">
@@ -786,6 +838,7 @@ alter table public.fozan_sales add column if not exists branch_id text not null 
 
 alter table public.fozan_expenses enable row level security;
 alter table public.fozan_expenses add column if not exists branch_id text not null default '1';
+alter table public.fozan_expenses add column if not exists taken_by text not null default ''; -- expense recipient: Bykia / Rahij / Fozan / Other
 
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
@@ -888,7 +941,8 @@ async function cloudSyncData(){
       amount:Number(x.amount||0),
       description:cleanDescription(x.desc||''),
       expense_date:x.date,
-      expense_time:x.time||''
+      expense_time:x.time||'',
+      taken_by:x.taken_by||''
     }));
     if(salesRows.length){
       const {error}=await supabaseClient.from('fozan_sales').upsert(salesRows,{onConflict:'id'});
@@ -940,7 +994,7 @@ async function cloudLoad(){
     }));
     const cloudExpenses=(expenses||[]).map(x=>({
       id:x.id,branch_id:String(x.branch_id||'1'),amount:Number(x.amount||0),desc:x.description||'',
-      date:x.expense_date,time:x.expense_time||''
+      date:x.expense_date,time:x.expense_time||'',taken_by:x.taken_by||''
     }));
 
     // Replace the old local snapshot with cloud records. This prevents stale
@@ -1161,6 +1215,12 @@ function toggleBillGenerator(){
   button.title=collapsed?'Open bill generator':'Close bill generator';
 }
 
+let monthlyDuesFilter='all';
+function setMonthlyDuesFilter(filter){
+  monthlyDuesFilter=['all','credit','balance'].includes(filter)?filter:'all';
+  renderMonthlyDues();
+}
+
 function renderMonthlyDues(){
   const host=document.getElementById('monthlyDues');
   if(!host)return;
@@ -1174,15 +1234,22 @@ function renderMonthlyDues(){
     const paid=Math.max(0,originalDue-due);
     return {x,due,paid,originalDue,status:due<=0.0001?'PAID':paid>0.0001?'PARTIALLY PAID':'DUE'};
   }).filter(e=>e.originalDue>0.0001 && e.due>0.0001);
-  const outstanding=entries.reduce((sum,e)=>sum+e.due,0);
-  const paidCount=entries.filter(e=>e.status==='PAID').length;
+  const creditEntries=entries.filter(e=>e.x.type==='credit');
+  const balanceEntries=entries.filter(e=>e.x.type!=='credit');
+  const creditOutstanding=creditEntries.reduce((sum,e)=>sum+e.due,0);
+  const balanceOutstanding=balanceEntries.reduce((sum,e)=>sum+e.due,0);
+  const outstanding=creditOutstanding+balanceOutstanding;
   document.getElementById('duesMonthLabel').textContent=monthLabel(month)+' • '+(activeBranch==='all'?'Both Offices':branchName(activeBranch));
-  if(!entries.length){host.innerHTML='<div class="empty">No credit or balance entries for this month.</div>';return;}
-  const sorted=entries.sort((a,b)=>{
+  const filteredEntries=entries.filter(e=>monthlyDuesFilter==='all'||(monthlyDuesFilter==='credit'?e.x.type==='credit':e.x.type!=='credit'));
+  const filterBar='<div class="dues-filter-tabs" role="group" aria-label="Filter credit and balance"><button type="button" class="'+(monthlyDuesFilter==='all'?'active':'')+'" onclick="setMonthlyDuesFilter(\'all\')">All <b>'+entries.length+'</b></button><button type="button" class="'+(monthlyDuesFilter==='credit'?'active':'')+'" onclick="setMonthlyDuesFilter(\'credit\')">Credit <b>'+creditEntries.length+'</b></button><button type="button" class="'+(monthlyDuesFilter==='balance'?'active':'')+'" onclick="setMonthlyDuesFilter(\'balance\')">Balance <b>'+balanceEntries.length+'</b></button></div>';
+  const summary='<div class="due-summary dues-three-summary"><div><small>Credit Due</small><strong style="color:#c62828">'+money(creditOutstanding)+'</strong></div><div><small>Balance Due</small><strong style="color:#b56b0a">'+money(balanceOutstanding)+'</strong></div><div><small>Total Due</small><strong style="color:#1769aa">'+money(outstanding)+'</strong></div></div>';
+  if(!entries.length){host.innerHTML=filterBar+summary+'<div class="empty">No credit or balance entries for this month.</div>';return;}
+  if(!filteredEntries.length){host.innerHTML=filterBar+summary+'<div class="empty">No '+(monthlyDuesFilter==='credit'?'credit':'balance')+' entries for this month.</div>';return;}
+  const sorted=filteredEntries.sort((a,b)=>{
     const rank=e=>e.status==='DUE'?0:e.status==='PARTIALLY PAID'?1:2;
     return rank(a)-rank(b)||String(b.x.date||'').localeCompare(String(a.x.date||''))||String(b.x.time||'').localeCompare(String(a.x.time||''));
   });
-  host.innerHTML='<div class="due-summary"><div><small>Total Outstanding</small><strong style="color:#c62828">'+money(outstanding)+'</strong></div><div><small>Open Entries</small><strong style="color:#1769aa">'+entries.length+'</strong></div></div>'+sorted.map(({x,due,paid,originalDue,status})=>{
+  host.innerHTML=filterBar+summary+'<div class="dues-filter-caption">Showing '+(monthlyDuesFilter==='all'?'all open entries':monthlyDuesFilter==='credit'?'credit entries only':'balance entries only')+'</div>'+sorted.map(({x,due,paid,originalDue,status})=>{
     const typeLabel=x.type==='credit'?'Credit Sale':'Balance Due';
     const branch=activeBranch==='all'?'<div class="due-meta">'+esc(branchName(x.branch_id||'1'))+'</div>':'';
     return '<div class="due-item '+(status==='PAID'?'paid':status==='PARTIALLY PAID'?'partial':'')+'"><div class="due-item-head"><div><div class="due-customer">'+esc(x.customer||'Customer not named')+'</div><div class="due-product">'+esc(x.desc||'Product detail not entered')+'</div></div><div class="due-amount">'+money(due)+'</div></div><div class="due-meta">'+esc(x.date||'')+' • '+typeLabel+' • Bill/Due '+money(originalDue)+'</div>'+(paid>0.0001?'<div class="due-meta">Received: '+money(paid)+'</div>':'')+branch+'<span class="due-status">'+status+'</span></div>';
@@ -1244,6 +1311,10 @@ function renderFullMonthlyReport(){
   set('mrCredit',money(mt.credit));set('mrExpenses',money(mt.expenses));
   set('mrCashHand',money(mt.cashInHand));set('mrCashOnline',money(mt.cashInHand+mt.online));
   set('mrAdvance',money(mt.advance));set('mrBalance',money(mt.balancePayment));
+  const takenTotals={Bykia:0,Rahij:0,Fozan:0,Other:0};
+  expenses.forEach(x=>{const who=['Bykia','Rahij','Fozan'].includes(x.taken_by)?x.taken_by:'Other';takenTotals[who]+=Number(x.amount||0);});
+  set('mrTakenBykia',money(takenTotals.Bykia));set('mrTakenRahij',money(takenTotals.Rahij));
+  set('mrTakenFozan',money(takenTotals.Fozan));set('mrTakenOther',money(takenTotals.Other));
   set('mrSalesCount',String(sales.length));set('mrExpenseCount',String(expenses.length));
   set('mrAverage',money(sales.length?(mt.cash+mt.online)/sales.length:0));
   const max=Math.max(mt.cash+mt.cashBalancePayment,mt.online,mt.credit,mt.expenses,1);
@@ -1252,13 +1323,13 @@ function renderFullMonthlyReport(){
   if(breakdown)breakdown.innerHTML=bars.map(([label,value])=>`<div class="mr-progress-row"><span>${label}</span><div class="mr-track"><div class="mr-fill" style="width:${Math.max(0,Math.min(100,value/max*100))}%"></div></div><b>${money(value)}</b></div>`).join('');
   const salesHost=document.getElementById('mrSalesTable');
   if(salesHost){
-    const rows=[...sales].sort((a,b)=>(String(b.date)+' '+String(b.time||'')).localeCompare(String(a.date)+' '+String(a.time||'')));
+    const rows=[...sales].sort((a,b)=>(String(a.date)+' '+String(a.time||'')).localeCompare(String(b.date)+' '+String(b.time||'')));
     salesHost.innerHTML=rows.length?'<table><thead><tr><th>Date</th><th>Customer</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.customer||'Walk-in')}</td><td>${esc(x.desc||'—')}</td><td>${esc(String(x.type||'').replace(/_/g,' '))}</td><td>${money(x.amount||0)}</td></tr>`).join('')+'</tbody></table>':'<div class="mr-empty">No sales recorded for this month.</div>';
   }
   const expenseHost=document.getElementById('mrExpenseTable');
   if(expenseHost){
-    const rows=[...expenses].sort((a,b)=>(String(b.date)+' '+String(b.time||'')).localeCompare(String(a.date)+' '+String(a.time||'')));
-    expenseHost.innerHTML=rows.length?'<table><thead><tr><th>Date</th><th>Description</th><th>Amount</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.desc||'—')}</td><td>${money(x.amount||0)}</td></tr>`).join('')+'</tbody></table>':'<div class="mr-empty">No expenses recorded for this month.</div>';
+    const rows=[...expenses].sort((a,b)=>(String(a.date)+' '+String(a.time||'')).localeCompare(String(b.date)+' '+String(b.time||'')));
+    expenseHost.innerHTML=rows.length?'<table><thead><tr><th>Date</th><th>Description</th><th>Taken By</th><th>Amount</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.desc||'—')}</td><td>${esc(x.taken_by||'Not assigned')}</td><td>${money(x.amount||0)}</td></tr>`).join('')+'</tbody></table>':'<div class="mr-empty">No expenses recorded for this month.</div>';
   }
 }
 function updateSidebarReport(){
@@ -1298,8 +1369,8 @@ function renderDashboard(){
     return;
   }
   const rows=[...dayExpenses].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
-  el.innerHTML='<h2 style="margin-top:18px">Expense</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
-    rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
+  el.innerHTML='<h2 style="margin-top:18px">Expense</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Taken By</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
+    rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td>${esc(x.taken_by||'Not assigned')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
     '</tbody></table>';
   updateSidebarReport();
 }
@@ -1462,7 +1533,7 @@ function renderSales(){
     const shownBalance = ['cash','online'].includes(x.type)
       ? remainingSaleBalance
       : 0;
-    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${esc(String(x.mobile).replace(/\\/g,'\\\\').replace(/'/g,"\\\\'"))}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${esc(String(x.mobile).replace(/\\/g,'\\\').replace(/'/g,"\\\'"))}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -1707,6 +1778,7 @@ function newExpense(){
   window._editingExpense=null;
   document.getElementById('eAmount').value='';
   document.getElementById('eDesc').value='';
+  document.getElementById('eTakenBy').value='Bykia';
   const n=nowLocal();
   document.getElementById('eDate').value=getSummaryDate()||n.date;
   document.getElementById('eTime').value=n.time;
@@ -1718,7 +1790,7 @@ function saveExpense(){
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before saving an expense.');
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
-  const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
+  const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),taken_by:document.getElementById('eTakenBy').value||'Other',date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
   const id=window._editingExpense;
   if(id){
     const x=data.expenses.find(e=>e.id===id); if(!canMutateRecord(x,'expense'))return;Object.assign(x,obj);
@@ -1732,6 +1804,7 @@ function editExpense(id){
   const x=data.expenses.find(e=>e.id===id);if(!canMutateRecord(x,'expense'))return;
   document.getElementById('eAmount').value=x.amount;
   document.getElementById('eDesc').value=x.desc||'';
+  document.getElementById('eTakenBy').value=['Bykia','Rahij','Fozan','Other'].includes(x.taken_by)?x.taken_by:'Other';
   document.getElementById('eDate').value=x.date;
   document.getElementById('eTime').value=x.time||'00:00:00';
   window._editingExpense=id;
