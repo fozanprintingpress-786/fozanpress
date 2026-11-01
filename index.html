@@ -543,6 +543,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
 
 
 .mr-taken-summary{margin:14px 0}.mr-taken-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mr-taken-grid>div{background:linear-gradient(145deg,#172337,#24344d);border:1px solid #3a4a62;border-radius:12px;padding:15px}.mr-taken-grid small{display:block;color:#bdc9d8;font-size:12px;margin-bottom:7px}.mr-taken-grid strong{display:block;color:#ff9b45;font-size:21px;font-weight:800}@media(max-width:650px){.mr-taken-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Small usability refinements for the customer WhatsApp contact */
+#saleModal input[type="tel"]{letter-spacing:.2px}
+#salesLedger a[href="#"]{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:7px;background:#eaf8ef}
+#salesLedger a[href="#"]:hover{background:#d7f1df;text-decoration:underline!important}
+@media(max-width:560px){#saleModal .box{padding:15px}#salesLedger table{font-size:12px}}
+
 </style>
 </head>
 <body>
@@ -760,10 +767,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
   <div id="balanceField"><label id="balanceLabel">Balance Due (calculated)</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="Calculated automatically" readonly></div>
   <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Select sale type; fields will adjust automatically.</div>
   <label>Customer Name (Optional)</label><input id="sCustomer" placeholder="e.g. Muhammad Ali">
-  <label>Customer Mobile / WhatsApp Number</label><input id="sMobile" type="tel" inputmode="tel" placeholder="e.g. 03001234567">
+  <label>Customer Mobile / WhatsApp Number</label><input id="sMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="e.g. 03001234567">
   <label>Description / Item</label><input id="sDesc" placeholder="e.g. Visiting Cards / Banner" dir="ltr">
-  <label>Date</label><input id="sDate" type="date">
-  <label>Time</label><input id="sTime" type="time" step="1">
   <div style="display:flex;gap:8px">
     <button class="success" onclick="saveSale()">Save Sale</button>
     <button class="muted" onclick="closeSaleModal()">Cancel</button>
@@ -835,6 +840,7 @@ alter table public.fozan_sales add column if not exists advance_payment numeric 
 alter table public.fozan_sales add column if not exists balance_payment numeric not null default 0;
 -- Branch separation migration (run once in Supabase SQL Editor):
 alter table public.fozan_sales add column if not exists branch_id text not null default '1';
+alter table public.fozan_sales add column if not exists mobile text not null default ''; -- customer WhatsApp number
 
 alter table public.fozan_expenses enable row level security;
 alter table public.fozan_expenses add column if not exists branch_id text not null default '1';
@@ -929,6 +935,7 @@ async function cloudSyncData(){
       type:x.type,
       amount:Number(x.amount||0),
       customer:x.customer||'',
+      mobile:x.mobile||'',
       description:cleanDescription(x.desc||''),
       sale_date:x.date,
       sale_time:x.time||'',
@@ -987,8 +994,10 @@ async function cloudLoad(){
     if(se) throw se;
     if(ee) throw ee;
 
+    const localSalesById=new Map(data.sales.map(x=>[String(x.id),x]));
     const cloudSales=(sales||[]).map(x=>({
       id:x.id,branch_id:String(x.branch_id||'1'),type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
+      mobile:x.mobile||localSalesById.get(String(x.id))?.mobile||'',
       desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',
       advance_payment:Number(x.advance_payment||0),balance_payment:Number(x.balance_payment||0)
     }));
@@ -1097,6 +1106,7 @@ function balanceMethod(x){
 function searchText(x){
   return [
     x.customer || '',
+    x.mobile || '',
     x.desc || '',
     x.type || '',
     isCredit(x) ? (customerBalance(x)>0 ? 'credit udhaar customer owes unpaid' : 'paid settled') : '',
@@ -1468,14 +1478,16 @@ function saleBalancePaymentInfo(entry){
 
 function whatsappCustomer(event, mobile){
   if(event)event.stopPropagation();
-  let phone=String(mobile||'').replace(/\\D/g,'');
+  let phone=String(mobile||'').replace(/\D/g,'');
+  if(phone.startsWith('00'))phone=phone.slice(2);
   if(phone.startsWith('0'))phone='92'+phone.slice(1);
-  else if(phone.startsWith('3'))phone='92'+phone;
-  if(!phone || phone.length<10)return alert('Please enter a valid customer mobile number.');
-  // A named window is reused for subsequent clicks, keeping WhatsApp in one browser tab.
+  else if(phone.startsWith('3') && phone.length===10)phone='92'+phone;
+  if(phone.length<10 || phone.length>15)return alert('Please enter a valid customer mobile number.');
+  // Open the WhatsApp Web chat in this browser profile.
   const waUrl='https://web.whatsapp.com/send?phone='+encodeURIComponent(phone);
   const waWindow=window.open(waUrl,'fozanWhatsAppWindow');
   if(waWindow)waWindow.focus();
+  else alert('Please allow pop-ups for this page to open WhatsApp Web.');
 }
 
 function renderSales(){
@@ -1547,7 +1559,7 @@ function renderSales(){
     const shownBalance = ['cash','online'].includes(x.type)
       ? remainingSaleBalance
       : 0;
-    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${esc(String(x.mobile).replace(/\\/g,'\\\').replace(/'/g,"\\\'"))}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${String(x.mobile).replace(/\D/g,'')}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -1687,9 +1699,6 @@ function newSale(){
   document.getElementById('sCustomer').value='';
   document.getElementById('sMobile').value='';
   document.getElementById('sDesc').value='';
-  const n=nowLocal();
-  document.getElementById('sDate').value=getSummaryDate()||n.date;
-  document.getElementById('sTime').value=n.time;
   updateSaleFields();
   document.getElementById('saleModal').style.display='flex';
 }
@@ -1709,8 +1718,6 @@ function editSale(id){
   document.getElementById('sCustomer').value=x.customer||'';
   document.getElementById('sMobile').value=x.mobile||'';
   document.getElementById('sDesc').value=x.desc||'';
-  document.getElementById('sDate').value=x.date;
-  document.getElementById('sTime').value=x.time||'00:00:00';
   updateSaleFields();
   document.getElementById('saleModal').style.display='flex';
 }
@@ -1721,6 +1728,9 @@ function saveSale(){
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a sale.');
   const customer=document.getElementById('sCustomer').value.trim();
   const mobile=document.getElementById('sMobile').value.trim();
+  const mobileDigits=mobile.replace(/\D/g,'');
+  if(mobile && (mobileDigits.length<10 || mobileDigits.length>15))
+    return alert('Please enter a valid mobile / WhatsApp number (10 to 15 digits).');
   const desc=cleanDescription(document.getElementById('sDesc').value);
   const type=document.getElementById('sType').value;
   const storedType=type==='balance_payment' ? 'balance_payment_'+document.getElementById('sBalanceMethod').value : type;
@@ -1733,8 +1743,10 @@ function saveSale(){
   if(!Number.isFinite(amount)||amount<0||(amount===0&&type!=='credit'))return alert(type==='credit'?'Please enter a valid bill amount (0 is allowed for an unpriced credit entry).':'Please enter an amount greater than zero.');
   if(!Number.isFinite(advance)||advance<0)return alert('Please enter a valid advance amount.');
   if((type==='credit'||type==='online'||type==='cash') && advance>amount)return alert('Advance received cannot exceed the full bill amount.');
-  const date=document.getElementById('sDate').value||nowLocal().date;
-  const time=document.getElementById('sTime').value||nowLocal().time;
+  const oldRecord=editingSale?data.sales.find(x=>x.id===editingSale):null;
+  const timestamp=oldRecord?{date:oldRecord.date,time:oldRecord.time||'00:00:00'}:nowLocal();
+  const date=timestamp.date;
+  const time=timestamp.time;
   if(editingSale){
     const old=data.sales.find(x=>x.id===editingSale);
     if(!canMutateRecord(old))return;
@@ -1760,7 +1772,7 @@ function saveSale(){
     applyUnallocatedAdvancesToCredit(customer);
     // Record any same-day receipts as separate transactions so daily totals remain accurate.
     if(initialBalance>0){
-      const payment={id:uid(),branch_id:activeBranch,type:'balance_payment',amount:initialBalance,customer,desc:'Balance received for '+desc,date,time,advance_payment:0,balance_payment:0};
+      const payment={id:uid(),branch_id:activeBranch,type:'balance_payment',amount:initialBalance,customer,mobile,desc:'Balance received for '+desc,date,time,advance_payment:0,balance_payment:0};
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
