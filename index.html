@@ -576,6 +576,24 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
 #creditDetailsModal .credit-settled{background:#e9f7ee;color:#087f5b}
 @media(max-width:600px){#creditDetailsModal{padding:7px}#creditDetailsModal .credit-details-body{padding:10px}#creditDetailsModal .credit-details-head{padding:12px}}
 
+
+.outstanding-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.outstanding-summary>div{min-width:0;padding:12px;border:1px solid #e9ebef;border-radius:11px;background:#f7f8fa}
+.outstanding-summary small{display:block;color:#788394;font-size:10px;font-weight:800}
+.outstanding-summary strong{display:block;color:#202b3d;font-size:16px;margin-top:6px;overflow-wrap:anywhere}
+.outstanding-summary>div:last-child{background:#fff3e8;border-color:#f7d7bd}
+.outstanding-summary>div:last-child strong{color:#d7650c}
+.outstanding-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 8px;font-size:12px;color:#52616d}
+.outstanding-customer{border:1px solid #e4e8ee;border-left:4px solid #f58220;border-radius:11px;padding:12px;margin:9px 0;background:#fff}
+.outstanding-customer-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.outstanding-customer-name{font-weight:800;color:#202b3d;overflow-wrap:anywhere}
+.outstanding-customer-total{font-weight:800;color:#c62828;white-space:nowrap}
+.outstanding-customer-meta{font-size:11px;color:#778294;margin-top:6px;line-height:1.5}
+.outstanding-breakdown{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.outstanding-breakdown span{font-size:11px;padding:5px 8px;border-radius:7px;background:#f4f6f9;color:#52616d}
+.outstanding-breakdown .credit-chip{background:#fff0e9;color:#c45a13}
+.outstanding-breakdown .balance-chip{background:#eef6ff;color:#1769aa}
+@media(max-width:560px){.outstanding-summary{grid-template-columns:1fr 1fr}.outstanding-summary>div:last-child{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -677,7 +695,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
   <nav class="side-menu" aria-label="Management sections">
     <button class="side-link" data-panel="credit" onclick="showSidePanel('credit')"><span>◉</span><b>Credit Balance</b><em id="creditNavCount">›</em></button>
     <button class="side-link" data-panel="bill" onclick="showSidePanel('bill')"><span>▤</span><b>Bill Generate</b><em>›</em></button>
-    <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Credit Over 20 Days</b><em id="overdueNavCount">›</em></button>
+    <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Overall Credit &amp; Balance</b><em id="overdueNavCount">›</em></button>
     <button class="side-link" data-panel="report" onclick="showSidePanel('report')"><span>▥</span><b>Monthly Report</b><em>›</em></button>
   </nav>
   <div class="sidebar-foot"><span class="live-dot"></span> Fozan Daily Sale <small>Management System</small></div>
@@ -713,13 +731,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
     </aside>
   </section>
   <section class="side-view" id="side-overdue">
-    <div id="overduePopup" role="dialog" aria-label="Overdue customer balance reminder">
-      <div class="overdue-box"><div class="overdue-head"><strong>⚠ Credit Over 20 Days</strong><div id="overdueCounter" style="font-size:12px;margin-top:4px;opacity:.9"></div></div>
-        <div class="overdue-body"><div class="overdue-name" id="overdueName"></div><div id="overdueDescription" style="color:#52616d;margin-top:5px"></div><div class="overdue-amount" id="overdueAmount"></div><div id="overdueDays" style="font-weight:700;color:#c62828"></div><div id="overdueBranch" style="font-size:12px;color:#687785;margin-top:7px"></div></div>
-        <div class="overdue-actions"><button class="overdue-close" type="button" onclick="closeOverduePopup()">Close</button><button class="overdue-next" type="button" onclick="nextOverduePopup()">Next Customer →</button></div>
+    <div class="report-panel outstanding-panel">
+      <div class="report-heading"><span class="report-icon">◷</span><div><h2>Overall Credit &amp; Balance</h2><p>All customers with unpaid amounts — all dates</p></div></div>
+      <div class="outstanding-summary">
+        <div><small>Total Credit Due</small><strong id="overallCreditTotal">Rs. 0</strong></div>
+        <div><small>Total Balance Due</small><strong id="overallBalanceTotal">Rs. 0</strong></div>
+        <div><small>Overall Outstanding</small><strong id="overallDueTotal">Rs. 0</strong></div>
       </div>
+      <div class="outstanding-toolbar"><strong id="overallDueCount">0 customers with pending payment</strong><button type="button" class="muted" onclick="renderOverallOutstanding()">↻ Refresh</button></div>
+      <div id="overallOutstandingList"><div class="mr-empty">No pending customer payments.</div></div>
     </div>
-    <div class="overdue-empty-note">Customers with outstanding credit older than 20 days will appear here when available.</div>
   </section>
   <section class="side-view" id="side-report">
     <div class="report-panel">
@@ -1370,10 +1391,10 @@ function showSidePanel(name){
   const target=alreadyOpen?'':name;
   document.querySelectorAll('.side-view').forEach(el=>el.classList.toggle('active',!!target && el.id==='side-'+target));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',!!target && el.dataset.panel===target));
-  if(target==='overdue' && typeof showOverduePopup==='function'){
+  if(target==='overdue'){
     const count=document.getElementById('overdueNavCount');
     if(count)count.textContent=String(getOverdueCustomerEntries().length);
-    showOverduePopup();
+    renderOverallOutstanding();
   }
 }
 function openFullMonthlyReport(){
@@ -2213,74 +2234,50 @@ installKeyboardShortcuts();
 renderDateHistory();renderDashboard();renderSales();refreshBillCustomerList();
 cloudLoad();
 
-let overduePopupQueue=[];
-let overduePopupIndex=0;
-let overduePopupTimer=null;
 function getOverdueCustomerEntries(){
-  const today=new Date();today.setHours(0,0,0,0);
-  const overdueRows=visibleSales()
+  // Build an all-time list of customers who still owe credit or balance.
+  const rows=visibleSales()
     .filter(x=>!isBalancePayment(x) && ['credit','cash','online'].includes(x.type))
     .map(x=>{
-      const due=x.type==='credit'
-        ? customerBalance(x)
-        : Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
-      const dt=new Date(String(x.date||'')+'T00:00:00');
-      const days=Math.floor((today-dt)/86400000);
-      return {x,due,days};
+      const creditDue=x.type==='credit'?customerBalance(x):0;
+      const balanceDue=['cash','online'].includes(x.type)
+        ?Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0)):0;
+      return {x,creditDue,balanceDue,due:creditDue+balanceDue};
     })
-    .filter(e=>e.due>0.0001 && Number.isFinite(e.days) && e.days>=20);
+    .filter(e=>e.due>0.0001);
 
-  // Show every customer with an unpaid credit or balance older than 20 days.
-  // Combine multiple overdue bills for the same customer into one reminder.
   const grouped=new Map();
-  overdueRows.forEach(e=>{
+  rows.forEach(e=>{
     const customer=(e.x.customer||'Customer not named').trim();
     const branch=String(e.x.branch_id||'1');
     const key=branch+'|'+customer.toLowerCase();
-    if(!grouped.has(key)){
-      grouped.set(key,{x:e.x,customer,branch,due:0,days:0,bills:0,types:new Set()});
-    }
+    if(!grouped.has(key))grouped.set(key,{customer,branch,credit:0,balance:0,due:0,bills:0,oldestDate:e.x.date||''});
     const item=grouped.get(key);
+    item.credit+=e.creditDue;
+    item.balance+=e.balanceDue;
     item.due+=e.due;
-    item.days=Math.max(item.days,e.days);
     item.bills++;
-    item.types.add(e.x.type==='credit'?'Credit':'Balance');
+    if(e.x.date && (!item.oldestDate || e.x.date<item.oldestDate))item.oldestDate=e.x.date;
   });
-  return [...grouped.values()]
-    .map(e=>({...e,kind:[...e.types].join(' & ')}))
-    .sort((a,b)=>b.days-a.days);
+  return [...grouped.values()].sort((a,b)=>b.due-a.due);
 }
-function showOverduePopup(){
-  const popup=document.getElementById('overduePopup');
-  if(!popup)return;
-  overduePopupQueue=getOverdueCustomerEntries();
-  overduePopupIndex=0;
-  if(!overduePopupQueue.length){popup.style.display='none';return;}
-  renderOverduePopupItem();
-  popup.style.display='flex';
-  if(overduePopupTimer)clearInterval(overduePopupTimer);
-  overduePopupTimer=setInterval(()=>{
-    if(document.getElementById('overduePopup')?.style.display==='flex') nextOverduePopup();
-  },10000);
-}
-function renderOverduePopupItem(){
-  const e=overduePopupQueue[overduePopupIndex];if(!e)return;
-  document.getElementById('overdueName').textContent=e.x.customer||'Customer not named';
-  document.getElementById('overdueDescription').textContent=e.kind+' • '+e.bills+' unpaid bill(s)';
-  document.getElementById('overdueAmount').textContent=money(e.due);
-  document.getElementById('overdueDays').textContent='Oldest unpaid bill: '+e.days+' days';
-  document.getElementById('overdueBranch').textContent=activeBranch==='all'?branchName(e.branch||'1'):'';
-  document.getElementById('overdueCounter').textContent='Customer '+(overduePopupIndex+1)+' of '+overduePopupQueue.length;
-}
-function nextOverduePopup(){
-  if(!overduePopupQueue.length)return closeOverduePopup();
-  overduePopupIndex++;
-  if(overduePopupIndex>=overduePopupQueue.length){closeOverduePopup();return;}
-  renderOverduePopupItem();
-}
-function closeOverduePopup(){
-  const popup=document.getElementById('overduePopup');if(popup)popup.style.display='none';
-  if(overduePopupTimer){clearInterval(overduePopupTimer);overduePopupTimer=null;}
+function renderOverallOutstanding(){
+  const entries=getOverdueCustomerEntries();
+  const creditTotal=entries.reduce((sum,e)=>sum+e.credit,0);
+  const balanceTotal=entries.reduce((sum,e)=>sum+e.balance,0);
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+  set('overallCreditTotal',money(creditTotal));
+  set('overallBalanceTotal',money(balanceTotal));
+  set('overallDueTotal',money(creditTotal+balanceTotal));
+  set('overallDueCount',entries.length+' customer(s) with pending payment');
+  const host=document.getElementById('overallOutstandingList');
+  if(!host)return;
+  if(!entries.length){host.innerHTML='<div class="mr-empty">No pending customer payments. All customer accounts are clear.</div>';return;}
+  host.innerHTML=entries.map(e=>`<div class="outstanding-customer">
+    <div class="outstanding-customer-head"><div class="outstanding-customer-name">${esc(e.customer)}</div><div class="outstanding-customer-total">${money(e.due)}</div></div>
+    <div class="outstanding-customer-meta">${activeBranch==='all'?esc(branchName(e.branch))+' • ':''}${e.bills} unpaid bill(s) • Oldest bill: ${esc(e.oldestDate||'Date not available')}</div>
+    <div class="outstanding-breakdown"><span class="credit-chip">Credit: ${money(e.credit)}</span><span class="balance-chip">Balance: ${money(e.balance)}</span></div>
+  </div>`).join('');
 }
 function startMonthlyDuesAutoScroll(){
   const host=document.getElementById('monthlyDues');
@@ -2294,7 +2291,7 @@ function startMonthlyDuesAutoScroll(){
   },4000);
 }
 
-window.addEventListener('load',()=>{setTimeout(showOverduePopup,1800);setTimeout(startMonthlyDuesAutoScroll,2500);});
+window.addEventListener('load',()=>{setTimeout(renderOverallOutstanding,1200);setTimeout(startMonthlyDuesAutoScroll,2500);});
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
 </script>
 
