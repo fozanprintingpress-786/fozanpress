@@ -709,6 +709,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
   <div id="balanceField"><label id="balanceLabel">Balance Due (calculated)</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="Calculated automatically" readonly></div>
   <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Select sale type; fields will adjust automatically.</div>
   <label>Customer Name (Optional)</label><input id="sCustomer" placeholder="e.g. Muhammad Ali">
+  <label>Customer Mobile / WhatsApp Number</label><input id="sMobile" type="tel" inputmode="tel" placeholder="e.g. 03001234567">
   <label>Description / Item</label><input id="sDesc" placeholder="e.g. Visiting Cards / Banner" dir="ltr">
   <label>Date</label><input id="sDate" type="date">
   <label>Time</label><input id="sTime" type="time" step="1">
@@ -803,6 +804,8 @@ let supabaseClient = CLOUD_ENABLED
 let data=JSON.parse(localStorage.getItem(KEY)||'{"sales":[],"expenses":[]}');
 if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
+// In cloud mode, Supabase is the source of truth; stale local-only rows are not re-added.
+let cloudReady=!CLOUD_ENABLED;
 let editingSale=null;
 let summaryMode='date';
 const BRANCH_PASSWORDS={'1':'PWD92','2':'bahria786'};
@@ -864,7 +867,7 @@ function cloudStatus(msg, ok=false){
 }
 
 async function cloudSyncData(){
-  if(!CLOUD_ENABLED) return;
+  if(!CLOUD_ENABLED || !cloudReady) return;
   cloudStatus('Saving changes to cloud...');
   try{
     const salesRows = data.sales.map(x=>({
@@ -917,6 +920,10 @@ async function cloudLoad(){
     cloudStatus('Local mode — configure cloud to share PCs');
     return;
   }
+  // Retain only entries created while this cloud request is in progress.
+  const salesIdsAtRequestStart=new Set(data.sales.map(x=>String(x.id)));
+  const expenseIdsAtRequestStart=new Set(data.expenses.map(x=>String(x.id)));
+  cloudReady=false;
   cloudStatus('Loading cloud data...');
   try{
     const [{data:sales,error:se},{data:expenses,error:ee}] = await Promise.all([
@@ -926,9 +933,6 @@ async function cloudLoad(){
     if(se) throw se;
     if(ee) throw ee;
 
-    // Merge cloud rows with the current local copy instead of replacing it.
-    // This prevents a slow initial cloud load from erasing a sale just entered
-    // locally while the request was still in progress.
     const cloudSales=(sales||[]).map(x=>({
       id:x.id,branch_id:String(x.branch_id||'1'),type:x.type,amount:Number(x.amount||0),customer:x.customer||'',
       desc:cleanDescription(x.description||''),date:x.sale_date,time:x.sale_time||'',
@@ -938,26 +942,34 @@ async function cloudLoad(){
       id:x.id,branch_id:String(x.branch_id||'1'),amount:Number(x.amount||0),desc:x.description||'',
       date:x.expense_date,time:x.expense_time||''
     }));
+
+    // Replace the old local snapshot with cloud records. This prevents stale
+    // browser-cache sales from appearing as new sales after opening the app.
+    const addedDuringLoadSales=data.sales.filter(x=>!salesIdsAtRequestStart.has(String(x.id)));
+    const addedDuringLoadExpenses=data.expenses.filter(x=>!expenseIdsAtRequestStart.has(String(x.id)));
     const salesById=new Map(cloudSales.map(x=>[String(x.id),x]));
-    data.sales.forEach(x=>{ if(!salesById.has(String(x.id))) salesById.set(String(x.id),x); });
+    addedDuringLoadSales.forEach(x=>{if(!salesById.has(String(x.id)))salesById.set(String(x.id),x);});
     const expensesById=new Map(cloudExpenses.map(x=>[String(x.id),x]));
-    data.expenses.forEach(x=>{ if(!expensesById.has(String(x.id))) expensesById.set(String(x.id),x); });
+    addedDuringLoadExpenses.forEach(x=>{if(!expensesById.has(String(x.id)))expensesById.set(String(x.id),x);});
     data.sales=[...salesById.values()];
     data.expenses=[...expensesById.values()];
     localStorage.setItem(KEY,JSON.stringify(data));
-    // Always return to the current month after cloud refresh.
+    cloudReady=true;
+    if(addedDuringLoadSales.length || addedDuringLoadExpenses.length) await cloudSyncData();
+
     const todayNow=nowLocal();
     document.getElementById('summaryDate').value=todayNow.date;
     document.getElementById('summaryMonth').value=monthKey(todayNow.date);
     summaryMode='date';
     renderDateHistory(); renderDashboard(); renderSales();
-    cloudStatus('Cloud connected • all PCs share this data', true);
+    cloudStatus('Cloud connected • cloud data loaded', true);
   }catch(e){
     console.error(e);
-    cloudStatus('Cloud connection failed — local copy kept');
+    // Do not upload a local cache when the cloud request fails.
+    cloudReady=false;
+    cloudStatus('Cloud connection failed — local copy kept; no local data uploaded');
   }
 }
-
 function persist(){
   localStorage.setItem(KEY,JSON.stringify(data));
   const s=document.getElementById('saveStatus');
@@ -1369,6 +1381,18 @@ function saleBalancePaymentInfo(entry){
   return infoByEntry.get(String(entry.id))||null;
 }
 
+function whatsappCustomer(event, mobile){
+  if(event)event.stopPropagation();
+  let phone=String(mobile||'').replace(/\\D/g,'');
+  if(phone.startsWith('0'))phone='92'+phone.slice(1);
+  else if(phone.startsWith('3'))phone='92'+phone;
+  if(!phone || phone.length<10)return alert('Please enter a valid customer mobile number.');
+  // A named window is reused for subsequent clicks, keeping WhatsApp in one browser tab.
+  const waUrl='https://web.whatsapp.com/send?phone='+encodeURIComponent(phone);
+  const waWindow=window.open(waUrl,'fozanWhatsAppWindow');
+  if(waWindow)waWindow.focus();
+}
+
 function renderSales(){
   // Keep the Customer Bill Generator list synchronized with every saved sale,
   // branch change, and cloud refresh (including newly entered customer names).
@@ -1438,7 +1462,7 @@ function renderSales(){
     const shownBalance = ['cash','online'].includes(x.type)
       ? remainingSaleBalance
       : 0;
-    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${esc(String(x.mobile).replace(/\\/g,'\\\\').replace(/'/g,"\\\\'"))}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -1576,6 +1600,7 @@ function newSale(){
   document.getElementById('sAdvance').value='0';
   document.getElementById('sBalancePayment').value='0';
   document.getElementById('sCustomer').value='';
+  document.getElementById('sMobile').value='';
   document.getElementById('sDesc').value='';
   const n=nowLocal();
   document.getElementById('sDate').value=getSummaryDate()||n.date;
@@ -1597,6 +1622,7 @@ function editSale(id){
   document.getElementById('sAdvanceMethod').value=(x.type==='online'?'online':x.type==='cash'?'cash':(x.advance_method||'cash'));
   document.getElementById('sBalancePayment').value=x.balance_payment||0;
   document.getElementById('sCustomer').value=x.customer||'';
+  document.getElementById('sMobile').value=x.mobile||'';
   document.getElementById('sDesc').value=x.desc||'';
   document.getElementById('sDate').value=x.date;
   document.getElementById('sTime').value=x.time||'00:00:00';
@@ -1609,6 +1635,7 @@ function saveSale(){
   if(activeBranch==='all' && !editingSale)return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office before saving a new sale.');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a sale.');
   const customer=document.getElementById('sCustomer').value.trim();
+  const mobile=document.getElementById('sMobile').value.trim();
   const desc=cleanDescription(document.getElementById('sDesc').value);
   const type=document.getElementById('sType').value;
   const storedType=type==='balance_payment' ? 'balance_payment_'+document.getElementById('sBalanceMethod').value : type;
@@ -1629,7 +1656,7 @@ function saveSale(){
     const oldType=old.type;
     const oldCustomer=(old.customer||'').trim();
     const oldCustomerKey=oldCustomer.toLowerCase();
-    const obj={type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
+    const obj={type:storedType,amount,customer,mobile,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
     Object.assign(old,obj);
 
     // Balance receipts remain editable. Recalculate their allocations for the
@@ -1639,7 +1666,7 @@ function saveSale(){
       if(customer && customer.toLowerCase()!==oldCustomerKey)rebuildBalanceAllocations(customer);
     }
   }else if(type==='credit'){
-    const credit={id:uid(),branch_id:activeBranch,type,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),balance_payment:0};
+    const credit={id:uid(),branch_id:activeBranch,type,amount,customer,mobile,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),balance_payment:0};
     data.sales.push(credit);
     // Immediately show the month of the newly added credit in Monthly Credit & Balance.
     // Otherwise an old month selected in the summary can make the new credit appear missing.
@@ -1652,7 +1679,7 @@ function saveSale(){
       data.sales.push(payment); applyBalancePayment(customer,initialBalance,date,time,payment.id);
     }
   }else{
-    const obj={id:uid(),branch_id:activeBranch,type:storedType,amount,customer,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
+    const obj={id:uid(),branch_id:activeBranch,type:storedType,amount,customer,mobile,desc,date,time,advance_payment:advance,advance_method:(type==='online'?'online':type==='cash'?'cash':(document.getElementById('sAdvanceMethod').value||'cash')),payment_method:document.getElementById('sTotalPaymentMethod').value||'cash',balance_payment:initialBalance};
     data.sales.push(obj);
     if(type==='advance_payment')applyAdvancePayment(customer,amount,obj.id);
     if(type==='balance_payment')applyBalancePayment(customer,amount,date,time,obj.id);
