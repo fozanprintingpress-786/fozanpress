@@ -550,6 +550,32 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
 #salesLedger a[href="#"]:hover{background:#d7f1df;text-decoration:underline!important}
 @media(max-width:560px){#saleModal .box{padding:15px}#salesLedger table{font-size:12px}}
 
+
+/* Total Credit Sale: clickable summary and customer-wise outstanding details */
+.credit-stat-clickable{cursor:pointer;position:relative;border:1px solid #f2c7a4!important;transition:transform .18s,box-shadow .18s,border-color .18s}
+.credit-stat-clickable:hover,.credit-stat-clickable:focus{outline:none;transform:translateY(-2px);border-color:#f58220!important;box-shadow:0 7px 18px #f5822028}
+.credit-view-hint{float:right;font-size:10px;color:#e87516;font-weight:800}
+#creditDetailsModal{display:none;position:fixed;inset:0;z-index:10060;background:#101827b8;align-items:center;justify-content:center;padding:16px}
+#creditDetailsModal.open{display:flex}
+#creditDetailsModal .credit-details-box{width:min(1050px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:0 18px 60px #0005}
+#creditDetailsModal .credit-details-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 19px;background:linear-gradient(110deg,#172033,#303d52);border-bottom:4px solid #f58220;color:#fff}
+#creditDetailsModal .credit-details-head h2{margin:0;color:#fff;font-size:18px}
+#creditDetailsModal .credit-details-close{background:#f58220;color:#fff;font-weight:800}
+#creditDetailsModal .credit-details-body{padding:16px}
+#creditDetailsModal .credit-details-total{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 15px;margin-bottom:13px;border:1px solid #f2d2b9;border-radius:11px;background:#fff5ec}
+#creditDetailsModal .credit-details-total strong{font-size:20px;color:#c62828}
+#creditDetailsModal .credit-customer-group{margin:12px 0;border:1px solid #e3e8ef;border-radius:12px;overflow:hidden}
+#creditDetailsModal .credit-customer-title{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;background:#f5f7fa}
+#creditDetailsModal .credit-customer-title strong{color:#202b3d}
+#creditDetailsModal .credit-customer-due{font-weight:800;color:#c62828}
+#creditDetailsModal .credit-details-table{overflow-x:auto}
+#creditDetailsModal table{min-width:680px;margin:0;font-size:12px}
+#creditDetailsModal th{background:#202b3d;color:#fff}
+#creditDetailsModal .credit-paid{color:#198754;font-weight:700}
+#creditDetailsModal .credit-open{color:#c62828;font-weight:800}
+#creditDetailsModal .credit-settled{background:#e9f7ee;color:#087f5b}
+@media(max-width:600px){#creditDetailsModal{padding:7px}#creditDetailsModal .credit-details-body{padding:10px}#creditDetailsModal .credit-details-head{padding:12px}}
+
 </style>
 </head>
 <body>
@@ -610,7 +636,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
     <div class="stat"><small>Cash Payment</small><strong class="cash" id="totalCash">Rs. 750.00</strong></div>
     <div class="stat onlineBox"><small>Online Payment</small><strong class="online" id="totalOnline">Rs. 0.00</strong></div>
     <div class="stat afterExpenseBox"><small>Cash In Hand After Expense</small><strong id="paymentAfterExpense">Rs. 750.00</strong></div>
-    <div class="stat"><small>Total Credit Sale</small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
+    <div class="stat credit-stat-clickable" role="button" tabindex="0" title="Click to view all credit customers" onclick="showCreditDetails()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showCreditDetails()}"><small>Total Credit Sale <span class="credit-view-hint">↗ View Details</span></small><strong class="debit" id="totalCredit">Rs. 0.00</strong></div>
     <div class="stat expenseBox"><small>Total Expenses</small><strong class="expense" id="totalExpense">Rs. 0.00</strong></div>
     <div class="stat cashOnlineBox"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 750.00</strong></div>
   </div>
@@ -1136,6 +1162,54 @@ function changeMonth(step){
   const d=new Date(y,m-1+step,1);
   selectMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
 }
+
+function showCreditDetails(){
+  const host=document.getElementById('creditDetailsContent');
+  const modal=document.getElementById('creditDetailsModal');
+  if(!host||!modal)return;
+  const credits=visibleSales().filter(x=>x.type==='credit')
+    .sort((a,b)=>String(a.customer||'').localeCompare(String(b.customer||'')) ||
+      String(b.date||'').localeCompare(String(a.date||'')) ||
+      String(b.time||'').localeCompare(String(a.time||'')));
+  const totalDue=credits.reduce((sum,x)=>sum+customerBalance(x),0);
+  const grouped=new Map();
+  credits.forEach(x=>{
+    const name=(x.customer||'Customer not named').trim();
+    const key=name.toLowerCase();
+    if(!grouped.has(key))grouped.set(key,{name,mobile:x.mobile||'',items:[],due:0});
+    const group=grouped.get(key);
+    if(!group.mobile&&x.mobile)group.mobile=x.mobile;
+    const due=customerBalance(x);
+    group.due+=due;
+    group.items.push({x,due,paid:Math.max(0,Number(x.advance_payment||0))+Math.max(0,Number(x.balance_payment||0))});
+  });
+  if(!credits.length){
+    host.innerHTML='<div class="empty">No credit customer records found in this branch selection.</div>';
+  }else{
+    const groups=[...grouped.values()].sort((a,b)=>b.due-a.due||a.name.localeCompare(b.name));
+    host.innerHTML='<div class="credit-details-total"><div><small>Total Outstanding Credit</small><br><strong>'+money(totalDue)+'</strong></div><div><small>Credit Customers</small><br><b>'+groups.length+'</b></div><div><small>Credit Bills</small><br><b>'+credits.length+'</b></div></div>'+
+      groups.map(group=>{
+        const rows=group.items.map(({x,due,paid})=>{
+          const status=due<=0.0001?'PAID':paid>0.0001?'PARTIALLY PAID':'DUE';
+          const branch=activeBranch==='all'?'<br><small>'+esc(branchName(x.branch_id||'1'))+'</small>':'';
+          return '<tr><td>'+esc(x.date||'—')+branch+'</td><td>'+esc(x.desc||'—')+'</td><td>'+money(x.amount||0)+'</td><td class="credit-paid">'+money(paid)+'</td><td class="'+(due>0.0001?'credit-open':'credit-settled')+'">'+money(due)+'</td><td>'+status+'</td></tr>';
+        }).join('');
+        return '<section class="credit-customer-group"><div class="credit-customer-title"><div><strong>'+esc(group.name)+'</strong><div class="notice">'+(group.mobile?'Mobile: '+esc(group.mobile):'Mobile not available')+'</div></div><div class="credit-customer-due">Remaining: '+money(group.due)+'</div></div><div class="credit-details-table"><table><thead><tr><th>Bill Date</th><th>Description</th><th>Bill Amount</th><th>Paid</th><th>Remaining</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+      }).join('');
+  }
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+}
+function closeCreditDetails(){
+  const modal=document.getElementById('creditDetailsModal');
+  if(!modal)return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+}
+document.addEventListener('keydown',function(event){
+  if(event.key==='Escape')closeCreditDetails();
+});
+
 function calculateTotals(filterFn){
   let cash=0,online=0,credit=0,advance=0,balancePayment=0,cashBalancePayment=0,onlineBalancePayment=0,expenses=0;
   visibleSales().forEach(x=>{
@@ -1376,7 +1450,7 @@ function renderDashboard(){
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=money(val);};
   set('totalCash',summary.cash+summary.cashBalancePayment);
   set('totalOnline',summary.online);
-  set('totalCredit',summary.credit);
+  set('totalCredit',visibleSales().filter(x=>x.type==='credit').reduce((sum,x)=>sum+customerBalance(x),0));
   set('totalAdvance',summary.advance);
   set('totalBalancePayment',summary.balancePayment);
   set('totalPaymentReceived',summary.cash+summary.cashBalancePayment+summary.online+summary.advance);
@@ -2063,5 +2137,16 @@ window.addEventListener('load',()=>{setTimeout(showOverduePopup,1800);setTimeout
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
 </script>
 
+
+
+<div id="creditDetailsModal" aria-hidden="true" onclick="if(event.target===this)closeCreditDetails()">
+  <div class="credit-details-box" role="dialog" aria-modal="true" aria-labelledby="creditDetailsTitle">
+    <div class="credit-details-head">
+      <h2 id="creditDetailsTitle">All Credit Customers</h2>
+      <button class="credit-details-close" type="button" onclick="closeCreditDetails()">Close ✕</button>
+    </div>
+    <div class="credit-details-body" id="creditDetailsContent"></div>
+  </div>
+</div>
 
 </body></html>
