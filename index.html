@@ -646,7 +646,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
 
 <section class="card">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-    <h2 style="margin-bottom:0">Daily Sales</h2>
+    <div><h2 style="margin-bottom:0">Daily Sales</h2><small style="color:#7b8796">Shortcuts: Alt+N Sale · Alt+E Expense · Alt+F Search · Enter Save · Esc Close</small></div>
     <div style="display:flex;gap:6px;align-items:center">
       <input class="search" id="search" style="max-width:300px;margin:0" placeholder="Search Customer / Credit / Sale — all months..." oninput="renderSales()">
       <button class="muted" style="padding:9px 11px" onclick="clearSearch()">Clear</button>
@@ -792,9 +792,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
   <div id="advanceMethodField" class="field-hidden"><label>Advance Payment Received By</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="balanceField"><label id="balanceLabel">Balance Due (calculated)</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="Calculated automatically" readonly></div>
   <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Select sale type; fields will adjust automatically.</div>
-  <label>Customer Name (Optional)</label><input id="sCustomer" placeholder="e.g. Muhammad Ali">
+  <label>Customer Name (Optional) <small style="color:#758397;font-weight:400">— type 1–2 words for saved customer suggestions</small></label><input id="sCustomer" list="saleCustomerSuggestions" autocomplete="off" placeholder="e.g. Muhammad Ali"><datalist id="saleCustomerSuggestions"></datalist>
   <label>Customer Mobile / WhatsApp Number</label><input id="sMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="e.g. 03001234567">
-  <label>Description / Item</label><input id="sDesc" placeholder="e.g. Visiting Cards / Banner" dir="ltr">
+  <label>Description / Item <small style="color:#758397;font-weight:400">— saved descriptions appear as you type</small></label><input id="sDesc" list="saleDescriptionSuggestions" autocomplete="off" placeholder="e.g. Visiting Cards / Banner" dir="ltr"><datalist id="saleDescriptionSuggestions"></datalist>
   <div style="display:flex;gap:8px">
     <button class="success" onclick="saveSale()">Save Sale</button>
     <button class="muted" onclick="closeSaleModal()">Cancel</button>
@@ -1167,32 +1167,47 @@ function showCreditDetails(){
   const host=document.getElementById('creditDetailsContent');
   const modal=document.getElementById('creditDetailsModal');
   if(!host||!modal)return;
-  const credits=visibleSales().filter(x=>x.type==='credit')
-    .sort((a,b)=>String(a.customer||'').localeCompare(String(b.customer||'')) ||
-      String(b.date||'').localeCompare(String(a.date||'')) ||
-      String(b.time||'').localeCompare(String(a.time||'')));
-  const totalDue=credits.reduce((sum,x)=>sum+customerBalance(x),0);
+
+  // Include only credit bills or cash/online bills with an unpaid balance.
+  // Fully paid entries (remaining amount = 0) are intentionally excluded.
+  const entries=visibleSales().filter(x=>['credit','cash','online'].includes(x.type))
+    .map(x=>{
+      const due=x.type==='credit'
+        ? customerBalance(x)
+        : Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
+      const paid=x.type==='credit'
+        ? Math.max(0,Number(x.advance_payment||0))+Math.max(0,Number(x.balance_payment||0))
+        : Math.max(0,Number(x.advance_payment||0))+Math.max(0,Number(saleBalancePaymentInfo(x)?.amount||0));
+      return {x,due,paid};
+    })
+    .filter(e=>e.due>0.0001)
+    .sort((a,b)=>String(a.x.customer||'').localeCompare(String(b.x.customer||'')) ||
+      String(b.x.date||'').localeCompare(String(a.x.date||'')) ||
+      String(b.x.time||'').localeCompare(String(a.x.time||'')));
+
+  const totalDue=entries.reduce((sum,e)=>sum+e.due,0);
   const grouped=new Map();
-  credits.forEach(x=>{
+  entries.forEach(({x,due,paid})=>{
     const name=(x.customer||'Customer not named').trim();
     const key=name.toLowerCase();
     if(!grouped.has(key))grouped.set(key,{name,mobile:x.mobile||'',items:[],due:0});
     const group=grouped.get(key);
     if(!group.mobile&&x.mobile)group.mobile=x.mobile;
-    const due=customerBalance(x);
     group.due+=due;
-    group.items.push({x,due,paid:Math.max(0,Number(x.advance_payment||0))+Math.max(0,Number(x.balance_payment||0))});
+    group.items.push({x,due,paid});
   });
-  if(!credits.length){
-    host.innerHTML='<div class="empty">No credit customer records found in this branch selection.</div>';
+
+  if(!entries.length){
+    host.innerHTML='<div class="empty">No customers with outstanding credit or balance found in this branch selection.</div>';
   }else{
-    const groups=[...grouped.values()].sort((a,b)=>b.due-a.due||a.name.localeCompare(b.name));
-    host.innerHTML='<div class="credit-details-total"><div><small>Total Outstanding Credit</small><br><strong>'+money(totalDue)+'</strong></div><div><small>Credit Customers</small><br><b>'+groups.length+'</b></div><div><small>Credit Bills</small><br><b>'+credits.length+'</b></div></div>'+
+    const groups=[...grouped.values()].filter(group=>group.due>0.0001)
+      .sort((a,b)=>b.due-a.due||a.name.localeCompare(b.name));
+    host.innerHTML='<div class="credit-details-total"><div><small>Total Outstanding Credit / Balance</small><br><strong>'+money(totalDue)+'</strong></div><div><small>Customers with Due</small><br><b>'+groups.length+'</b></div><div><small>Unpaid Bills</small><br><b>'+entries.length+'</b></div></div>'+
       groups.map(group=>{
         const rows=group.items.map(({x,due,paid})=>{
-          const status=due<=0.0001?'PAID':paid>0.0001?'PARTIALLY PAID':'DUE';
+          const status=paid>0.0001?'PARTIALLY PAID':'DUE';
           const branch=activeBranch==='all'?'<br><small>'+esc(branchName(x.branch_id||'1'))+'</small>':'';
-          return '<tr><td>'+esc(x.date||'—')+branch+'</td><td>'+esc(x.desc||'—')+'</td><td>'+money(x.amount||0)+'</td><td class="credit-paid">'+money(paid)+'</td><td class="'+(due>0.0001?'credit-open':'credit-settled')+'">'+money(due)+'</td><td>'+status+'</td></tr>';
+          return '<tr><td>'+esc(x.date||'—')+branch+'</td><td>'+esc(x.desc||'—')+'</td><td>'+money(x.amount||0)+'</td><td class="credit-paid">'+money(paid)+'</td><td class="credit-open">'+money(due)+'</td><td>'+status+'</td></tr>';
         }).join('');
         return '<section class="credit-customer-group"><div class="credit-customer-title"><div><strong>'+esc(group.name)+'</strong><div class="notice">'+(group.mobile?'Mobile: '+esc(group.mobile):'Mobile not available')+'</div></div><div class="credit-customer-due">Remaining: '+money(group.due)+'</div></div><div class="credit-details-table"><table><thead><tr><th>Bill Date</th><th>Description</th><th>Bill Amount</th><th>Paid</th><th>Remaining</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
       }).join('');
@@ -1450,7 +1465,16 @@ function renderDashboard(){
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=money(val);};
   set('totalCash',summary.cash+summary.cashBalancePayment);
   set('totalOnline',summary.online);
-  set('totalCredit',visibleSales().filter(x=>x.type==='credit' && (summaryMode==='month' ? monthKey(x.date)===month : x.date===date)).reduce((sum,x)=>sum+customerBalance(x),0));
+  const creditAndBalanceDue=visibleSales()
+    .filter(x=>['credit','cash','online'].includes(x.type) &&
+      (summaryMode==='month' ? monthKey(x.date)===month : x.date===date))
+    .reduce((sum,x)=>{
+      const due=x.type==='credit'
+        ? customerBalance(x)
+        : Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
+      return sum+due;
+    },0);
+  set('totalCredit',creditAndBalanceDue);
   set('totalAdvance',summary.advance);
   set('totalBalancePayment',summary.balancePayment);
   set('totalPaymentReceived',summary.cash+summary.cashBalancePayment+summary.online+summary.advance);
@@ -1557,11 +1581,9 @@ function whatsappCustomer(event, mobile){
   if(phone.startsWith('0'))phone='92'+phone.slice(1);
   else if(phone.startsWith('3') && phone.length===10)phone='92'+phone;
   if(phone.length<10 || phone.length>15)return alert('Please enter a valid customer mobile number.');
-  // Open the WhatsApp Web chat in this browser profile.
+  // Open WhatsApp Web in this same tab (the browser's existing WhatsApp login/session is reused).
   const waUrl='https://web.whatsapp.com/send?phone='+encodeURIComponent(phone);
-  const waWindow=window.open(waUrl,'fozanWhatsAppWindow');
-  if(waWindow)waWindow.focus();
-  else alert('Please allow pop-ups for this page to open WhatsApp Web.');
+  window.location.href=waUrl;
 }
 
 function renderSales(){
@@ -1913,7 +1935,123 @@ function editExpense(id){
 function closeExpenseModal(){document.getElementById('expenseModal').style.display='none';window._editingExpense=null}
 
 
+
+function savedSaleCustomers(){
+  const rows=(activeBranch==='all'?data.sales:salesInBranch(activeBranch));
+  const map=new Map();
+  rows.forEach(x=>{
+    const name=(x.customer||'').trim();
+    if(!name)return;
+    const key=name.toLocaleLowerCase();
+    const existing=map.get(key)||{name,mobile:x.mobile||''};
+    if(!existing.mobile&&x.mobile)existing.mobile=x.mobile;
+    map.set(key,existing);
+  });
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
+}
+function refreshSaleSuggestions(){
+  const rows=(activeBranch==='all'?data.sales:salesInBranch(activeBranch));
+  const customers=savedSaleCustomers();
+  const customerList=document.getElementById('saleCustomerSuggestions');
+  const descList=document.getElementById('saleDescriptionSuggestions');
+  if(customerList)customerList.replaceChildren(...customers.map(item=>{
+    const option=document.createElement('option');option.value=item.name;return option;
+  }));
+  if(descList){
+    const descriptions=[...new Set(rows.map(x=>cleanDescription(x.desc||'').trim()).filter(Boolean))]
+      .sort((a,b)=>a.localeCompare(b));
+    descList.replaceChildren(...descriptions.map(value=>{
+      const option=document.createElement('option');option.value=value;return option;
+    }));
+  }
+}
+function attachSmartAutocomplete(inputId,source,onChoose){
+  const input=document.getElementById(inputId);if(!input||input.dataset.smartAutocomplete)return;
+  input.dataset.smartAutocomplete='1';
+  const menu=document.createElement('div');
+  menu.className='fozan-autocomplete-menu';
+  menu.style.cssText='display:none;position:fixed;z-index:12000;max-height:230px;overflow:auto;background:#fff;border:1px solid #d8e0ea;border-radius:9px;box-shadow:0 8px 25px #14243b30;padding:4px';
+  document.body.appendChild(menu);
+  let matches=[],active=-1;
+  const close=()=>{menu.style.display='none';matches=[];active=-1;};
+  const choose=index=>{
+    const item=matches[index];if(!item)return;
+    input.value=typeof item==='string'?item:item.name;
+    if(onChoose)onChoose(item);
+    close();
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  const paint=()=>{
+    const rect=input.getBoundingClientRect();
+    menu.style.left=rect.left+'px';menu.style.top=(rect.bottom+3)+'px';
+    menu.style.width=Math.max(rect.width,240)+'px';
+    menu.innerHTML='';
+    matches.forEach((item,index)=>{
+      const label=typeof item==='string'?item:item.name;
+      const extra=typeof item==='string'?'':(item.mobile||'');
+      const option=document.createElement('div');
+      option.textContent=extra?label+'  ·  '+extra:label;
+      option.style.cssText='padding:9px 10px;border-radius:6px;cursor:pointer;color:#263449;font-size:13px';
+      option.addEventListener('mouseenter',()=>{active=index;highlight();});
+      option.addEventListener('mousedown',e=>{e.preventDefault();choose(index);});
+      menu.appendChild(option);
+    });
+    menu.style.display=matches.length?'block':'none';
+    highlight();
+  };
+  const highlight=()=>[...menu.children].forEach((node,i)=>{
+    node.style.background=i===active?'#fff0e4':'#fff';
+  });
+  input.addEventListener('input',()=>{
+    const query=input.value.trim().toLocaleLowerCase();
+    if(query.length<1){close();return;}
+    const words=query.split(/\s+/).filter(Boolean);
+    matches=source().filter(item=>{
+      const label=(typeof item==='string'?item:item.name).toLocaleLowerCase();
+      return words.every(word=>label.includes(word));
+    }).slice(0,9);
+    active=matches.length?0:-1;paint();
+  });
+  input.addEventListener('keydown',e=>{
+    if(menu.style.display!=='block')return;
+    if(e.key==='ArrowDown'){e.preventDefault();active=Math.min(active+1,matches.length-1);highlight();}
+    else if(e.key==='ArrowUp'){e.preventDefault();active=Math.max(active-1,0);highlight();}
+    else if(e.key==='Enter'&&active>=0){e.preventDefault();choose(active);}
+    else if(e.key==='Escape')close();
+  });
+  input.addEventListener('blur',()=>setTimeout(close,140));
+  window.addEventListener('resize',close);
+  window.addEventListener('scroll',close,true);
+}
+function setupSaleAutocomplete(){
+  attachSmartAutocomplete('sCustomer',savedSaleCustomers, item=>{
+    if(item&&typeof item==='object'&&item.mobile&&!document.getElementById('sMobile').value.trim())
+      document.getElementById('sMobile').value=item.mobile;
+  });
+  attachSmartAutocomplete('sDesc',()=>{
+    const rows=(activeBranch==='all'?data.sales:salesInBranch(activeBranch));
+    return [...new Set(rows.map(x=>cleanDescription(x.desc||'').trim()).filter(Boolean))];
+  });
+  refreshSaleSuggestions();
+}
+function installKeyboardShortcuts(){
+  document.addEventListener('keydown',e=>{
+    if(e.altKey&&!e.ctrlKey&&!e.metaKey){
+      const key=e.key.toLowerCase();
+      if(key==='n'){e.preventDefault();newSale();}
+      else if(key==='e'){e.preventDefault();newExpense();}
+      else if(key==='f'){e.preventDefault();const search=document.getElementById('search');if(search){search.focus();search.select();}}
+    }
+    if(e.key==='Escape'){
+      const sale=document.getElementById('saleModal'),expense=document.getElementById('expenseModal');
+      if(sale&&sale.style.display==='flex')closeSaleModal();
+      else if(expense&&expense.style.display==='flex')closeExpenseModal();
+    }
+  });
+}
+
 function refreshBillCustomerList(){
+  refreshSaleSuggestions();
   const list=document.getElementById('billCustomerList');
   if(!list)return;
   // Pull names from all saved records for the selected branch, not only credit bills.
@@ -2070,6 +2208,8 @@ document.getElementById('sAmount').addEventListener('input',updateBalanceDue);
 document.getElementById('sAdvance').addEventListener('input',updateBalanceDue);
 updateSaleFields();
 updateBalanceDue();
+setupSaleAutocomplete();
+installKeyboardShortcuts();
 renderDateHistory();renderDashboard();renderSales();refreshBillCustomerList();
 cloudLoad();
 
@@ -2078,15 +2218,36 @@ let overduePopupIndex=0;
 let overduePopupTimer=null;
 function getOverdueCustomerEntries(){
   const today=new Date();today.setHours(0,0,0,0);
-  return visibleSales().filter(x=>!String(x.type||'').startsWith('balance_payment') && ['credit','cash','online'].includes(x.type)).map(x=>{
-    const originalDue=x.type==='credit'
-      ? Math.max(0,Number(x.amount||0)-Number(x.advance_payment||0))
-      : Math.max(0,Number(x.balance_payment||0));
-    const due=x.type==='credit' ? customerBalance(x) : Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
-    const dt=new Date(String(x.date||'')+'T00:00:00');
-    const days=Math.floor((today-dt)/86400000);
-    return {x,due,originalDue,days};
-  }).filter(e=>e.due>0.0001 && e.originalDue>0.0001 && Number.isFinite(e.days) && e.days>=20)
+  const overdueRows=visibleSales()
+    .filter(x=>!isBalancePayment(x) && ['credit','cash','online'].includes(x.type))
+    .map(x=>{
+      const due=x.type==='credit'
+        ? customerBalance(x)
+        : Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0));
+      const dt=new Date(String(x.date||'')+'T00:00:00');
+      const days=Math.floor((today-dt)/86400000);
+      return {x,due,days};
+    })
+    .filter(e=>e.due>0.0001 && Number.isFinite(e.days) && e.days>=20);
+
+  // Show every customer with an unpaid credit or balance older than 20 days.
+  // Combine multiple overdue bills for the same customer into one reminder.
+  const grouped=new Map();
+  overdueRows.forEach(e=>{
+    const customer=(e.x.customer||'Customer not named').trim();
+    const branch=String(e.x.branch_id||'1');
+    const key=branch+'|'+customer.toLowerCase();
+    if(!grouped.has(key)){
+      grouped.set(key,{x:e.x,customer,branch,due:0,days:0,bills:0,types:new Set()});
+    }
+    const item=grouped.get(key);
+    item.due+=e.due;
+    item.days=Math.max(item.days,e.days);
+    item.bills++;
+    item.types.add(e.x.type==='credit'?'Credit':'Balance');
+  });
+  return [...grouped.values()]
+    .map(e=>({...e,kind:[...e.types].join(' & ')}))
     .sort((a,b)=>b.days-a.days);
 }
 function showOverduePopup(){
@@ -2105,10 +2266,10 @@ function showOverduePopup(){
 function renderOverduePopupItem(){
   const e=overduePopupQueue[overduePopupIndex];if(!e)return;
   document.getElementById('overdueName').textContent=e.x.customer||'Customer not named';
-  document.getElementById('overdueDescription').textContent=(e.x.desc||'Outstanding payment')+' • '+(e.x.type==='credit'?'Credit':'Balance');
+  document.getElementById('overdueDescription').textContent=e.kind+' • '+e.bills+' unpaid bill(s)';
   document.getElementById('overdueAmount').textContent=money(e.due);
-  document.getElementById('overdueDays').textContent='Unpaid for '+e.days+' days';
-  document.getElementById('overdueBranch').textContent=activeBranch==='all'?branchName(e.x.branch_id||'1'):'';
+  document.getElementById('overdueDays').textContent='Oldest unpaid bill: '+e.days+' days';
+  document.getElementById('overdueBranch').textContent=activeBranch==='all'?branchName(e.branch||'1'):'';
   document.getElementById('overdueCounter').textContent='Customer '+(overduePopupIndex+1)+' of '+overduePopupQueue.length;
 }
 function nextOverduePopup(){
