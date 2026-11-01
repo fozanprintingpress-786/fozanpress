@@ -1450,7 +1450,7 @@ function renderDashboard(){
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=money(val);};
   set('totalCash',summary.cash+summary.cashBalancePayment);
   set('totalOnline',summary.online);
-  set('totalCredit',visibleSales().filter(x=>x.type==='credit').reduce((sum,x)=>sum+customerBalance(x),0));
+  set('totalCredit',visibleSales().filter(x=>x.type==='credit' && (summaryMode==='month' ? monthKey(x.date)===month : x.date===date)).reduce((sum,x)=>sum+customerBalance(x),0));
   set('totalAdvance',summary.advance);
   set('totalBalancePayment',summary.balancePayment);
   set('totalPaymentReceived',summary.cash+summary.cashBalancePayment+summary.online+summary.advance);
