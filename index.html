@@ -732,7 +732,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
    <div class="mr-card"><h3>Payment &amp; Expense Breakdown</h3><div id="mrBreakdown"></div></div>
    <div class="mr-card"><h3>Monthly Performance</h3><div class="mr-stat-line"><span>Sales Entries</span><b id="mrSalesCount">0</b></div><div class="mr-stat-line"><span>Expense Entries</span><b id="mrExpenseCount">0</b></div><div class="mr-stat-line"><span>Average Cash per Sale</span><b id="mrAverage">Rs. 0</b></div><div class="mr-stat-line"><span>Branch</span><b id="mrBranch">Head Office</b></div></div>
   </div>
-  <div class="mr-card mr-taken-summary"><div class="mr-section-head"><h3>Monthly Expense — Taken By</h3><span class="mr-muted">Who received / took the amount</span></div><div class="mr-taken-grid"><div><small>Bykia</small><strong id="mrTakenBykia">Rs. 0</strong></div><div><small>Rahij</small><strong id="mrTakenRahij">Rs. 0</strong></div><div><small>Fozan</small><strong id="mrTakenFozan">Rs. 0</strong></div><div><small>Other / Not Assigned</small><strong id="mrTakenOther">Rs. 0</strong></div></div></div>
+  <div class="mr-card mr-taken-summary"><div class="mr-section-head"><h3>Monthly Expense — Taken By</h3><span class="mr-muted">Who received / took the amount</span></div><div class="mr-taken-grid"><div><small>Bykia &amp; Indrive</small><strong id="mrTakenBykiaIndrive">Rs. 0</strong></div><div><small>Rahij</small><strong id="mrTakenRahij">Rs. 0</strong></div><div><small>Fozan</small><strong id="mrTakenFozan">Rs. 0</strong></div><div><small>Other / Not Assigned</small><strong id="mrTakenOther">Rs. 0</strong></div></div></div>
   <div class="mr-two">
    <div class="mr-card"><div class="mr-section-head"><h3>Sales Activity</h3><span class="mr-muted">Selected month</span></div><div class="mr-table-wrap" id="mrSalesTable"></div></div>
    <div class="mr-card"><div class="mr-section-head"><h3>Expense Details</h3><span class="mr-muted">Selected month</span></div><div class="mr-table-wrap" id="mrExpenseTable"></div></div>
@@ -775,7 +775,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
   <h2>Add Expense / Payment</h2>
   <label>Amount</label><input id="eAmount" type="number" min="0" step="0.01" placeholder="0">
   <label>Description</label><input id="eDesc" placeholder="e.g. Paper purchase / Staff payment" dir="ltr">
-  <label>Taken By</label><select id="eTakenBy"><option value="Bykia">Bykia</option><option value="Rahij">Rahij</option><option value="Fozan">Fozan</option><option value="Other">Other</option></select>
+  <label>Taken By</label><select id="eTakenBy"><option value="Bykia &amp; Indrive">Bykia &amp; Indrive</option><option value="Rahij">Rahij</option><option value="Fozan">Fozan</option><option value="Other">Other</option></select>
   <label>Date</label><input id="eDate" type="date">
   <label>Time</label><input id="eTime" type="time" step="1">
   <div style="display:flex;gap:8px">
@@ -1298,6 +1298,20 @@ function changeFullReportMonth(month){
   if(date && monthKey(date.value)!==month)date.value=month+'-01';
   renderDashboard();renderSales();renderFullMonthlyReport();
 }
+// Resolve the expense recipient consistently, including older records that were
+// saved before the Taken By field was introduced. Explicit values always win.
+function normalizeExpenseTakenBy(expense){
+  const canonical=['Bykia & Indrive','Rahij','Fozan','Other'];
+  const raw=String(expense?.taken_by??expense?.takenBy??'').trim();
+  const direct=canonical.find(name=>name.toLowerCase()===raw.toLowerCase());
+  if(direct)return direct==='Bykia'?'Bykia & Indrive':direct;
+  const description=String(expense?.desc??expense?.description??'');
+  const matches=[...description.matchAll(/\b(Bykia\s*&\s*Indrive|Bykia|Rahij|Fozan)\b/gi)]
+    .map(match=>match[1].toLowerCase().replace(/\s*&\s*/g,' & '));
+  const unique=[...new Set(matches)];
+  if(unique.length===1){const found=canonical.find(name=>name.toLowerCase()===unique[0]);return found|| (unique[0]==='bykia'?'Bykia & Indrive':'Other');}
+  return 'Other';
+}
 function renderFullMonthlyReport(){
   const month=(document.getElementById('mrMonth')||{}).value||getSummaryMonth();
   const mt=monthlyTotals(month);
@@ -1311,9 +1325,9 @@ function renderFullMonthlyReport(){
   set('mrCredit',money(mt.credit));set('mrExpenses',money(mt.expenses));
   set('mrCashHand',money(mt.cashInHand));set('mrCashOnline',money(mt.cashInHand+mt.online));
   set('mrAdvance',money(mt.advance));set('mrBalance',money(mt.balancePayment));
-  const takenTotals={Bykia:0,Rahij:0,Fozan:0,Other:0};
-  expenses.forEach(x=>{const who=['Bykia','Rahij','Fozan'].includes(x.taken_by)?x.taken_by:'Other';takenTotals[who]+=Number(x.amount||0);});
-  set('mrTakenBykia',money(takenTotals.Bykia));set('mrTakenRahij',money(takenTotals.Rahij));
+  const takenTotals={'Bykia & Indrive':0,Rahij:0,Fozan:0,Other:0};
+  expenses.forEach(x=>{const who=normalizeExpenseTakenBy(x);takenTotals[who]+=Number(x.amount||0);});
+  set('mrTakenBykiaIndrive',money(takenTotals['Bykia & Indrive']));set('mrTakenRahij',money(takenTotals.Rahij));
   set('mrTakenFozan',money(takenTotals.Fozan));set('mrTakenOther',money(takenTotals.Other));
   set('mrSalesCount',String(sales.length));set('mrExpenseCount',String(expenses.length));
   set('mrAverage',money(sales.length?(mt.cash+mt.online)/sales.length:0));
@@ -1329,7 +1343,7 @@ function renderFullMonthlyReport(){
   const expenseHost=document.getElementById('mrExpenseTable');
   if(expenseHost){
     const rows=[...expenses].sort((a,b)=>(String(a.date)+' '+String(a.time||'')).localeCompare(String(b.date)+' '+String(b.time||'')));
-    expenseHost.innerHTML=rows.length?'<table><thead><tr><th>Date</th><th>Description</th><th>Taken By</th><th>Amount</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.desc||'—')}</td><td>${esc(x.taken_by||'Not assigned')}</td><td>${money(x.amount||0)}</td></tr>`).join('')+'</tbody></table>':'<div class="mr-empty">No expenses recorded for this month.</div>';
+    expenseHost.innerHTML=rows.length?'<table><thead><tr><th>Date</th><th>Description</th><th>Taken By</th><th>Amount</th></tr></thead><tbody>'+rows.map(x=>`<tr><td>${esc(x.date||'')}</td><td>${esc(x.desc||'—')}</td><td>${esc(normalizeExpenseTakenBy(x)==='Other'?'Other / Not assigned':normalizeExpenseTakenBy(x))}</td><td>${money(x.amount||0)}</td></tr>`).join('')+'</tbody></table>':'<div class="mr-empty">No expenses recorded for this month.</div>';
   }
 }
 function updateSidebarReport(){
@@ -1370,7 +1384,7 @@ function renderDashboard(){
   }
   const rows=[...dayExpenses].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
   el.innerHTML='<h2 style="margin-top:18px">Expense</h2><table><thead><tr><th>Date & Time</th><th>Description</th><th>Taken By</th><th>Expense</th><th>Actions</th></tr></thead><tbody>'+
-    rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td>${esc(x.taken_by||'Not assigned')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
+    rows.map(x=>`<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${x.date} ${x.time||''}</td><td>${esc(x.desc||'')}</td><td>${esc(normalizeExpenseTakenBy(x)||'Not assigned')}</td><td class="expense">${money(x.amount)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editExpense('${x.id}')">✎</button><button class="danger" onclick="deleteExpense('${x.id}')">×</button>`}</td></tr>`).join('')+
     '</tbody></table>';
   updateSidebarReport();
 }
@@ -1778,7 +1792,7 @@ function newExpense(){
   window._editingExpense=null;
   document.getElementById('eAmount').value='';
   document.getElementById('eDesc').value='';
-  document.getElementById('eTakenBy').value='Bykia';
+  document.getElementById('eTakenBy').value='Bykia & Indrive';
   const n=nowLocal();
   document.getElementById('eDate').value=getSummaryDate()||n.date;
   document.getElementById('eTime').value=n.time;
@@ -1804,7 +1818,7 @@ function editExpense(id){
   const x=data.expenses.find(e=>e.id===id);if(!canMutateRecord(x,'expense'))return;
   document.getElementById('eAmount').value=x.amount;
   document.getElementById('eDesc').value=x.desc||'';
-  document.getElementById('eTakenBy').value=['Bykia','Rahij','Fozan','Other'].includes(x.taken_by)?x.taken_by:'Other';
+  document.getElementById('eTakenBy').value=(['Bykia','Bykia & Indrive','Rahij','Fozan','Other'].includes(x.taken_by)?(x.taken_by==='Bykia'?'Bykia & Indrive':x.taken_by):'Other');
   document.getElementById('eDate').value=x.date;
   document.getElementById('eTime').value=x.time||'00:00:00';
   window._editingExpense=id;
