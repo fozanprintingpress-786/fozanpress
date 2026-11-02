@@ -53,7 +53,7 @@ button{border:0;border-radius:8px;padding:10px 15px;cursor:pointer}
 @media(max-width:1050px){.nav-group{gap:5px}.nav-group button{padding:9px 10px}.month-nav-group{margin-left:0;padding-left:12px}}
 @media(max-width:800px){.date-nav-group,.month-nav-group{width:auto;justify-content:flex-start;flex-wrap:nowrap}.month-nav-group{margin-left:0;padding-left:0}.summary-nav-row{justify-content:flex-start}}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
-.stat{padding:13px;border-radius:9px;background:#f5f8fb}.stat small{display:block;color:#687785}.stat strong{font-size:21px}#cashOnlineTotal,#paymentAfterExpense{animation:summaryBlink 1.15s ease-in-out infinite}@keyframes summaryBlink{0%,100%{opacity:1}50%{opacity:.42}}
+.stat{padding:13px;border-radius:9px;background:#f5f8fb}.stat small{display:block;color:#687785}.stat strong{font-size:21px}
 table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #edf0f2;text-align:left}th{background:#f7f9fb}td.cash,td.online,td.debit{white-space:nowrap;min-width:88px} table th:nth-child(4),table td:nth-child(4),table th:nth-child(5),table td:nth-child(5),table th:nth-child(6),table td:nth-child(6),table th:nth-child(7),table td:nth-child(7),table th:nth-child(8),table td:nth-child(8),table th:nth-child(9),table td:nth-child(9){background:#fff}.pay-cell{white-space:nowrap;line-height:1.15}.pay-tag{display:block;font-size:10px;font-weight:700;letter-spacing:.2px;margin-bottom:3px;text-transform:uppercase}.pay-amount{display:block;white-space:nowrap}
 .empty{text-align:center;color:#7b8791;padding:35px}
 
@@ -594,6 +594,112 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
 .outstanding-breakdown .credit-chip{background:#fff0e9;color:#c45a13}
 .outstanding-breakdown .balance-chip{background:#eef6ff;color:#1769aa}
 @media(max-width:560px){.outstanding-summary{grid-template-columns:1fr 1fr}.outstanding-summary>div:last-child{grid-column:1/-1}}
+
+/* Summary cards remain still until hovered; hover animation is defined below. */
+
+/* Hover interaction for all six daily summary cards: blink and rise above nearby cards */
+@keyframes dailySummaryHoverBlink {
+  0%,100% { opacity:1; filter:brightness(1); }
+  50% { opacity:.52; filter:brightness(1.18); }
+}
+.stats { position:relative; isolation:isolate; }
+.stats .stat {
+  position:relative;
+  z-index:0;
+  cursor:default;
+  transition:transform .2s ease, box-shadow .2s ease, z-index .2s ease;
+  transform-origin:center center;
+}
+.stats .stat:hover {
+  z-index:50;
+  animation:dailySummaryHoverBlink .65s ease-in-out infinite;
+  transform:translateY(-8px) scale(1.045);
+  box-shadow:0 10px 24px rgba(245,130,32,.28), 0 0 0 3px rgba(245,130,32,.38);
+  outline:2px solid #f58220;
+  outline-offset:1px;
+}
+.stats .stat:hover small,
+.stats .stat:hover strong {
+  animation:dailySummaryHoverBlink .65s ease-in-out infinite;
+}
+@media(prefers-reduced-motion:reduce){
+  .stats .stat:hover,.stats .stat:hover small,.stats .stat:hover strong { animation:none; }
+}
+
+/* Hover-triggered blink for Overall Credit & Balance totals and customer credit rows */
+@keyframes outstandingHoverBlink{0%,100%{opacity:1;filter:brightness(1)}50%{opacity:.48;filter:brightness(1.16)}}
+.outstanding-summary>div{transition:box-shadow .18s ease,transform .18s ease}
+.outstanding-summary>div:hover{animation:outstandingHoverBlink .7s ease-in-out infinite;box-shadow:0 0 0 3px #f5822045,0 5px 15px #f5822030;transform:translateY(-2px)}
+.outstanding-summary>div:hover small,.outstanding-summary>div:hover strong{animation:outstandingHoverBlink .7s ease-in-out infinite}
+.outstanding-customer{transition:box-shadow .18s ease,transform .18s ease}
+.outstanding-customer:hover{animation:outstandingHoverBlink .7s ease-in-out infinite;box-shadow:0 0 0 3px #f5822055,0 6px 16px #f5822030;transform:translateY(-2px)}
+.outstanding-customer:hover *{animation:outstandingHoverBlink .7s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.outstanding-summary>div:hover,.outstanding-summary>div:hover small,.outstanding-summary>div:hover strong,.outstanding-customer:hover,.outstanding-customer:hover *{animation:none}}
+
+/* Daily Sales: payment values blink and lift only while hovered, matching action buttons */
+@keyframes dailyPaymentHoverBlink {
+  0%,100% { opacity:1; filter:brightness(1); }
+  50% { opacity:.52; filter:brightness(1.18); }
+}
+#salesLedger .pay-cell {
+  display:inline-block; position:relative; z-index:0; border-radius:6px;
+  padding:3px 5px; margin:-3px -5px;
+  transition:transform .18s ease, box-shadow .18s ease; cursor:default;
+}
+#salesLedger .pay-cell:hover {
+  z-index:20; animation:dailyPaymentHoverBlink .65s ease-in-out infinite;
+  transform:translateY(-2px) scale(1.06);
+  box-shadow:0 4px 12px #f5822040, 0 0 0 2px #f5822055;
+}
+#salesLedger .pay-cell:hover .pay-tag,
+#salesLedger .pay-cell:hover .pay-amount { animation:dailyPaymentHoverBlink .65s ease-in-out infinite; }
+@media(prefers-reduced-motion:reduce) {
+  #salesLedger .pay-cell:hover, #salesLedger .pay-cell:hover .pay-tag,
+  #salesLedger .pay-cell:hover .pay-amount { animation:none; }
+}
+
+
+
+/* Clean two-column navigation: only the four previous/next controls remain visible */
+.summary-nav-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:center;
+  gap:14px;
+  width:100%;
+  overflow:visible;
+  padding:3px 0 5px;
+}
+.summary-nav-row>.date-nav-group,
+.summary-nav-row>.month-nav-group{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:center;
+  justify-content:stretch;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+}
+.summary-nav-row .soft-nav{
+  width:100%;
+  min-width:0;
+  min-height:38px;
+  padding:9px 10px;
+  text-align:center;
+  white-space:nowrap;
+  font-size:13px;
+  border-radius:8px;
+}
+.summary-nav-row input[type="hidden"]{display:none!important}
+@media(max-width:700px){
+  .summary-nav-row{grid-template-columns:1fr;gap:8px}
+  .summary-nav-row>.date-nav-group,
+  .summary-nav-row>.month-nav-group{grid-template-columns:1fr 1fr}
+  .summary-nav-row .soft-nav{min-width:0}
+}
+
 </style>
 </head>
 <body>
@@ -623,7 +729,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
     <button class="muted mutation-control" onclick="importData()">⬆ Restore</button><button class="muted" onclick="cloudLoad()">↻ Refresh Cloud</button>
     <label for="branchSelector" style="font-weight:bold;align-self:center">Shop / Branch:</label>
     <select id="branchSelector" onchange="changeBranch(this.value)" style="width:auto;min-width:190px;margin:0">
-      <option value="1">Head Office</option><option value="2">Bahria Enclave Office</option><option value="all">Combined Report — Both Offices</option><option value="preview">🔎 Preview (Password: ikram)</option>
+      <option value="1">Head Office</option><option value="2">Bahria Enclave Office</option><option value="all">Combined Report — Both Offices</option>
     </select>
     <span class="syncbox" id="saveStatus">✓ Cloud saved • shared on all PCs</span>
   </div>
@@ -635,17 +741,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
     </div>
     <div class="notice">Current month is shown automatically. Previous months remain safely saved and can be opened with Previous Month or searched.</div>
     <div class="summary-nav-row">
+      <input id="summaryDate" type="hidden" aria-hidden="true">
+      <input id="summaryMonth" type="hidden" aria-hidden="true">
       <div class="nav-group date-nav-group">
-        <button class="soft-nav" onclick="changeDate(-1)">‹ Previous Date</button>
-        <label for="summaryDate" style="font-weight:bold;color:#fff;background:linear-gradient(135deg,#1769aa,#5b4bdb);padding:9px 12px;border-radius:8px">Date</label>
-        <input id="summaryDate" type="date" style="width:auto;margin:0" onchange="renderDashboard();renderSales()">
-        <button class="soft-nav" onclick="changeDate(1)">Next Date ›</button>
+        <button class="soft-nav" type="button" onclick="changeDate(-1)">‹ Previous Date</button>
+        <button class="soft-nav" type="button" onclick="changeDate(1)">Next Date ›</button>
       </div>
       <div class="nav-group month-nav-group">
-        <button class="soft-nav" onclick="changeMonth(-1)">‹ Previous Month</button>
-        <label for="summaryMonth" style="font-weight:bold;color:#fff;background:linear-gradient(135deg,#198754,#20a4a8);padding:9px 12px;border-radius:8px">Month</label>
-        <input id="summaryMonth" type="month" style="width:auto;margin:0" onchange="selectMonth(this.value)">
-        <button class="soft-nav" onclick="changeMonth(1)">Next Month ›</button>
+        <button class="soft-nav" type="button" onclick="changeMonth(-1)">‹ Previous Month</button>
+        <button class="soft-nav" type="button" onclick="changeMonth(1)">Next Month ›</button>
       </div>
     </div>
   </div>
@@ -698,7 +802,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
     <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Overall Credit &amp; Balance</b><em id="overdueNavCount">›</em></button>
     <button class="side-link" data-panel="report" onclick="showSidePanel('report')"><span>▥</span><b>Monthly Report</b><em>›</em></button>
   </nav>
-  <div class="sidebar-foot"><span class="live-dot"></span> Fozan Daily Sale <small>Management System</small></div>
 </aside>
 <div class="right-sidebar-stack">
   <section class="side-view" id="side-credit">
@@ -931,40 +1034,18 @@ function updateBranchContact(){
   else el.innerHTML='📍 Plaza # 17, Backside D-Eatson Medical Store, Main PWD Society Road, Islamabad<br><strong>◉ 0330-5003388 &nbsp; | &nbsp; 0333-5465626</strong>';
 }
 function changeBranch(value){
-  const previous=activeBranch;
-  if(value==='preview'){
-    const pw=prompt('Preview mode password درج کریں:');
-    if(pw!=='ikram'){alert('Incorrect password.');document.getElementById('branchSelector').value=previous;return;}
-    previewMode=true;
-    document.querySelectorAll('.mutation-control').forEach(el=>el.style.display='none');
-    document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=true);
-    alert('Preview mode فعال ہے۔ اب کسی بھی branch کو منتخب کرکے صرف تفصیل دیکھ سکتے ہیں؛ Sale یا Expense شامل/ڈیلیٹ نہیں ہو سکے گی۔');
-    document.getElementById('branchSelector').value=previous;
-    return;
-  }
   if(!['1','2','all'].includes(value)) value='1';
-  if(!previewMode && value==='all'){
-    for(const id of ['1','2']) if(!authorizedBranches.has(id)){
-      const pw=prompt('Combined Report دیکھنے کے لیے '+branchName(id)+' کا password درج کریں:');
-      if(pw!==BRANCH_PASSWORDS[id]){alert('Incorrect password. Branch was not changed.');document.getElementById('branchSelector').value=previous;return;}
-      authorizedBranches.add(id);
-    }
-  }else if(!previewMode && !authorizedBranches.has(value)){
-    const pw=prompt(branchName(value)+' کا password درج کریں:');
-    if(pw!==BRANCH_PASSWORDS[value]){alert('Incorrect password. Branch was not changed.');document.getElementById('branchSelector').value=previous;return;}
-    authorizedBranches.add(value);
-  }
+  // Viewing any branch or the combined report never requires a password.
   activeBranch=value; localStorage.setItem('fozan_active_branch',value);
   const sel=document.getElementById('branchSelector'); if(sel)sel.value=value;
   const combined=value==='all';
-  document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=combined||previewMode);
+  document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=combined);
   updateBranchContact();renderDateHistory();renderDashboard();renderSales();
 }
 function canMutateRecord(record, kind='sale'){
   if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔');return false;}
   if(!record || String(record.branch_id||'1')!==activeBranch){alert('یہ ریکارڈ دوسرے آفس کا ہے۔ آپ اسے تبدیل یا ڈیلیٹ نہیں کر سکتے۔');return false;}
-  if(!authorizedBranches.has(activeBranch)){alert('اس آفس میں داخل ہونے کے لیے دوبارہ branch password درج کریں۔');return false;}
-  return true;
+  return requireActionPassword();
 }
 
 function cloudStatus(msg, ok=false){
@@ -1793,12 +1874,10 @@ function applyUnallocatedAdvancesToCredit(customer){
   }
 }
 function requireActionPassword(){
-  if(previewMode){alert('Preview mode صرف دیکھنے کے لیے ہے۔');return false;}
-  if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔');return false;}
-  // Branch password is requested once per page session, when selecting the branch.
-  // Once authenticated, allow sale add/edit/delete without asking again.
+  if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔ Sale یا Expense میں تبدیلی کے لیے متعلقہ branch منتخب کریں۔');return false;}
+  // Ask once per branch per open page session; each branch keeps its own existing password.
   if(authorizedBranches.has(activeBranch)) return true;
-  const pw=prompt(branchName(activeBranch)+' میں داخل ہونے کے لیے password درج کریں:');
+  const pw=prompt(branchName(activeBranch)+' میں Sale یا Expense میں تبدیلی کے لیے password درج کریں:');
   if(pw!==BRANCH_PASSWORDS[activeBranch]){alert('Incorrect password.');return false;}
   authorizedBranches.add(activeBranch);
   return true;
@@ -1840,7 +1919,7 @@ function editSale(id){
 }
 function saveSale(){
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
-  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
+  if(!requireActionPassword())return;
   if(activeBranch==='all' && !editingSale)return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office before saving a new sale.');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a sale.');
   const customer=document.getElementById('sCustomer').value.trim();
@@ -1916,8 +1995,8 @@ function closeSaleModal(){document.getElementById('saleModal').style.display='no
 
 function newExpense(){
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
-  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add an expense.');
+  if(!requireActionPassword())return;
   window._editingExpense=null;
   document.getElementById('eAmount').value='';
   document.getElementById('eDesc').value='';
@@ -1929,8 +2008,8 @@ function newExpense(){
 }
 function saveExpense(){
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
-  if(!authorizedBranches.has(activeBranch))return alert('Please authenticate for this branch first.');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before saving an expense.');
+  if(!requireActionPassword())return;
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
   const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),taken_by:document.getElementById('eTakenBy').value||'Other',date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
