@@ -727,6 +727,172 @@ body:not(.fozan-authenticated)>header,body:not(.fozan-authenticated)>.container,
 body.fozan-authenticated #fozanLogin{display:none}
 
 </style>
+<style>
+
+/* Full-screen Zoho-style invoice workspace */
+.invoice-fields-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+.invoice-fields-grid>div{min-width:0}
+.invoice-fields-grid label{display:block;font-size:11px;font-weight:700;color:#52616d;margin:8px 0 2px}
+.invoice-fields-grid input,.invoice-fields-grid select{width:100%;margin:3px 0 7px;padding:9px;font-size:13px}
+#customSubject,#customBillNotes{width:100%;margin:3px 0 8px;padding:9px}
+#customInvoiceNo{font-weight:800;background:#f4f5f7;color:#b6530b}
+.invoice-bottom-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+body.invoice-workspace-active{overflow:hidden;background:#f5f6f8}
+body.invoice-workspace-active>header{display:none!important}
+body.invoice-workspace-active>.container{display:block!important;max-width:none!important;margin:0!important;padding:0!important}
+body.invoice-workspace-active .main-left,
+body.invoice-workspace-active .fozan-sidebar,
+body.invoice-workspace-active .right-sidebar-stack>.side-view:not(#side-bill){display:none!important}
+body.invoice-workspace-active .main-layout{display:block!important}
+body.invoice-workspace-active #side-bill{display:block!important}
+body.invoice-workspace-active #billGeneratorPanel{
+ display:block!important;position:fixed!important;inset:0!important;z-index:10040!important;
+ width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;
+ margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:auto!important;
+ background:#f5f6f8!important;box-shadow:none!important
+}
+body.invoice-workspace-active #billGeneratorPanel .bill-generator{
+ max-width:1500px;margin:0 auto!important;padding:22px 28px!important;background:transparent!important
+}
+body.invoice-workspace-active #billGeneratorPanel .bill-generator-title{
+ position:sticky;top:0;z-index:3;background:#fff!important;border:0!important;border-bottom:3px solid #f58220!important;
+ border-radius:0!important;padding:15px 18px!important;margin:0 -28px 18px!important;box-shadow:0 3px 14px #00000010
+}
+body.invoice-workspace-active #billGeneratorPanel .bill-generator-content{
+ display:block!important;max-width:1120px;margin:0 auto;padding:22px 26px;background:#fff;
+ border:1px solid #e2e5e9;border-radius:12px;box-shadow:0 5px 20px #1720330d
+}
+body.invoice-workspace-active #billGeneratorPanel .bill-generator-content>label{display:block;font-size:13px;font-weight:700;color:#303b49;margin:12px 0 4px}
+body.invoice-workspace-active #billGeneratorPanel .bill-generator-content input,
+body.invoice-workspace-active #billGeneratorPanel .bill-generator-content select,
+body.invoice-workspace-active #billGeneratorPanel .bill-generator-content textarea{padding:11px 12px;border-radius:6px;border:1px solid #d5d9df;font-size:14px}
+body.invoice-workspace-active #billGeneratorPanel .custom-bill-builder{display:block!important;border:0;background:transparent;padding:0;margin-top:0}
+body.invoice-workspace-active #billGeneratorPanel .custom-bill-note,
+body.invoice-workspace-active #billGeneratorPanel .bill-custom-toggle{display:none!important}
+body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{font-size:0!important;width:auto!important;height:auto!important;padding:9px 14px!important;background:#202b3d!important}
+body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle:after{content:"✕ Close";font-size:13px}
+body.invoice-workspace-active #billGeneratorPanel .bill-generator-title p{font-size:12px}
+body.invoice-workspace-active #billGeneratorPanel .custom-generate-btn{width:auto;min-width:230px;padding:13px 24px}
+#billModal{z-index:10060!important}
+#billModal .box{width:min(1000px,96vw)!important;max-height:94vh!important;overflow:auto!important}
+#billModal .bill-modal-close-top{display:none!important}
+.bill-modal-actions .primary{background:#e96e12!important}
+@media(max-width:700px){
+ .invoice-fields-grid,.invoice-bottom-fields{grid-template-columns:1fr}
+ body.invoice-workspace-active #billGeneratorPanel .bill-generator{padding:10px!important}
+ body.invoice-workspace-active #billGeneratorPanel .bill-generator-title{margin:0 -10px 10px!important}
+ body.invoice-workspace-active #billGeneratorPanel .bill-generator-content{padding:14px}
+}
+@media print{
+ body *{visibility:hidden!important}
+ #billModal,#billModal *{visibility:visible!important}
+ #billModal{display:block!important;position:absolute!important;inset:0!important;background:#fff!important;padding:0!important}
+ #billModal .box{width:100%!important;max-height:none!important;overflow:visible!important;box-shadow:none!important;border:0!important}
+ #billModal .bill-modal-actions,#billModal .bill-modal-close-top{display:none!important}
+ #billModal .bill-paper{padding:8mm!important}
+ @page{size:A4;margin:8mm}
+}
+
+</style>
+<style>
+
+.custom-live-totals{margin:14px 0;padding:14px 16px;border:1px solid #e4e7eb;border-radius:9px;background:#fafbfc;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.custom-live-totals>div{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:5px 0}
+.custom-live-totals .grand,.custom-live-totals .balance{border-top:1px solid #dfe3e8;padding-top:10px;font-size:15px}
+.custom-live-totals .grand strong{color:#b6530b}.custom-live-totals .balance strong{color:#198754}
+#customCustomerName{width:100%;margin:3px 0 8px;padding:11px 12px;border-radius:6px;border:1px solid #d5d9df;font-size:14px}
+@media(max-width:700px){.custom-live-totals{grid-template-columns:1fr}}
+
+</style>
+<style>
+
+.customer-contact-fields{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:4px}
+.customer-contact-fields .address-field{grid-column:1/-1}
+.customer-contact-fields textarea{width:100%;box-sizing:border-box}
+.invoice-register-tools{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
+.invoice-register-tools input,.invoice-register-tools select{padding:10px;border:1px solid #d8dde4;border-radius:7px;min-width:220px}
+.invoice-register-table{width:100%;border-collapse:collapse;font-size:12px}
+.invoice-register-table th,.invoice-register-table td{padding:10px 8px;border-bottom:1px solid #e8ebef;text-align:left;white-space:nowrap}
+.invoice-register-table th{background:#fff5ed;color:#7a3b0c}
+.invoice-view-btn{border:1px solid #df741d;background:#fff7f0;color:#9b4a08;border-radius:6px;padding:6px 11px;cursor:pointer}
+@media(max-width:700px){.customer-contact-fields{grid-template-columns:1fr}.customer-contact-fields .address-field{grid-column:auto}.invoice-register-tools input,.invoice-register-tools select{width:100%;min-width:0}}
+
+</style>
+<style>\n.customer-admin-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
+.customer-admin-form input{min-width:0;padding:10px;border:1px solid #d8dde4;border-radius:7px}
+.customer-admin-form button{grid-column:1/-1;justify-self:start}
+.admin-data-table{width:100%;border-collapse:collapse;font-size:13px}
+.admin-data-table th,.admin-data-table td{padding:10px 8px;border-bottom:1px solid #e8ebef;text-align:left}
+.admin-data-table th{background:#fff5ed;color:#7a3b0c}
+.admin-row-delete{border:1px solid #d8dde4;background:#fff;color:#a33;border-radius:5px;padding:4px 9px;cursor:pointer}
+@media(max-width:650px){.customer-admin-form{grid-template-columns:1fr}}
+\n</style>\n<style>
+
+.customer-fullscreen-view.active{position:fixed!important;inset:0!important;z-index:10050!important;display:block!important;background:#fff!important;overflow:hidden!important;margin:0!important;padding:0!important}
+body.customer-form-open .sidebar,body.customer-form-open .main-sidebar,body.customer-form-open #sidebar,body.customer-form-open .topbar{visibility:hidden!important}
+.zoho-customer-page{height:100vh;background:#fff;color:#222;display:flex;flex-direction:column;font-family:Arial,sans-serif}
+.zoho-customer-topbar{height:56px;flex:0 0 56px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.zoho-customer-topbar h2{font-size:18px;font-weight:600;margin:0}
+.zoho-customer-topbar button,.zoho-customer-footer button{border-radius:5px;padding:9px 16px;cursor:pointer;font-size:13px;margin-left:7px}
+.zoho-save-btn{background:#0876b9;color:#fff;border:1px solid #0876b9}
+.zoho-cancel-btn{background:#fff;color:#333;border:1px solid #cfd4da}
+.zoho-customer-scroll{overflow:auto;flex:1}
+.zoho-customer-main{padding:14px 28px 18px;max-width:1120px}
+.zoho-type-row{display:flex;align-items:center;gap:25px;margin:0 0 22px;font-size:13px}.zoho-type-row>label:first-child{display:block;width:100%;flex-basis:100%;margin-bottom:-13px}
+.zoho-type-row{flex-wrap:wrap}.zoho-type-row input{accent-color:#0876b9}
+.zoho-customer-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 26px;max-width:850px}
+.zoho-field{display:flex;flex-direction:column;gap:6px;margin:0 0 13px;font-size:12px}
+.zoho-field>label{font-size:12px;color:#333}
+.zoho-field input,.zoho-field select,.zoho-field textarea,.zoho-inline-inputs input,.zoho-inline-inputs select{width:100%;box-sizing:border-box;border:1px solid #cfd4da;border-radius:4px;min-height:32px;padding:6px 10px;font:12px Arial;background:#fff;color:#222}
+.zoho-field textarea{resize:vertical}.zoho-inline-inputs{display:flex;gap:7px}.zoho-inline-inputs select{max-width:100px}
+.required-star{color:#e33}.zoho-add-more{border:0;background:none;color:#0784ca;padding:5px 0;cursor:pointer;font-size:12px}
+.zoho-extra-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:850px}.zoho-extra-fields[hidden]{display:none}
+.zoho-customer-tabs{display:flex;gap:25px;border-bottom:1px solid #e1e4e8;padding:0 18px;position:sticky;top:0;background:#fff;z-index:2}
+.zoho-customer-tabs button{background:none;border:0;padding:16px 4px 12px;color:#777;cursor:pointer;font-size:14px;border-bottom:3px solid transparent}
+.zoho-customer-tabs button.active{color:#0784ca;border-bottom-color:#0784ca;font-weight:600}
+.zoho-tab-content{display:none;padding:22px 28px;min-height:320px}.zoho-tab-content.active{display:block}
+.zoho-tab-content .narrow{max-width:400px}.zoho-tab-content small,.zoho-muted{color:#777;font-size:11px}
+.zoho-switch{display:flex;align-items:center;gap:10px}.zoho-switch input,.zoho-checkline input{accent-color:#0876b9}
+.zoho-address-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1000px}.zoho-address-grid h3,.zoho-tab-content h3{font-size:14px;font-weight:600;margin:0 0 18px}
+.zoho-checkline{display:flex;gap:8px;font-size:12px;margin:0 0 14px}
+.zoho-tab-heading{display:flex;justify-content:space-between;align-items:center;max-width:850px}
+.zoho-contact-card{border:1px solid #e2e5e9;border-radius:7px;padding:14px;margin:10px 0;max-width:850px}
+.zoho-customer-footer{padding:14px 28px;border-top:1px solid #e6e8eb}
+.zoho-customer-list-area{padding:20px 28px 40px;border-top:6px solid #f4f5f6}
+.zoho-customer-list-area h3{font-size:15px}
+@media(max-width:700px){.zoho-customer-grid,.zoho-address-grid,.zoho-extra-fields{grid-template-columns:1fr}.zoho-customer-main{padding:12px}.zoho-customer-tabs{gap:8px;overflow-x:auto}.zoho-customer-tabs button{white-space:nowrap}.zoho-tab-content{padding:15px}.zoho-inline-inputs{flex-wrap:wrap}}
+
+</style>
+<style>
+
+.item-fullscreen-view.active{position:fixed!important;inset:0!important;z-index:10060!important;display:block!important;background:#fff!important;overflow:hidden!important;margin:0!important;padding:0!important}
+body.item-form-open .sidebar,body.item-form-open .main-sidebar,body.item-form-open #sidebar,body.item-form-open .topbar,body.item-form-open .main-content{visibility:hidden!important}
+.zoho-item-page{height:100vh;background:#fff;color:#222;display:flex;flex-direction:column;font-family:Arial,sans-serif}
+.zoho-item-topbar{height:56px;flex:0 0 56px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.zoho-item-topbar h2{font-size:18px;font-weight:600;margin:0}
+.zoho-item-topbar button{border-radius:5px;padding:9px 16px;cursor:pointer;font-size:13px;margin-left:7px}
+.zoho-item-scroll{overflow:auto;flex:1}
+.zoho-item-form{padding:14px 28px 26px;max-width:900px}
+.zoho-item-type{display:flex;align-items:center;gap:28px;margin:0 0 22px;font-size:13px;flex-wrap:wrap}
+.zoho-item-type>label:first-child{flex-basis:100%;margin-bottom:-14px}
+.zoho-item-type input{accent-color:#0876b9}
+.zoho-item-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:740px}
+.zoho-field{display:flex;flex-direction:column;gap:6px;margin:0 0 13px;font-size:12px}
+.zoho-field>label{font-size:12px;color:#333}
+.zoho-field input,.zoho-field select,.zoho-field textarea{width:100%;box-sizing:border-box;border:1px solid #cfd4da;border-radius:4px;min-height:32px;padding:6px 10px;font:12px Arial;background:#fff;color:#222}
+.zoho-field textarea{resize:vertical}
+.zoho-item-divider{height:1px;background:#e5e7eb;max-width:740px;margin:20px 0 38px}
+.zoho-item-price,.zoho-item-description,.zoho-item-tax{max-width:360px}
+.zoho-price-input{display:flex;border:1px solid #cfd4da;border-radius:4px;overflow:hidden;height:34px}
+.zoho-price-input span{padding:9px 10px;background:#f7f7f7;border-right:1px solid #ddd;font-size:12px}
+.zoho-price-input input{border:0;border-radius:0;height:32px}
+.zoho-item-list{padding:20px 28px 40px;border-top:6px solid #f4f5f6}
+.zoho-item-list h3{font-size:15px;margin:0 0 12px}
+.zoho-item-list .invoice-register-tools{display:flex;gap:14px;align-items:center;max-width:850px}
+.zoho-item-list .invoice-register-tools input{flex:1}
+@media(max-width:700px){.zoho-item-grid{grid-template-columns:1fr}.zoho-item-form{padding:12px}.zoho-item-list{padding:16px}}
+
+</style>
 </head>
 <body>
 
@@ -871,6 +1037,9 @@ body.fozan-authenticated #fozanLogin{display:none}
   <nav class="side-menu" aria-label="Management sections">
     <button class="side-link" data-panel="credit" onclick="showSidePanel('credit')"><span>◉</span><b>Credit Balance</b><em id="creditNavCount">›</em></button>
     <button class="side-link" data-panel="bill" onclick="showSidePanel('bill')"><span>▤</span><b>Bill Generate</b><em>›</em></button>
+    <button class="side-link" data-panel="invoices" onclick="showSidePanel('invoices')"><span>▧</span><b>Invoices</b><em id="invoiceNavCount">0</em></button>
+    <button class="side-link" data-panel="customers" onclick="showSidePanel('customers')"><span>♙</span><b>Customers</b><em id="customerNavCount">0</em></button>
+    <button class="side-link" data-panel="items" onclick="showSidePanel('items')"><span>▤</span><b>Items</b><em id="itemNavCount">0</em></button>
     <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Overall Credit &amp; Balance</b><em id="overdueNavCount">›</em></button>
     <button class="side-link" data-panel="report" onclick="showSidePanel('report')"><span>▥</span><b>Monthly Report</b><em>›</em></button>
   </nav>
@@ -883,22 +1052,160 @@ body.fozan-authenticated #fozanLogin{display:none}
       <div id="monthlyDues"><div class="empty">Loading monthly balances…</div></div></div>
     </aside>
   </section>
+  <section class="side-view" id="side-invoices">
+    <aside class="monthly-dues-panel invoice-register-panel">
+      <div class="monthly-dues-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><h2>Saved Invoices</h2></div></div>
+      <div class="monthly-dues-content">
+        <div class="invoice-register-tools">
+          <input id="invoiceSearch" type="search" placeholder="Search invoice number / customer..." oninput="renderInvoiceRegister()">
+          <select id="invoiceBranchFilter" onchange="renderInvoiceRegister()"><option value="all">All Branches</option><option value="1">Head Office</option><option value="2">Bahria Enclave</option></select>
+        </div>
+        <div id="invoiceRegisterList"><div class="empty">No invoices saved yet.</div></div>
+      </div>
+    </aside>
+  </section>
+  <section class="side-view customer-fullscreen-view" id="side-customers">
+    <div class="zoho-customer-page">
+      <div class="zoho-customer-topbar">
+        <h2 id="customerFormHeading">Add Customer</h2>
+        <div><button type="button" class="zoho-save-btn" onclick="saveManagedCustomer()">✓ Save</button>
+        <button type="button" class="zoho-cancel-btn" onclick="closeCustomerForm()">× Cancel</button></div>
+      </div>
+      <div class="zoho-customer-scroll">
+        <div class="zoho-customer-main">
+          <div class="zoho-type-row">
+            <label>Customer Type</label>
+            <label><input type="radio" name="managedCustomerType" value="Business" checked onchange="toggleCustomerBusinessFields()"> Business</label>
+            <label><input type="radio" name="managedCustomerType" value="Individual" onchange="toggleCustomerBusinessFields()"> Individual</label>
+          </div>
+          <div class="zoho-customer-grid">
+            <div class="zoho-field">
+              <label>Primary Contact</label>
+              <div class="zoho-inline-inputs">
+                <select id="manageCustomerSalutation"><option value="">Salutation</option><option>Mr.</option><option>Mrs.</option><option>Ms.</option><option>Dr.</option><option>Prof.</option></select>
+                <input id="manageCustomerFirstName" placeholder="First Name">
+                <input id="manageCustomerLastName" placeholder="Last Name">
+              </div>
+            </div>
+            <div class="zoho-field business-only"><label for="manageCustomerCompany">Company Name</label><input id="manageCustomerCompany"></div>
+            <div class="zoho-field"><label for="manageCustomerName">Customer Display Name <b class="required-star">*</b></label><input id="manageCustomerName" required></div>
+            <div class="zoho-field"><label for="manageCustomerEmail">Customer Email</label><input id="manageCustomerEmail" type="email"></div>
+            <div class="zoho-field"><label>Customer Phone</label><div class="zoho-inline-inputs"><input id="manageCustomerWorkPhone" placeholder="Work Phone"><input id="manageCustomerMobile" placeholder="Mobile"></div></div>
+            <div class="zoho-field"><label for="manageCustomerWebsite">Website</label><input id="manageCustomerWebsite" type="url"></div>
+          </div>
+          <button type="button" class="zoho-add-more" onclick="toggleCustomerExtraFields()">＋ Add More Fields</button>
+          <div id="customerExtraFields" class="zoho-extra-fields" hidden>
+            <div class="zoho-field"><label for="manageCustomerTaxNo">Tax Registration / NTN</label><input id="manageCustomerTaxNo"></div>
+            <div class="zoho-field"><label for="manageCustomerOpeningBalance">Opening Balance (PKR)</label><input id="manageCustomerOpeningBalance" type="number" min="0" step="0.01" value="0"></div>
+          </div>
+        </div>
+        <div class="zoho-customer-tabs" role="tablist">
+          <button type="button" class="active" data-ctab="other" onclick="switchCustomerTab('other')">Other Details</button>
+          <button type="button" data-ctab="address" onclick="switchCustomerTab('address')">Address</button>
+          <button type="button" data-ctab="contacts" onclick="switchCustomerTab('contacts')">Contact Persons</button>
+          <button type="button" data-ctab="custom" onclick="switchCustomerTab('custom')">Custom Fields</button>
+          <button type="button" data-ctab="remarks" onclick="switchCustomerTab('remarks')">Remarks</button>
+        </div>
+        <div class="zoho-tab-content active" id="customerTab-other">
+          <div class="zoho-field narrow"><label for="manageCustomerCompanyId">Company ID</label><input id="manageCustomerCompanyId"></div>
+          <div class="zoho-field narrow"><label>Currency <b class="required-star">*</b></label><select id="manageCustomerCurrency"><option value="PKR">PKR — Pakistani Rupee</option></select><small>Currency is set to PKR.</small></div>
+          <div class="zoho-field narrow"><label for="manageCustomerTaxRate">Tax Rate</label><select id="manageCustomerTaxRate"><option value="">Select Tax</option><option value="0">0%</option><option value="5">5%</option><option value="10">10%</option><option value="15">15%</option><option value="17">17%</option><option value="18">18%</option></select></div>
+          <div class="zoho-field narrow"><label for="manageCustomerPaymentTerms">Payment Terms</label><select id="manageCustomerPaymentTerms"><option>Due on Receipt</option><option>Net 7</option><option>Net 15</option><option>Net 30</option><option>Net 45</option><option>Net 60</option></select></div>
+          <div class="zoho-field narrow"><label for="manageCustomerPortalLanguage">Portal Language</label><select id="manageCustomerPortalLanguage"><option>English</option><option>Urdu</option></select></div>
+          <div class="zoho-field narrow"><label>Allow portal access for this customer</label><label class="zoho-switch"><input id="manageCustomerPortalAccess" type="checkbox"><span>No / Yes</span></label></div>
+        </div>
+        <div class="zoho-tab-content" id="customerTab-address">
+          <div class="zoho-address-grid">
+            <div><h3>Billing Address</h3><div class="zoho-field"><label>Attention</label><input id="manageBillingAttention"></div><div class="zoho-field"><label>Country / Region</label><input id="manageBillingCountry" value="Pakistan"></div><div class="zoho-field"><label>Address</label><textarea id="manageBillingAddress" rows="3"></textarea></div><div class="zoho-field"><label>City</label><input id="manageBillingCity"></div><div class="zoho-field"><label>State</label><input id="manageBillingState"></div><div class="zoho-field"><label>Postal Code</label><input id="manageBillingPostal"></div><div class="zoho-field"><label>Phone</label><input id="manageBillingPhone"></div></div>
+            <div><h3>Shipping Address</h3><label class="zoho-checkline"><input type="checkbox" id="sameAsBilling" onchange="copyBillingToShipping()"> Same as Billing Address</label><div class="zoho-field"><label>Attention</label><input id="manageShippingAttention"></div><div class="zoho-field"><label>Country / Region</label><input id="manageShippingCountry" value="Pakistan"></div><div class="zoho-field"><label>Address</label><textarea id="manageShippingAddress" rows="3"></textarea></div><div class="zoho-field"><label>City</label><input id="manageShippingCity"></div><div class="zoho-field"><label>State</label><input id="manageShippingState"></div><div class="zoho-field"><label>Postal Code</label><input id="manageShippingPostal"></div><div class="zoho-field"><label>Phone</label><input id="manageShippingPhone"></div></div>
+          </div>
+        </div>
+        <div class="zoho-tab-content" id="customerTab-contacts">
+          <div class="zoho-tab-heading"><h3>Contact Persons</h3><button type="button" class="zoho-add-more" onclick="addCustomerContactPerson()">＋ Add Contact Person</button></div><div id="customerContactPersons"></div>
+        </div>
+        <div class="zoho-tab-content" id="customerTab-custom">
+          <h3>Custom Fields</h3><p class="zoho-muted">Add any additional customer information below.</p><div class="zoho-field narrow"><label>Field 1</label><input id="manageCustomerCustom1" placeholder="Custom information"></div><div class="zoho-field narrow"><label>Field 2</label><input id="manageCustomerCustom2" placeholder="Custom information"></div>
+        </div>
+        <div class="zoho-tab-content" id="customerTab-remarks"><div class="zoho-field"><label for="manageCustomerRemarks">Remarks</label><textarea id="manageCustomerRemarks" rows="5" placeholder="Notes about this customer..."></textarea></div></div>
+        <div class="zoho-customer-footer"><button type="button" class="zoho-save-btn" onclick="saveManagedCustomer()">✓ Save Customer</button><button type="button" class="zoho-cancel-btn" onclick="closeCustomerForm()">Cancel</button></div>
+        <div class="zoho-customer-list-area"><h3>Saved Customers</h3><div class="invoice-register-tools"><input id="manageCustomerSearch" placeholder="Search customers..." oninput="renderManagedCustomers()"><button type="button" class="zoho-add-more" onclick="resetManagedCustomerForm()">＋ Add New Customer</button></div><div id="managedCustomerList"></div></div>
+      </div>
+    </div>
+  </section>
+  <section class="side-view item-fullscreen-view" id="side-items">
+    <div class="zoho-item-page">
+      <div class="zoho-item-topbar">
+        <h2 id="itemFormHeading">Add Item</h2>
+        <div><button type="button" class="zoho-save-btn" onclick="saveManagedItem()">▣ Save</button>
+        <button type="button" class="zoho-cancel-btn" onclick="closeItemForm()">× Cancel</button></div>
+      </div>
+      <div class="zoho-item-scroll">
+        <div class="zoho-item-form">
+          <div class="zoho-item-type">
+            <label>Type ⓘ</label>
+            <label><input type="radio" name="managedItemType" value="Goods" checked> Goods</label>
+            <label><input type="radio" name="managedItemType" value="Service"> Service</label>
+          </div>
+          <div class="zoho-item-grid">
+            <div class="zoho-field"><label for="manageItemName">Name <b class="required-star">*</b></label><input id="manageItemName" required></div>
+            <div class="zoho-field"><label for="manageItemUnit">Unit ⓘ</label><input id="manageItemUnit" list="managedItemUnits" placeholder="Select or Type to add"><datalist id="managedItemUnits"><option value="piece"><option value="pcs"><option value="set"><option value="box"><option value="page"><option value="ream"><option value="sheet"><option value="sq. ft."><option value="job"><option value="copy"><option value="pack"></datalist></div>
+          </div>
+          <div class="zoho-item-divider"></div>
+          <div class="zoho-field zoho-item-price"><label for="manageItemRate">Selling Price <b class="required-star">*</b></label><div class="zoho-price-input"><span>PKR</span><input id="manageItemRate" type="number" min="0" step="0.01" placeholder="0.00" required></div></div>
+          <div class="zoho-field zoho-item-description"><label for="manageItemDescription">Description</label><textarea id="manageItemDescription" rows="3"></textarea></div>
+          <div class="zoho-field zoho-item-tax"><label for="manageItemTax">Tax ⓘ</label><select id="manageItemTax"><option value="">Select a Tax</option><option value="0">0%</option><option value="5">5%</option><option value="10">10%</option><option value="15">15%</option><option value="17">17%</option><option value="18">18%</option></select></div>
+        </div>
+        <div class="zoho-item-list">
+          <h3>Saved Items</h3>
+          <div class="invoice-register-tools"><input id="manageItemSearch" placeholder="Search items..." oninput="renderManagedItems()"><button type="button" class="zoho-add-more" onclick="resetManagedItemForm()">＋ Add New Item</button></div>
+          <div id="managedItemList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
   <section class="side-view" id="side-bill">
     <aside class="bill-generator-panel" id="billGeneratorPanel" aria-label="Customer bill generator">
       <div class="bill-generator">
-        <div class="bill-generator-title"><span class="bill-icon">▣</span><div class="bill-title-copy"><h3>Customer Bill Generator</h3><p>Create a saved customer's date-wise bill</p></div><button class="bill-panel-toggle" id="billPanelToggle" type="button" aria-label="Close Customer Bill Generator" title="Close / open bill generator" onclick="toggleBillGenerator()">−</button></div>
+        <div class="bill-generator-title"><span class="bill-icon">▣</span><div class="bill-title-copy"><h3>Customer Bill Generator</h3><p>Create a saved customer's date-wise bill</p></div><button class="bill-panel-toggle" id="billPanelToggle" type="button" aria-label="Close Customer Bill Generator" title="Close / open bill generator" onclick="closeInvoiceWorkspace()">−</button></div>
         <div class="bill-generator-content" id="billGeneratorContent">
           <label for="billCustomer">Customer Name</label><input id="billCustomer" list="billCustomerList" placeholder="Enter customer name…" autocomplete="off"><datalist id="billCustomerList"></datalist>
           <div class="bill-date-grid"><div><label for="billFromDate">From Date</label><input id="billFromDate" type="date"></div><div><label for="billToDate">To Date</label><input id="billToDate" type="date"></div></div>
           <button type="button" class="bill-generate-btn" onclick="generateCustomerBill()"><span>▣</span> Generate Saved Customer Bill</button>
-          <button type="button" class="bill-custom-toggle" onclick="toggleCustomBillBuilder()"><span>＋</span> Create New / Custom Bill</button>
+          <button type="button" class="bill-custom-toggle" onclick="openInvoiceWorkspace()"><span>＋</span> Create New / Custom Bill</button>
           <div id="customBillBuilder" class="custom-bill-builder" style="display:none">
             <div class="custom-bill-note">New customer? Enter the name and add your own items and prices. This bill does not require a saved customer record.</div>
-            <label for="customBillDate">Bill Date</label><input id="customBillDate" type="date">
+            <label for="customCustomerName">Customer Name</label>
+            <input id="customCustomerName" type="text" placeholder="Enter customer full name" autocomplete="off" required>
+            <div class="invoice-fields-grid customer-contact-fields">
+              <div><label for="customCustomerMobile">Mobile Number</label><input id="customCustomerMobile" type="tel" placeholder="03XX-XXXXXXX"></div>
+              <div><label for="customCompanyName">Company Name</label><input id="customCompanyName" type="text" placeholder="Company / Organization"></div>
+              <div class="address-field"><label for="customCustomerAddress">Address</label><textarea id="customCustomerAddress" rows="2" placeholder="Customer address"></textarea></div>
+            </div>
+            <div class="invoice-fields-grid">
+              <div><label>Invoice #</label><input id="customInvoiceNo" readonly></div>
+              <div><label for="customBillDate">Invoice Date</label><input id="customBillDate" type="date"></div>
+              <div><label for="customOrderNo">Order Number</label><input id="customOrderNo" placeholder="Optional order number"></div>
+              <div><label for="customTerms">Terms</label><select id="customTerms"><option>Due on Receipt</option><option>Net 7</option><option>Net 15</option><option>Net 30</option><option>Net 45</option><option>Net 60</option></select></div>
+              <div><label for="customDueDate">Due Date</label><input id="customDueDate" type="date"></div>
+              <div><label for="customSalesperson">Salesperson</label><input id="customSalesperson" placeholder="Salesperson name"></div>
+            </div>
+            <label for="customSubject">Subject</label><textarea id="customSubject" rows="2" placeholder="What is this invoice for?"></textarea>
             <div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" placeholder="Item / service description" aria-label="Item description"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
             <button type="button" class="custom-add-item" onclick="addCustomBillItem()">＋ Add Another Item</button>
-            <label for="customBillReceived">Advance / Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0">
-            <label for="customBillNotes">Notes (optional)</label><input id="customBillNotes" placeholder="Extra details / instructions">
+            <div class="invoice-fields-grid invoice-bottom-fields">
+              <div><label for="customBillDiscount">Discount (%)</label><input id="customBillDiscount" type="number" min="0" max="100" step="0.01" value="0"></div>
+              <div><label for="customBillShipping">Shipping Charges (Rs.)</label><input id="customBillShipping" type="number" min="0" step="0.01" value="0"></div>
+              <div><label for="customBillReceived">Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0"></div>
+            </div>
+            <div class="custom-live-totals" aria-live="polite">
+              <div><span>Subtotal</span><strong id="customLiveSubtotal">Rs. 0.00</strong></div>
+              <div><span>Discount</span><strong id="customLiveDiscount">Rs. 0.00</strong></div>
+              <div><span>Shipping</span><strong id="customLiveShipping">Rs. 0.00</strong></div>
+              <div class="grand"><span>Invoice Total</span><strong id="customLiveTotal">Rs. 0.00</strong></div>
+              <div><span>Advance / Paid</span><strong id="customLiveAdvance">Rs. 0.00</strong></div>
+              <div class="balance"><span>Balance Due</span><strong id="customLiveBalance">Rs. 0.00</strong></div>
+            </div>
+            <label for="customBillNotes">Notes / Customer Instructions</label><textarea id="customBillNotes" rows="2" placeholder="Extra details / instructions"></textarea>
             <button type="button" class="bill-generate-btn custom-generate-btn" onclick="generateCustomBill()">✦ Generate Custom Bill</button>
           </div>
         </div>
@@ -974,18 +1281,18 @@ body.fozan-authenticated #fozanLogin{display:none}
   <h2 id="saleModalTitle">New Daily Sale</h2>
   <label>Sale Type</label>
   <select id="sType" onchange="updateSaleFields()">
-    <option value="cash">Cash Bill + Due</option><option value="cash_received">Cash Received Only</option>
-    <option value="online">Online Bill + Due</option><option value="online_received">Online Received Only</option>
-    <option value="total_payment">Total Payment</option>
-    <option value="advance_payment">Advance Received</option>
-    <option value="credit">Credit Sale (Due)</option>
-    <option value="balance_payment">Old Balance Received</option>
+    <option value="cash">Cash + Bill</option>
+    <option value="cash_received">Cash</option>
+    <option value="online">Online + Bill</option>
+    <option value="online_received">Online</option>
+    <option value="credit_balance">Credit Sale / Old Balance</option>
   </select>
+  <div id="creditBalanceModeField" class="field-hidden"><label>Transaction Type</label><select id="sCreditBalanceMode" onchange="updateSaleFields()"><option value="credit">Credit Sale (New Due)</option><option value="balance_payment">Old Balance Received</option></select></div>
   <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="totalPaymentMethodField" class="field-hidden"><label>Payment Received By</label><select id="sTotalPaymentMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="amountField"><label id="amountLabel">Amount / Total Bill</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="0"></div>
-  <div id="advanceField"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
-  <div id="advanceMethodField" class="field-hidden"><label>Advance Payment Received By</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
+  <div id="advanceField"><label id="receivedNowLabel">Received Now</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
+  <div id="advanceMethodField" class="field-hidden"><label>Received By</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
   <div id="balanceField"><label id="balanceLabel">Balance Due (calculated)</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="Calculated automatically" readonly></div>
   <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Select sale type; fields will adjust automatically.</div>
   <label>Customer Name (Optional) <small style="color:#758397;font-weight:400">— type 1–2 words for saved customer suggestions</small></label><input id="sCustomer" list="saleCustomerSuggestions" autocomplete="off" placeholder="e.g. Muhammad Ali"><datalist id="saleCustomerSuggestions"></datalist>
@@ -1082,9 +1389,10 @@ let supabaseClient = CLOUD_ENABLED
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-let data=JSON.parse(localStorage.getItem(KEY)||'{"sales":[],"expenses":[]}');
+let data=JSON.parse(localStorage.getItem(KEY)||'{"sales":[],"expenses":[],"invoices":[]}');
 if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
+if(!Array.isArray(data.invoices)) data.invoices=[];
 // In cloud mode, Supabase is the source of truth; stale local-only rows are not re-added.
 let cloudReady=!CLOUD_ENABLED;
 let editingSale=null;
@@ -1582,6 +1890,163 @@ function renderMonthlyDues(){
   }).join('');
 }
 
+
+function getCustomerFormValue(id){return (document.getElementById(id)?.value||'').trim();}
+function getCustomerFormChecked(id){return !!document.getElementById(id)?.checked;}
+function saveManagedCustomer(){
+  const name=getCustomerFormValue('manageCustomerName');
+  if(!name){alert('Customer Display Name is required.');document.getElementById('manageCustomerName')?.focus();return;}
+  const type=document.querySelector('input[name="managedCustomerType"]:checked')?.value||'Business';
+  const mobile=getCustomerFormValue('manageCustomerMobile');
+  const company=getCustomerFormValue('manageCustomerCompany');
+  const existingId=window.editingManagedCustomerId||'';
+  const duplicate=data.customers.find(c=>c.id!==existingId&&String(c.name||'').toLowerCase()===name.toLowerCase()&&String(c.mobile||'')===mobile);
+  if(duplicate){alert('This customer is already saved.');return;}
+  const obj={
+    id:existingId||uid(),type,name,display_name:name,
+    salutation:getCustomerFormValue('manageCustomerSalutation'),
+    first_name:getCustomerFormValue('manageCustomerFirstName'),
+    last_name:getCustomerFormValue('manageCustomerLastName'),
+    company,mobile,work_phone:getCustomerFormValue('manageCustomerWorkPhone'),
+    email:getCustomerFormValue('manageCustomerEmail'),website:getCustomerFormValue('manageCustomerWebsite'),
+    tax_no:getCustomerFormValue('manageCustomerTaxNo'),
+    opening_balance:Number(getCustomerFormValue('manageCustomerOpeningBalance')||0),
+    company_id:getCustomerFormValue('manageCustomerCompanyId'),
+    currency:getCustomerFormValue('manageCustomerCurrency')||'PKR',
+    tax_rate:getCustomerFormValue('manageCustomerTaxRate'),
+    payment_terms:getCustomerFormValue('manageCustomerPaymentTerms')||'Due on Receipt',
+    portal_language:getCustomerFormValue('manageCustomerPortalLanguage')||'English',
+    portal_access:getCustomerFormChecked('manageCustomerPortalAccess'),
+    address:getCustomerFormValue('manageBillingAddress'),
+    billing:{attention:getCustomerFormValue('manageBillingAttention'),country:getCustomerFormValue('manageBillingCountry'),address:getCustomerFormValue('manageBillingAddress'),city:getCustomerFormValue('manageBillingCity'),state:getCustomerFormValue('manageBillingState'),postal:getCustomerFormValue('manageBillingPostal'),phone:getCustomerFormValue('manageBillingPhone')},
+    shipping:{attention:getCustomerFormValue('manageShippingAttention'),country:getCustomerFormValue('manageShippingCountry'),address:getCustomerFormValue('manageShippingAddress'),city:getCustomerFormValue('manageShippingCity'),state:getCustomerFormValue('manageShippingState'),postal:getCustomerFormValue('manageShippingPostal'),phone:getCustomerFormValue('manageShippingPhone')},
+    contact_persons:[...document.querySelectorAll('.zoho-contact-card')].map(card=>({first:card.querySelector('.cp-first')?.value||'',last:card.querySelector('.cp-last')?.value||'',email:card.querySelector('.cp-email')?.value||'',mobile:card.querySelector('.cp-mobile')?.value||''})),
+    custom1:getCustomerFormValue('manageCustomerCustom1'),custom2:getCustomerFormValue('manageCustomerCustom2'),
+    remarks:getCustomerFormValue('manageCustomerRemarks'),
+    branch_id:activeBranch==='all'?'1':activeBranch
+  };
+  if(existingId){const i=data.customers.findIndex(c=>c.id===existingId);if(i>=0)data.customers[i]={...data.customers[i],...obj};}
+  else data.customers.push(obj);
+  persist();window.editingManagedCustomerId='';
+  resetManagedCustomerForm();renderManagedCustomers();
+  alert('Customer saved successfully.');
+}
+function resetManagedCustomerForm(){
+  window.editingManagedCustomerId='';
+  const ids=['manageCustomerName','manageCustomerSalutation','manageCustomerFirstName','manageCustomerLastName','manageCustomerCompany','manageCustomerEmail','manageCustomerWorkPhone','manageCustomerMobile','manageCustomerWebsite','manageCustomerTaxNo','manageCustomerOpeningBalance','manageCustomerCompanyId','manageCustomerTaxRate','manageBillingAttention','manageBillingAddress','manageBillingCity','manageBillingState','manageBillingPostal','manageBillingPhone','manageShippingAttention','manageShippingAddress','manageShippingCity','manageShippingState','manageShippingPostal','manageShippingPhone','manageCustomerCustom1','manageCustomerCustom2','manageCustomerRemarks'];
+  ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='manageCustomerOpeningBalance'?'0':'';});
+  ['manageCustomerCurrency','manageCustomerPaymentTerms','manageCustomerPortalLanguage'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  ['manageCustomerPortalAccess','sameAsBilling'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=false;});
+  document.querySelector('input[name="managedCustomerType"][value="Business"]')?.click();
+  document.getElementById('customerContactPersons').innerHTML='';
+  document.getElementById('customerFormHeading').textContent='Add Customer';
+  switchCustomerTab('other');
+}
+function editManagedCustomer(id){
+  const c=data.customers.find(x=>String(x.id)===String(id));if(!c)return;
+  resetManagedCustomerForm();window.editingManagedCustomerId=c.id;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
+  set('manageCustomerName',c.name);set('manageCustomerSalutation',c.salutation);set('manageCustomerFirstName',c.first_name);set('manageCustomerLastName',c.last_name);
+  set('manageCustomerCompany',c.company);set('manageCustomerEmail',c.email);set('manageCustomerWorkPhone',c.work_phone);set('manageCustomerMobile',c.mobile);set('manageCustomerWebsite',c.website);
+  set('manageCustomerTaxNo',c.tax_no);set('manageCustomerOpeningBalance',c.opening_balance??0);set('manageCustomerCompanyId',c.company_id);set('manageCustomerCurrency',c.currency||'PKR');set('manageCustomerTaxRate',c.tax_rate);set('manageCustomerPaymentTerms',c.payment_terms);set('manageCustomerPortalLanguage',c.portal_language);
+  set('manageBillingAttention',c.billing?.attention);set('manageBillingCountry',c.billing?.country||'Pakistan');set('manageBillingAddress',c.billing?.address||c.address);set('manageBillingCity',c.billing?.city);set('manageBillingState',c.billing?.state);set('manageBillingPostal',c.billing?.postal);set('manageBillingPhone',c.billing?.phone);
+  set('manageShippingAttention',c.shipping?.attention);set('manageShippingCountry',c.shipping?.country||'Pakistan');set('manageShippingAddress',c.shipping?.address);set('manageShippingCity',c.shipping?.city);set('manageShippingState',c.shipping?.state);set('manageShippingPostal',c.shipping?.postal);set('manageShippingPhone',c.shipping?.phone);
+  set('manageCustomerCustom1',c.custom1);set('manageCustomerCustom2',c.custom2);set('manageCustomerRemarks',c.remarks);
+  document.querySelector('input[name="managedCustomerType"][value="'+(c.type||'Business')+'"]')?.click();
+  document.getElementById('manageCustomerPortalAccess').checked=!!c.portal_access;
+  (c.contact_persons||[]).forEach(cp=>addCustomerContactPerson(cp));
+  document.getElementById('customerFormHeading').textContent='Edit Customer';
+  switchCustomerTab('other');
+}
+function closeCustomerForm(){
+  document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
+  document.body.classList.remove('customer-form-open');
+}
+function toggleCustomerBusinessFields(){
+  const business=document.querySelector('input[name="managedCustomerType"]:checked')?.value!=='Individual';
+  document.querySelectorAll('.business-only').forEach(el=>el.style.display=business?'':'none');
+}
+function toggleCustomerExtraFields(){const e=document.getElementById('customerExtraFields');e.hidden=!e.hidden;}
+function switchCustomerTab(tab){
+  document.querySelectorAll('.zoho-customer-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.ctab===tab));
+  document.querySelectorAll('.zoho-tab-content').forEach(e=>e.classList.toggle('active',e.id==='customerTab-'+tab));
+}
+function addCustomerContactPerson(v={}){
+  const wrap=document.getElementById('customerContactPersons');if(!wrap)return;
+  const card=document.createElement('div');card.className='zoho-contact-card';
+  card.innerHTML='<div class="zoho-inline-inputs"><input class="cp-first" placeholder="First Name"><input class="cp-last" placeholder="Last Name"><input class="cp-email" placeholder="Email"><input class="cp-mobile" placeholder="Mobile"><button type="button" class="admin-row-delete cp-remove">Remove</button></div>';
+  wrap.appendChild(card);
+  card.querySelector('.cp-remove').addEventListener('click',()=>card.remove());
+  card.querySelector('.cp-first').value=v.first||'';card.querySelector('.cp-last').value=v.last||'';card.querySelector('.cp-email').value=v.email||'';card.querySelector('.cp-mobile').value=v.mobile||'';
+}
+function copyBillingToShipping(){
+  if(!getCustomerFormChecked('sameAsBilling'))return;
+  const pairs=[['Attention','Attention'],['Country','Country'],['Address','Address'],['City','City'],['State','State'],['Postal','Postal'],['Phone','Phone']];
+  pairs.forEach(([a,b])=>{const x=document.getElementById('manageBilling'+a),y=document.getElementById('manageShipping'+b);if(x&&y)y.value=x.value;});
+}
+function renderManagedCustomers(){
+  const el=document.getElementById('managedCustomerList');if(!el)return;
+  if(!Array.isArray(data.customers))data.customers=[];
+  const q=(document.getElementById('manageCustomerSearch')?.value||'').toLowerCase();
+  const rows=data.customers.filter(c=>[c.name,c.mobile,c.company,c.address].some(v=>String(v||'').toLowerCase().includes(q)));
+  const count=document.getElementById('customerNavCount');if(count)count.textContent=String(data.customers.length);
+  el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Customer</th><th>Mobile</th><th>Company</th><th>Address</th><th></th></tr></thead><tbody>'+
+    rows.map(c=>'<tr><td>'+esc(c.name)+'</td><td>'+esc(c.mobile||'—')+'</td><td>'+esc(c.company||'—')+'</td><td>'+esc(c.address||c.billing?.address||'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(c.id)+'" onclick="editManagedCustomer(this.dataset.id)">Edit</button> <button class="admin-row-delete" data-id="'+esc(c.id)+'" onclick="deleteManagedCustomer(this.dataset.id)">Delete</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No customers saved yet.</div>';
+}
+function deleteManagedCustomer(id){
+  if(!confirm('Delete this customer record?'))return;
+  data.customers=data.customers.filter(c=>String(c.id)!==String(id));persist();renderManagedCustomers();
+}
+function saveManagedItem(){
+  const name=(document.getElementById('manageItemName')?.value||'').trim();
+  if(!name){alert('Item Name is required.');document.getElementById('manageItemName')?.focus();return;}
+  const rate=Number(document.getElementById('manageItemRate')?.value||0);
+  if(!Number.isFinite(rate)||rate<0){alert('Please enter a valid Selling Price.');return;}
+  const unit=(document.getElementById('manageItemUnit')?.value||'').trim();
+  const existingId=window.editingManagedItemId||'';
+  if(data.items.some(x=>String(x.id)!==String(existingId)&&x.name.toLowerCase()===name.toLowerCase())){alert('This item is already saved.');return;}
+  const obj={id:existingId||uid(),name,rate,unit,type:document.querySelector('input[name="managedItemType"]:checked')?.value||'Goods',description:(document.getElementById('manageItemDescription')?.value||'').trim(),tax:document.getElementById('manageItemTax')?.value||''};
+  if(existingId){const i=data.items.findIndex(x=>String(x.id)===String(existingId));if(i>=0)data.items[i]={...data.items[i],...obj};}
+  else data.items.push(obj);
+  persist();resetManagedItemForm();renderManagedItems();alert('Item saved successfully.');
+}
+function resetManagedItemForm(){
+  window.editingManagedItemId='';
+  ['manageItemName','manageItemRate','manageItemUnit','manageItemDescription','manageItemTax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.querySelector('input[name="managedItemType"][value="Goods"]')?.click();
+  const h=document.getElementById('itemFormHeading');if(h)h.textContent='Add Item';
+}
+function editManagedItem(id){
+  const x=data.items.find(v=>String(v.id)===String(id));if(!x)return;
+  window.editingManagedItemId=x.id;
+  document.getElementById('manageItemName').value=x.name||'';
+  document.getElementById('manageItemRate').value=x.rate??0;
+  document.getElementById('manageItemUnit').value=x.unit||'';
+  document.getElementById('manageItemDescription').value=x.description||'';
+  document.getElementById('manageItemTax').value=x.tax||'';
+  document.querySelector('input[name="managedItemType"][value="'+(x.type||'Goods')+'"]')?.click();
+  document.getElementById('itemFormHeading').textContent='Edit Item';
+  document.querySelector('.zoho-item-scroll')?.scrollTo({top:0,behavior:'smooth'});
+}
+function closeItemForm(){
+  document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
+  document.body.classList.remove('item-form-open');
+}
+function renderManagedItems(){
+  const el=document.getElementById('managedItemList');if(!el)return;
+  if(!Array.isArray(data.items))data.items=[];
+  const q=(document.getElementById('manageItemSearch')?.value||'').toLowerCase();
+  const rows=data.items.filter(x=>[x.name,x.unit,x.type,x.description].some(v=>String(v||'').toLowerCase().includes(q)));
+  const count=document.getElementById('itemNavCount');if(count)count.textContent=String(data.items.length);
+  el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Type</th><th>Item / Service</th><th>Selling Price</th><th>Unit</th><th>Tax</th><th>Actions</th></tr></thead><tbody>'+
+    rows.map(x=>'<tr><td>'+esc(x.type||'Goods')+'</td><td>'+esc(x.name)+'</td><td>'+money(x.rate||0)+'</td><td>'+esc(x.unit||'—')+'</td><td>'+esc(x.tax?x.tax+'%':'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(x.id)+'" onclick="editManagedItem(this.dataset.id)">Edit</button> <button class="admin-row-delete" data-id="'+esc(x.id)+'" onclick="deleteManagedItem(this.dataset.id)">Delete</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No items saved yet.</div>';
+}
+function deleteManagedItem(id){
+  if(!confirm('Delete this item / service?'))return;
+  data.items=data.items.filter(x=>String(x.id)!==String(id));persist();renderManagedItems();
+}
 function showSidePanel(name){
   if(name==='report'){
     const report=document.getElementById('fullMonthlyReport');
@@ -1595,8 +2060,13 @@ function showSidePanel(name){
   const current=document.querySelector('.side-view.active');
   const alreadyOpen=!!(current && current.id==='side-'+name);
   const target=alreadyOpen?'':name;
+  if(target!=='customers')document.body.classList.remove('customer-form-open');
+  if(target!=='items')document.body.classList.remove('item-form-open');
   document.querySelectorAll('.side-view').forEach(el=>el.classList.toggle('active',!!target && el.id==='side-'+target));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',!!target && el.dataset.panel===target));
+  if(target==='invoices')renderInvoiceRegister();
+  if(target==='customers'){document.body.classList.add('customer-form-open');renderManagedCustomers();toggleCustomerBusinessFields();}
+  if(target==='items'){document.body.classList.add('item-form-open');renderManagedItems();resetManagedItemForm();}
   if(target==='overdue'){
     const count=document.getElementById('overdueNavCount');
     if(count)count.textContent=String(getOverdueCustomerEntries().length);
@@ -1897,21 +2367,29 @@ function renderSales(){
 }
 
 function updateSaleFields(){
-  const type=document.getElementById('sType').value;
+  const selected=document.getElementById('sType').value;
+  const type=selected==='credit_balance'?(document.getElementById('sCreditBalanceMode')?.value||'credit'):selected;
   const show=(id,yes)=>document.getElementById(id).classList.toggle('field-hidden',!yes);
   show('amountField',true);
+  show('creditBalanceModeField',selected==='credit_balance');
   show('balanceMethodField',type==='balance_payment');
-  show('totalPaymentMethodField',type==='total_payment');
+  show('totalPaymentMethodField',false);
   document.getElementById('sCustomer').parentElement.style.display='';
   show('advanceField',type==='online'||type==='cash');
-  show('advanceMethodField',type==='advance_payment'||type==='cash'||type==='online');
-  document.querySelector('#advanceMethodField label').textContent=(type==='cash'||type==='online')?'Advance Payment Received By':'Advance Payment Received By';
+  show('advanceMethodField',false);
   show('balanceField',type==='credit'||type==='online'||type==='cash');
-  document.getElementById('amountLabel').textContent=(type==='credit'||type==='online'||type==='cash')?'Total Bill Amount':type==='balance_payment'?'Balance Payment Received':type==='advance_payment'?'Advance Payment Amount':type==='total_payment'?'Total Payment Amount':'Amount';
-  document.getElementById('sAmount').placeholder=(type==='credit'||type==='online'||type==='cash')?'Enter full bill amount':'Enter amount';
+  document.getElementById('receivedNowLabel').textContent=type==='online'?'Online Received Now':'Cash Received Now';
+  document.getElementById('amountLabel').textContent=(type==='credit'||type==='online'||type==='cash')?'Total Bill Amount':type==='balance_payment'?'Old Balance Amount':'Amount Received';
+  document.getElementById('sAmount').placeholder=(type==='credit'||type==='online'||type==='cash')?'Enter full bill amount':'Enter amount received';
   document.getElementById('balanceLabel').textContent='Balance Due (calculated)';
   document.getElementById('sBalancePayment').readOnly=true;
-  document.getElementById('saleTypeHelp').textContent=type==='online_received'?'Enter only the online amount received. This will save as an online payment with no balance due.':type==='cash_received'?'Enter only the cash amount received. This will save as a cash sale with no balance due.':type==='cash'?'Enter the full bill amount and the cash received now as Advance Payment. The remaining amount is Balance Due. When the customer pays later, record it separately using Balance Payment Received.':type==='online'?'Enter the full bill amount and the online amount received now as Advance Payment. The remaining amount is Balance Due. Record later payments separately using Balance Payment Received.':type==='advance_payment'?'Record an advance amount received from the customer; the full amount will appear in the Advance Payment column.':type==='total_payment'?'Enter the payment amount and choose whether it was received by cash or online. It will be added to Cash or Online, not Advance Payment.':type==='credit'?'Enter the full bill amount. Advance is optional; leave it at 0 if nothing was received. The unpaid amount will be saved as Credit.':'Enter the amount received and the exact customer name so it can be applied to their oldest unpaid credit.';
+  document.getElementById('saleTypeHelp').textContent=
+    type==='online_received'?'Enter the online amount received. No new bill or due will be added.':
+    type==='cash_received'?'Enter the cash amount received. No new bill or due will be added.':
+    type==='cash'?'Enter the full bill amount and cash received now. Remaining amount will be added to customer due.':
+    type==='online'?'Enter the full bill amount and online amount received now. Remaining amount will be added to customer due.':
+    type==='credit'?'Enter the new credit bill amount. The full amount will be added to customer outstanding balance.':
+    'Enter the amount received against the customer’s previous outstanding balance. Choose Cash or Online below.';
   if(type==='balance_payment'){document.getElementById('sAdvance').value='0';document.getElementById('sBalancePayment').value='0';}
   refreshCustomerDescriptionSuggestions();
   updateBalanceDue();
@@ -2024,6 +2502,7 @@ function newSale(){
   editingSale=null;
   document.getElementById('saleModalTitle').textContent='New Daily Sale';
   document.getElementById('sType').value='cash';
+  document.getElementById('sCreditBalanceMode').value='credit';
   document.getElementById('sAmount').value='';
   document.getElementById('sAdvance').value='0';
   document.getElementById('sBalancePayment').value='0';
@@ -2040,7 +2519,10 @@ function editSale(id){
   if(!requireActionPassword())return;
   editingSale=id;
   document.getElementById('saleModalTitle').textContent='Edit Daily Sale';
-  document.getElementById('sType').value=isBalancePayment(x)?'balance_payment':x.type;
+  const oldIsBalance=isBalancePayment(x);
+  const oldType=oldIsBalance?'balance_payment':x.type;
+  document.getElementById('sType').value=(oldType==='credit'||oldType==='balance_payment')?'credit_balance':(['cash','cash_received','online','online_received'].includes(oldType)?oldType:(x.payment_method==='online'?'online_received':'cash_received'));
+  document.getElementById('sCreditBalanceMode').value=oldType==='balance_payment'?'balance_payment':'credit';
   document.getElementById('sBalanceMethod').value=balanceMethod(x);
   document.getElementById('sAmount').value=x.amount||0;
   document.getElementById('sAdvance').value=x.advance_payment||0;
@@ -2063,7 +2545,8 @@ function saveSale(){
   if(mobile && (mobileDigits.length<10 || mobileDigits.length>15))
     return alert('Please enter a valid mobile / WhatsApp number (10 to 15 digits).');
   const desc=cleanDescription(document.getElementById('sDesc').value);
-  const type=document.getElementById('sType').value;
+  const selectedType=document.getElementById('sType').value;
+  const type=selectedType==='credit_balance'?(document.getElementById('sCreditBalanceMode').value||'credit'):selectedType;
   const storedType=type==='balance_payment' ? 'balance_payment_'+document.getElementById('sBalanceMethod').value : type;
   if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
   if(type==='balance_payment' && !customer)return alert('For a balance payment, enter the customer name exactly as it appears on the credit entry.');
@@ -2326,7 +2809,7 @@ function refreshBillCustomerList(){
 }
 function generateCustomerBill(){
   refreshBillCustomerList();
-  const name=(document.getElementById('billCustomer').value||'').trim();
+  const name=(document.getElementById('customCustomerName').value||'').trim();
   const fromDate=document.getElementById('billFromDate').value||'';
   const toDate=document.getElementById('billToDate').value||'';
   if(!name){alert('Please enter a customer name.');return;}
@@ -2375,20 +2858,95 @@ function toggleCustomBillBuilder(){
     if(name)name.focus();
   }
 }
+function updateCustomBillTotals(){
+  const rows=[...document.querySelectorAll('#customBillItems .custom-bill-item')];
+  let subtotal=0;
+  rows.forEach(row=>{
+    const qty=Math.max(0,Number(row.querySelector('.custom-item-qty')?.value||0));
+    const rate=Math.max(0,Number(row.querySelector('.custom-item-rate')?.value||0));
+    const line=qty*rate;subtotal+=line;
+    let amount=row.querySelector('.custom-line-amount');
+    if(!amount){
+      amount=document.createElement('div');amount.className='custom-line-amount';
+      amount.style.cssText='font-size:12px;color:#667085;text-align:right;padding:3px 4px 7px';
+      row.appendChild(amount);
+    }
+    amount.textContent='Amount: '+money(line);
+  });
+  const pct=Math.min(100,Math.max(0,Number(document.getElementById('customBillDiscount')?.value||0)));
+  const discount=subtotal*pct/100;
+  const shipping=Math.max(0,Number(document.getElementById('customBillShipping')?.value||0));
+  const total=Math.max(0,subtotal-discount+shipping);
+  const advance=Math.max(0,Number(document.getElementById('customBillReceived')?.value||0));
+  const balance=total-advance;
+  const put=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=money(value);};
+  put('customLiveSubtotal',subtotal);put('customLiveDiscount',discount);
+  put('customLiveShipping',shipping);put('customLiveTotal',total);
+  put('customLiveAdvance',advance);put('customLiveBalance',balance);
+}
+document.addEventListener('input',function(e){
+  if(e.target.matches('.custom-item-qty,.custom-item-rate,#customBillDiscount,#customBillShipping,#customBillReceived'))updateCustomBillTotals();
+});
+document.addEventListener('change',function(e){
+  if(e.target.matches('.custom-item-qty,.custom-item-rate,#customBillDiscount,#customBillShipping,#customBillReceived'))updateCustomBillTotals();
+});
 function addCustomBillItem(){
   const wrap=document.getElementById('customBillItems');if(!wrap)return;
   const row=document.createElement('div');row.className='custom-bill-item';
   row.innerHTML='<input class="custom-item-desc" placeholder="Item / service description" aria-label="Item description"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div>';
   wrap.appendChild(row);
+  updateCustomBillTotals();
 }
 function removeCustomBillItem(button){
   const wrap=document.getElementById('customBillItems');const rows=wrap?wrap.querySelectorAll('.custom-bill-item'):[];
-  if(rows.length<=1){const row=rows[0];if(row){row.querySelector('.custom-item-desc').value='';row.querySelector('.custom-item-qty').value='1';row.querySelector('.custom-item-rate').value='';}return;}
+  if(rows.length<=1){const row=rows[0];if(row){row.querySelector('.custom-item-desc').value='';row.querySelector('.custom-item-qty').value='1';row.querySelector('.custom-item-rate').value='';}updateCustomBillTotals();return;}
   button.closest('.custom-bill-item').remove();
+  updateCustomBillTotals();
+}
+function nextBranchInvoiceNumber(branch){
+  const key='fozan_invoice_counter_branch_'+String(branch);
+  const code=String(branch)==='2'?'BE':'PWD';
+  const prefix='FP-'+code+'-';
+  let highest=Number(localStorage.getItem(key)||0);
+  // Also inspect synced daily-sale descriptions so a second PC can continue
+  // the branch sequence after cloud records have loaded.
+  (data.sales||[]).forEach(row=>{
+    if(String(row.branch_id||'1')!==String(branch))return;
+    const match=String(row.desc||'').match(new RegExp('Invoice\\s+'+prefix+'(\\d{6,})','i'));
+    if(match)highest=Math.max(highest,Number(match[1])||0);
+  });
+  const n=highest+1;
+  localStorage.setItem(key,String(n));
+  return prefix+String(n).padStart(6,'0');
+}
+function openInvoiceWorkspace(){
+  if(activeBranch==='all'){alert('Invoice banane ke liye pehle Head Office ya Bahria Enclave select karein.');return;}
+  const builder=document.getElementById('customBillBuilder');
+  if(builder)builder.style.display='block';
+  const panel=document.getElementById('billGeneratorPanel');
+  if(panel)panel.classList.remove('bill-collapsed');
+  const no=document.getElementById('customInvoiceNo');
+  if(no && !no.value)no.value=nextBranchInvoiceNumber(activeBranch);
+  const today=nowLocal().date;
+  const date=document.getElementById('customBillDate');
+  const due=document.getElementById('customDueDate');
+  if(date&&!date.value)date.value=today;
+  if(due&&!due.value)due.value=today;
+  document.body.classList.add('invoice-workspace-active');
+  updateCustomBillTotals();
+  setTimeout(()=>document.getElementById('customCustomerName')?.focus(),50);
+}
+function closeInvoiceWorkspace(){
+  document.body.classList.remove('invoice-workspace-active');
+  const genBtn=document.querySelector('.custom-generate-btn');if(genBtn)genBtn.disabled=false;
+  const builder=document.getElementById('customBillBuilder');
+  if(builder)builder.style.display='none';
 }
 function generateCustomBill(){
-  const name=(document.getElementById('billCustomer').value||'').trim();
-  if(!name){alert('Pehle Customer Name likhein.');document.getElementById('billCustomer').focus();return;}
+  if(activeBranch==='all'){alert('Combined Report view-only hai. Invoice ke liye branch select karein.');return;}
+  if(previewMode){alert('Preview mode mein invoice save nahi ho sakta.');return;}
+  const name=(document.getElementById('customCustomerName').value||'').trim();
+  if(!name){alert('Customer Name likhein.');document.getElementById('customCustomerName').focus();return;}
   const date=document.getElementById('customBillDate').value||nowLocal().date;
   const itemEls=[...document.querySelectorAll('#customBillItems .custom-bill-item')];
   const items=[];
@@ -2403,25 +2961,89 @@ function generateCustomBill(){
   }
   if(!items.length){alert('Kam az kam aik item/service aur us ka rate add karein.');return;}
   const subtotal=items.reduce((sum,x)=>sum+x.total,0);
+  const discountPct=Math.min(100,Math.max(0,Number(document.getElementById('customBillDiscount').value||0)));
+  const discount=subtotal*discountPct/100;
+  const shipping=Math.max(0,Number(document.getElementById('customBillShipping').value||0));
+  const total=Math.max(0,subtotal-discount+shipping);
   const received=Math.max(0,Number(document.getElementById('customBillReceived').value||0));
-  if(received>subtotal){if(!confirm('Received amount bill total se zyada hai. Kya aap phir bhi bill generate karna chahte hain?'))return;}
-  const balance=subtotal-received;
+  if(received>total){alert('Amount received invoice total se zyada nahi ho sakta.');return;}
+  const balance=total-received;
   const notes=(document.getElementById('customBillNotes').value||'').trim();
-  const branchLabel=activeBranch==='all'?'Combined Report':branchName(activeBranch);
+  const invoiceNo=document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch);
+  const orderNo=(document.getElementById('customOrderNo').value||'').trim();
+  const terms=document.getElementById('customTerms').value;
+  const dueDate=document.getElementById('customDueDate').value||date;
+  const salesperson=(document.getElementById('customSalesperson').value||'').trim();
+  const subject=(document.getElementById('customSubject').value||'').trim();
+  const branchLabel=branchName(activeBranch);
   const fmtDate=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB'):'—';
-  const logoMatch=generateCustomerBill.toString().match(/src="(data:image\/png;base64,[^"]+)"/);
-  const logoSrc=logoMatch?logoMatch[1]:'';
+  const desc=items.map(x=>x.desc+' × '+x.qty+' @ '+money(x.rate)).join(' | ')+(subject?' — '+subject:'');
+  const mobile=(document.getElementById('customCustomerMobile').value||'').trim();
+  const company=(document.getElementById('customCompanyName').value||'').trim();
+  const address=(document.getElementById('customCustomerAddress').value||'').trim();
+  const totalQty=items.reduce((sum,x)=>sum+Number(x.qty||0),0);
+  const timestamp=nowLocal();
+  const record={id:uid(),branch_id:activeBranch,type:'cash',amount:total,customer:name,mobile,company,address,desc:'Invoice '+invoiceNo+': '+desc,date,time:timestamp.time,advance_payment:received,advance_method:'cash',balance_payment:balance,invoice_no:invoiceNo,order_no:orderNo,invoice_due_date:dueDate,invoice_terms:terms,salesperson,invoice_subject:subject,invoice_items:items,invoice_qty:totalQty,invoice_subtotal:subtotal,invoice_discount:discount,invoice_discount_percent:discountPct,invoice_shipping:shipping,invoice_total:total};
+  data.sales.push(record);
+  if(!data.customers.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase()&&String(c.mobile||'')===mobile)){
+    data.customers.push({id:uid(),name,mobile,company,address,branch_id:activeBranch});
+  }
+  const invoiceRecord={...record,created_at:timestamp.date+' '+timestamp.time};
+  data.invoices.push(invoiceRecord);
+  persist();
+  renderInvoiceRegister();
+  const summaryDateEl=document.getElementById('summaryDate');
+  if(summaryDateEl)summaryDateEl.value=date;
+  const summaryMonthEl=document.getElementById('summaryMonth');
+  if(summaryMonthEl)summaryMonthEl.value=monthKey(date);
+  summaryMode='date';
+  renderDashboard();renderSales();
   const rows=items.map(x=>'<tr><td>'+esc(x.desc)+'</td><td style="text-align:right">'+esc(String(x.qty))+'</td><td style="text-align:right">'+money(x.rate)+'</td><td style="text-align:right">'+money(x.total)+'</td></tr>').join('');
   const generated=new Date().toLocaleDateString('en-GB');
   document.getElementById('billContent').innerHTML=
-    '<div class="bill-head"><div class="bill-brand-row">'+(logoSrc?'<img class="bill-logo" src="'+logoSrc+'" alt="Fozan Printing Logo">':'')+'<div><div class="bill-brand">FOZAN PRINTING</div><div class="bill-sub">Printing &amp; Digital Services</div><div class="bill-sub">'+esc(branchLabel)+'</div></div></div><div style="text-align:right"><span class="bill-pill">CUSTOM BILL</span><div class="bill-sub" style="margin-top:8px">Bill Date: '+esc(fmtDate(date))+'</div><div class="bill-sub">Generated: '+generated+'</div></div></div>'+
-    '<div class="bill-customer"><div style="font-size:11px;color:#687785;margin-bottom:4px">CUSTOMER NAME</div><strong>'+esc(name)+'</strong><div class="bill-sub">Custom bill • manually entered items</div></div>'+
-    '<table class="bill-table"><thead><tr><th>Description / Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<div class="bill-total-row"><div class="bill-total-card"><div class="bill-total-line"><span>Subtotal</span><strong>'+money(subtotal)+'</strong></div><div class="bill-total-line"><span>Received</span><strong style="color:#198754">'+money(received)+'</strong></div><div class="bill-total-line due"><span>Balance Due</span><strong>'+money(balance)+'</strong></div></div></div>'+
+    '<div class="bill-head"><div class="bill-brand-row"><div><div class="bill-brand">FOZAN PRINTING PRESS</div><div class="bill-sub">Digital Printing • Offset Printing • Panaflex Printing</div><div class="bill-sub">'+esc(branchLabel)+'</div></div></div><div style="text-align:right"><span class="bill-pill">TAX INVOICE</span><div class="bill-sub" style="margin-top:8px"><b>Invoice #:</b> '+esc(invoiceNo)+'</div><div class="bill-sub"><b>Invoice Date:</b> '+esc(fmtDate(date))+'</div><div class="bill-sub"><b>Due Date:</b> '+esc(fmtDate(dueDate))+'</div></div></div>'+
+    '<div class="bill-customer"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><div style="font-size:11px;color:#687785">CUSTOMER NAME</div><strong>'+esc(name)+'</strong></div><div><div style="font-size:11px;color:#687785">MOBILE NUMBER</div><strong>'+esc(mobile||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">COMPANY NAME</div><strong>'+esc(company||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">ADDRESS</div><strong>'+esc(address||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">ORDER NUMBER</div><strong>'+esc(orderNo||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">TERMS</div><strong>'+esc(terms)+'</strong></div><div><div style="font-size:11px;color:#687785">SALESPERSON</div><strong>'+esc(salesperson||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">TOTAL QUANTITY</div><strong>'+esc(String(totalQty))+'</strong></div></div></div>'+
+    (subject?'<div class="bill-range"><b>Subject:</b> '+esc(subject)+'</div>':'')+
+    '<table class="bill-table"><thead><tr><th>ITEM DETAILS</th><th style="text-align:right">QUANTITY</th><th style="text-align:right">RATE</th><th style="text-align:right">AMOUNT</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="bill-total-row"><div class="bill-total-card"><div class="bill-total-line"><span>Sub Total</span><strong>'+money(subtotal)+'</strong></div><div class="bill-total-line"><span>Discount ('+discountPct+'%)</span><strong>'+money(discount)+'</strong></div><div class="bill-total-line"><span>Shipping Charges</span><strong>'+money(shipping)+'</strong></div><div class="bill-total-line"><span>Invoice Total</span><strong>'+money(total)+'</strong></div><div class="bill-total-line"><span>Amount Received</span><strong style="color:#198754">'+money(received)+'</strong></div><div class="bill-total-line due"><span>Balance Due</span><strong>'+money(balance)+'</strong></div></div></div>'+
     (notes?'<div class="bill-range"><strong>Notes:</strong> '+esc(notes)+'</div>':'')+
-    '<div class="bill-footer">Thank you for choosing Fozan Printing Press.<br>Please contact us if any detail needs correction.</div>';
+    '<div class="bill-footer">Generated: '+generated+'<br>Thank you for choosing Fozan Printing Press.</div>';
+  document.getElementById('billModal').style.display='flex';
+  const next=document.getElementById('customInvoiceNo');if(next)next.value=nextBranchInvoiceNumber(activeBranch);
+  const genBtn=document.querySelector('.custom-generate-btn');if(genBtn)genBtn.disabled=true;
+}
+
+function renderInvoiceRegister(){
+  const list=document.getElementById('invoiceRegisterList');if(!list)return;
+  if(!Array.isArray(data.invoices))data.invoices=[];
+if(!Array.isArray(data.customers))data.customers=[];
+if(!Array.isArray(data.items))data.items=[];
+  const count=document.getElementById('invoiceNavCount');if(count)count.textContent=String(data.invoices.length);
+  const q=(document.getElementById('invoiceSearch')?.value||'').trim().toLowerCase();
+  const branch=document.getElementById('invoiceBranchFilter')?.value||'all';
+  const rows=data.invoices.filter(x=>(branch==='all'||String(x.branch_id)===branch)&&
+    (!q||[x.invoice_no,x.customer,x.mobile,x.company].some(v=>String(v||'').toLowerCase().includes(q))))
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
+  if(!rows.length){list.innerHTML='<div class="empty">No matching saved invoices.</div>';return;}
+  list.innerHTML='<div style="overflow-x:auto"><table class="invoice-register-table"><thead><tr><th>Invoice Number</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Branch</th><th>Total</th><th>Advance</th><th>Balance</th><th></th></tr></thead><tbody>'+
+    rows.map(x=>'<tr><td><b>'+esc(x.invoice_no||'—')+'</b></td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.mobile||'—')+'</td><td>'+esc(branchName(x.branch_id))+'</td><td>'+money(x.invoice_total??x.amount)+'</td><td>'+money(x.advance_payment||0)+'</td><td>'+money(x.balance_payment||0)+'</td><td><button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="viewSavedInvoice(this.dataset.invoiceId)">View / Print</button></td></tr>').join('')+
+    '</tbody></table></div>';
+}
+function viewSavedInvoice(id){
+  const x=(data.invoices||[]).find(v=>String(v.id)===String(id));if(!x)return;
+  const items=Array.isArray(x.invoice_items)?x.invoice_items:[];
+  const fmtDate=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB'):'—';
+  const rows=items.map(v=>'<tr><td>'+esc(v.desc||'')+'</td><td style="text-align:right">'+esc(String(v.qty||0))+'</td><td style="text-align:right">'+money(v.rate||0)+'</td><td style="text-align:right">'+money(v.total??(Number(v.qty||0)*Number(v.rate||0)))+'</td></tr>').join('');
+  const total=Number(x.invoice_total??x.amount??0),advance=Number(x.advance_payment||0),balance=Number(x.balance_payment??(total-advance));
+  document.getElementById('billContent').innerHTML=
+    '<div class="bill-head"><div class="bill-brand-row"><div><div class="bill-brand">FOZAN PRINTING PRESS</div><div class="bill-sub">Digital Printing • Offset Printing • Panaflex Printing</div><div class="bill-sub">'+esc(branchName(x.branch_id))+'</div></div></div><div style="text-align:right"><span class="bill-pill">INVOICE</span><div class="bill-sub"><b>Invoice #:</b> '+esc(x.invoice_no||'')+'</div><div class="bill-sub"><b>Date:</b> '+esc(fmtDate(x.date))+'</div><div class="bill-sub"><b>Due Date:</b> '+esc(fmtDate(x.invoice_due_date))+'</div></div></div>'+
+    '<div class="bill-customer"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><div style="font-size:11px;color:#687785">CUSTOMER NAME</div><strong>'+esc(x.customer||'')+'</strong></div><div><div style="font-size:11px;color:#687785">MOBILE NUMBER</div><strong>'+esc(x.mobile||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">COMPANY NAME</div><strong>'+esc(x.company||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">ADDRESS</div><strong>'+esc(x.address||'—')+'</strong></div></div></div>'+
+    '<table class="bill-table"><thead><tr><th>ITEM DETAILS</th><th style="text-align:right">QTY</th><th style="text-align:right">RATE</th><th style="text-align:right">AMOUNT</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="bill-total-row"><div class="bill-total-card"><div class="bill-total-line"><span>Subtotal</span><strong>'+money(x.invoice_subtotal??items.reduce((a,v)=>a+Number(v.total||0),0))+'</strong></div><div class="bill-total-line"><span>Discount</span><strong>'+money(x.invoice_discount||0)+'</strong></div><div class="bill-total-line"><span>Shipping</span><strong>'+money(x.invoice_shipping||0)+'</strong></div><div class="bill-total-line"><span>Total Payment</span><strong>'+money(total)+'</strong></div><div class="bill-total-line"><span>Advance</span><strong>'+money(advance)+'</strong></div><div class="bill-total-line due"><span>Balance</span><strong>'+money(balance)+'</strong></div></div></div>'+
+    '<div class="bill-footer">Thank you for choosing Fozan Printing Press.</div>';
   document.getElementById('billModal').style.display='flex';
 }
+
 function closeBillModal(){document.getElementById('billModal').style.display='none'}
 document.addEventListener('keydown',function(event){if(event.key==='Escape'){const modal=document.getElementById('billModal');if(modal&&modal.style.display==='flex')closeBillModal();}});
 
@@ -2441,7 +3063,7 @@ function importData(){
       try{
         const x=JSON.parse(r.result);
         if(!x.sales)throw 0;
-        data=x;if(!data.expenses)data.expenses=[];
+        data=x;if(!data.expenses)data.expenses=[];if(!Array.isArray(data.invoices))data.invoices=[];
         data.sales.forEach(v=>{v.branch_id=String(v.branch_id||'1')});data.expenses.forEach(v=>{v.branch_id=String(v.branch_id||'1')});
         persist();renderDashboard();renderSales();alert('Backup restored successfully.');
       }catch(e){alert('Invalid Daily Sale backup file.')}
