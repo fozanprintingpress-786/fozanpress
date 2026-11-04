@@ -4,7 +4,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FOZAN Printing — Customer Khata</title>
-<script src="./Fozan Daily Sale_files/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f3f6f9;color:#17212b}
 header{background:#123b5d;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
@@ -1287,7 +1287,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
               <div><label id="customRefLabel" for="customOrderNo">Order Number</label><input id="customOrderNo" placeholder="Optional order number"></div>
               <div><label for="customTerms">Terms</label><select id="customTerms"><option>Due on Receipt</option><option>Net 7</option><option>Net 15</option><option>Net 30</option><option>Net 45</option><option>Net 60</option></select></div>
               <div><label id="customDueLabel" for="customDueDate">Due Date</label><input id="customDueDate" type="date"></div>
-              <div><label for="customSalesperson">Salesperson</label><input id="customSalesperson" placeholder="Salesperson name"></div>
+              <div><label for="customSalesperson">Salesperson</label><input id="customSalesperson" list="fozanSalespersonList" placeholder="Select or type salesperson"><datalist id="fozanSalespersonList"><option value="Ikram Sohail"></option><option value="Imran Siddique"></option><option value="Jawad"></option></datalist></div>
             </div>
             <label for="customSubject">Subject</label><textarea id="customSubject" rows="2" placeholder="What is this invoice for?"></textarea>
             <datalist id="quoteInvoiceItemList"></datalist><div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
@@ -1446,9 +1446,10 @@ const KEY='daily_sale_v1';
 const SUPABASE_URL = 'https://ervxidorfqwocxotlpgq.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_A7oKKl_HSESuE3pHb_vLaw_zwWYBj_p';
 const CLOUD_ENABLED =
+  !!(window.supabase && typeof window.supabase.createClient === 'function') &&
   SUPABASE_URL.startsWith('https://') &&
   !SUPABASE_URL.includes('PASTE_') &&
-  SUPABASE_ANON_KEY &&
+  !!SUPABASE_ANON_KEY &&
   !SUPABASE_ANON_KEY.includes('PASTE_');
 
 
@@ -1770,10 +1771,11 @@ function isCredit(x){
   return x && x.type==='credit';
 }
 function isBalancePayment(x){
-  return !!x && String(x.type||'').startsWith('balance_payment');
+  return !!x && (String(x.type||'').startsWith('balance_payment') || x.type==='credit_balance_received');
 }
 function balanceMethod(x){
-  return String(x?.type||'').endsWith('_online') ? 'online' : 'cash';
+  return String(x?.type||'').endsWith('_online') ||
+    (x?.balance_method||x?.advance_method||x?.payment_method)==='online' ? 'online' : 'cash';
 }
 
 function searchText(x){
@@ -2391,7 +2393,7 @@ function saleBalancePaymentInfo(entry){
   const remainingByEntry=new Map(dueEntries.map(x=>[String(x.id),Number(x.balance_payment||0)]));
   const infoByEntry=new Map();
   for(const receipt of receipts){
-    let remaining=Math.max(0,Number(receipt.amount||0));
+    let remaining=Math.max(0,Number(receipt.amount||0)-Number(receipt.credit_applied||0));
     for(const item of dueEntries){
       if(remaining<=0.0001)break;
       const key=String(item.id), due=remainingByEntry.get(key)||0;
@@ -2502,11 +2504,11 @@ function updateSaleFields(){
   const oldBalance=type==='balance_payment'||type==='credit_balance_received';
   const splitPayment=cashBalance||onlineBalance||creditReceived;
   show('amountField',true);
-  show('balanceMethodField',oldBalance||creditReceived);
+  show('balanceMethodField',type==='balance_payment');
   show('totalPaymentMethodField',false);
-  const usesAdvanceField=creditReceived;
+  const usesAdvanceField=false;
   show('advanceField',usesAdvanceField);
-  show('advanceMethodField',usesAdvanceField);
+  show('advanceMethodField',creditReceived);
   show('balanceField',cashBalance||onlineBalance||credit);
   document.getElementById('sCustomer').parentElement.style.display='';
   document.getElementById('amountLabel').textContent=
@@ -2543,57 +2545,46 @@ function updateBalanceDue(){
 function rebuildBalanceAllocations(customer){
   const key=(customer||'').trim().toLowerCase();
   if(!key)return;
-  const credits=data.sales
+  const credits=salesInBranch(activeBranch)
     .filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===key)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
   credits.forEach(x=>x.balance_payment=0);
-  const receipts=data.sales
+  const receipts=salesInBranch(activeBranch)
     .filter(x=>isBalancePayment(x) && (x.customer||'').trim().toLowerCase()===key)
     .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
                  String(a.time||'').localeCompare(String(b.time||'')) ||
                  String(a.id||'').localeCompare(String(b.id||'')));
   for(const receipt of receipts){
     let remaining=Math.max(0,Number(receipt.amount||0));
+    let creditApplied=0;
     for(const credit of credits){
       if(remaining<=0.0001)break;
       const due=customerBalance(credit);
       if(due<=0.0001)continue;
       const paid=Math.min(due,remaining);
       credit.balance_payment=Number(credit.balance_payment||0)+paid;
+      creditApplied+=paid;
       remaining-=paid;
     }
+    receipt.credit_applied=creditApplied;
   }
 }
 function applyBalancePayment(customer, amount, paymentDate, paymentTime, paymentId){
-  let remaining=Number(amount||0);
-  const matches=salesInBranch(activeBranch).filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() && customerBalance(x)>0)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.id||'').localeCompare(String(b.id||'')));
-  for(const credit of matches){
-    if(remaining<=0)break;
-    const due=customerBalance(credit), paid=Math.min(due,remaining);
-    credit.balance_payment=Number(credit.balance_payment||0)+paid;
-    remaining-=paid;
-  }
-  // If no credit entry remains, accept the receipt against older cash/online
-  // sales that have an outstanding balance. Their original bill rows stay intact;
-  // the ledger derives PAID/PARTIALLY PAID and the receipt date from this receipt.
-  const otherDue=salesInBranch(activeBranch)
+  // Rebuild all receipt allocations chronologically: oldest unpaid Credit first,
+  // then oldest unpaid Cash/Online Balance. This also repairs older receipt rows.
+  rebuildBalanceAllocations(customer);
+  const receipt=salesInBranch(activeBranch).find(x=>x.id===paymentId);
+  const creditApplied=Number(receipt?.credit_applied||0);
+  const remaining=Math.max(0,Number(amount||0)-creditApplied);
+  const unpaidBalance=salesInBranch(activeBranch)
     .filter(x=>['cash','online'].includes(x.type) &&
-      (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase() &&
-      Number(x.balance_payment||0)>0)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
-                 String(a.time||'').localeCompare(String(b.time||'')) ||
-                 String(a.id||'').localeCompare(String(b.id||'')));
-  for(const sale of otherDue){
-    if(remaining<=0.0001)break;
-    const alreadyReceived=saleBalancePaymentInfo(sale)?.amount||0;
-    const due=Math.max(0,Number(sale.balance_payment||0)-alreadyReceived);
-    const applied=Math.min(due,remaining);
-    remaining-=applied;
+      (x.customer||'').trim().toLowerCase()===(customer||'').trim().toLowerCase())
+    .reduce((sum,sale)=>sum+Math.max(0,Number(sale.balance_payment||0)-(saleBalancePaymentInfo(sale)?.amount||0)),0);
+  if(remaining>unpaidBalance+0.0001){
+    alert('Note: '+money(remaining-unpaidBalance)+' could not be matched to an unpaid Credit or Balance for this customer. The full received payment is still saved.');
   }
-  if(remaining>0.0001) alert('Note: '+money(remaining)+' could not be matched to an unpaid balance for this customer. Check the customer name and old sale entries. The received payment is still saved.');
 }
 function applyAdvancePayment(customer, amount, paymentId){
   let payment=salesInBranch(activeBranch).find(x=>x.id===paymentId && x.type==='advance_payment');
@@ -2686,13 +2677,15 @@ function saveSale(){
     return alert('Please enter a valid mobile / WhatsApp number (10 to 15 digits).');
   const desc=cleanDescription(document.getElementById('sDesc').value);
   const type=document.getElementById('sType').value;
-  const oldBalance=type==='balance_payment';
+  const creditReceived=type==='credit_balance_received';
+  const oldBalance=type==='balance_payment'||creditReceived;
   const isCash=type==='cash_balance'||type==='cash_full';
   const isOnline=type==='online_balance'||type==='online_full';
   const isCredit=type==='credit';
   const isPaidPlusDue=type==='cash_balance'||type==='online_balance';
   const isSplit=false;
-  const storedType=oldBalance?'balance_payment_'+document.getElementById('sBalanceMethod').value:
+  const receivedBy=creditReceived?document.getElementById('sAdvanceMethod').value:document.getElementById('sBalanceMethod').value;
+  const storedType=oldBalance?'balance_payment_'+receivedBy:
     isCash?'cash':isOnline?'online':isCredit?'credit':type;
   if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
   if(oldBalance && !customer)return alert('For a balance payment, enter the customer name exactly as it appears on the credit entry.');
@@ -2700,10 +2693,9 @@ function saveSale(){
   const amount=amountValue===''?0:Number(amountValue);
   let advance=0;
   if(type==='cash_full'||type==='online_full')advance=amount;
-  else if(type==='credit_balance_received')advance=Number(document.getElementById('sAdvance').value||0);
   const enteredBalance=Number(document.getElementById('sBalancePayment').value||0);
   const initialBalance=isPaidPlusDue?enteredBalance:((isCash||isOnline)?Math.max(0,amount-advance):0);
-  const advanceMethod=(type==='online_balance'||type==='online_full')?'online':'cash';
+  const advanceMethod=creditReceived?receivedBy:(type==='online_balance'||type==='online_full')?'online':'cash';
   if(!Number.isFinite(amount)||amount<0||(amount===0&&!oldBalance&&!isCredit))
     return alert(isCredit?'Please enter a valid bill amount (0 is allowed for an unpriced credit entry).':'Please enter an amount greater than zero.');
   if(!Number.isFinite(advance)||advance<0)return alert('Please enter a valid received amount.');
@@ -3074,13 +3066,31 @@ function refreshSavedItemDatalist(){
   list.replaceChildren(...data.items.map(item=>{const o=document.createElement('option');o.value=item.name||'';o.label=[item.name,item.unit||'',item.rate!=null?'Rate: PKR '+Number(item.rate).toLocaleString('en-PK'):''].filter(Boolean).join(' — ');return o;}));
 }
 function showSavedItemOptions(input){refreshSavedItemDatalist();}
+function findSavedItemByName(name){
+  return (data.items||[]).find(x=>String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());
+}
+function savedItemDescription(item){
+  return item?[item.description||'',item.unit?'Unit: '+item.unit:''].filter(Boolean).join(' • '):'';
+}
+function itemNameCell(item){
+  const saved=findSavedItemByName(item.desc);
+  const details=item.description||saved?.description||'';
+  const unit=item.unit||saved?.unit||'';
+  const sub=[details,unit?'Unit: '+unit:''].filter(Boolean).join(' • ');
+  return '<b>'+esc(item.desc||'')+'</b>'+(sub?'<small class="bill-item-description">'+esc(sub)+'</small>':'');
+}
 function applySavedItemToRow(input){
-  const value=(input.value||'').trim().toLowerCase();const item=(data.items||[]).find(x=>String(x.name||'').trim().toLowerCase()===value);
-  if(!item)return;
+  const item=findSavedItemByName(input.value);
   const row=input.closest('.custom-bill-item');if(!row)return;
+  let detail=row.querySelector('.saved-item-detail');
+  if(!detail){detail=document.createElement('small');detail.className='saved-item-detail';detail.style.cssText='display:block;color:#667085;font-size:11px;line-height:1.4;padding:2px 4px 4px';input.insertAdjacentElement('afterend',detail);}
+  if(!item){
+    input.title='';delete input.dataset.itemDescription;detail.textContent='';detail.style.display='none';
+    updateCustomBillTotals();return;
+  }
   const rate=row.querySelector('.custom-item-rate');if(rate)rate.value=Number(item.rate||0);
-  if(item.description){input.title=item.description;input.dataset.itemDescription=item.description;}
-  let detail=row.querySelector('.saved-item-detail');if(!detail){detail=document.createElement('small');detail.className='saved-item-detail';detail.style.cssText='display:block;color:#667085;font-size:11px;padding:2px 4px 4px';input.insertAdjacentElement('afterend',detail);}detail.textContent=[item.description||'',item.unit?'Unit: '+item.unit:''].filter(Boolean).join(' • ');
+  input.title=item.description||'';input.dataset.itemDescription=item.description||'';
+  detail.textContent=savedItemDescription(item);detail.style.display=detail.textContent?'block':'none';
   updateCustomBillTotals();
 }
 function openQuoteWorkspace(){
@@ -3102,14 +3112,14 @@ function renderQuoteRegister(){
 function viewSavedQuote(id){
   const q=(data.quotes||[]).find(x=>String(x.id)===String(id));if(!q)return;
   const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB'):'—';
-  const rows=(q.quote_items||[]).map(x=>'<tr><td>'+esc(x.desc||'')+'</td><td style="text-align:right">'+esc(String(x.qty||0))+'</td><td style="text-align:right">'+money(x.rate||0)+'</td><td style="text-align:right">'+money(x.total||0)+'</td></tr>').join('');
+  const rows=(q.quote_items||[]).map(x=>'<tr><td>'+itemNameCell(x)+'</td><td style="text-align:right">'+esc(String(x.qty||0))+'</td><td style="text-align:right">'+money(x.rate||0)+'</td><td style="text-align:right">'+money(x.total||0)+'</td></tr>').join('');
   document.getElementById('billContent').innerHTML='<div class="bill-head"><div class="bill-brand-row"><div><div class="bill-brand">FOZAN PRINTING PRESS</div><div class="bill-sub">Digital Printing • Offset Printing • Panaflex Printing</div><div class="bill-sub">'+esc(branchName(q.branch_id))+'</div></div></div><div style="text-align:right"><span class="bill-pill">QUOTATION</span><div class="bill-sub"><b>Quote #:</b> '+esc(q.quote_no||'')+'</div><div class="bill-sub"><b>Quote Date:</b> '+fmt(q.date)+'</div><div class="bill-sub"><b>Expiry Date:</b> '+fmt(q.expiry_date)+'</div></div></div><div class="bill-customer"><b>'+esc(q.customer||'')+'</b><br>'+esc(q.mobile||'')+'<br>'+esc(q.company||'')+'<br>'+esc(q.address||'')+'</div>'+(q.subject?'<div class="bill-range"><b>Subject:</b> '+esc(q.subject)+'</div>':'')+'<table class="bill-table"><thead><tr><th>ITEM DETAILS</th><th>QUANTITY</th><th>RATE</th><th>AMOUNT</th></tr></thead><tbody>'+rows+'</tbody></table><div class="bill-total-row"><div class="bill-total-card"><div class="bill-total-line"><span>Subtotal</span><strong>'+money(q.quote_subtotal||0)+'</strong></div><div class="bill-total-line"><span>Discount</span><strong>'+money(q.quote_discount||0)+'</strong></div><div class="bill-total-line"><span>Shipping</span><strong>'+money(q.quote_shipping||0)+'</strong></div><div class="bill-total-line"><span>Quote Total</span><strong>'+money(q.quote_total||0)+'</strong></div></div></div>'+(q.notes?'<div class="bill-range"><b>Notes:</b> '+esc(q.notes)+'</div>':'')+'<div class="bill-footer">This quotation is valid until '+fmt(q.expiry_date)+'.</div>';
   document.getElementById('billModal').style.display='flex';
 }
 function generateCustomQuote(){
   if(activeBranch==='all'||previewMode){alert('Quote save karne ke liye specific branch select karein.');return;}
   const name=(document.getElementById('customCustomerName').value||'').trim();if(!name){alert('Customer Name likhein.');return;}
-  const items=[];for(const el of document.querySelectorAll('#customBillItems .custom-bill-item')){const desc=(el.querySelector('.custom-item-desc').value||'').trim(),qty=Number(el.querySelector('.custom-item-qty').value||0),rate=Number(el.querySelector('.custom-item-rate').value||0);if(!desc&&!rate)continue;if(!desc||qty<=0||rate<0||!Number.isFinite(rate)){alert('Item description, quantity aur rate check karein.');return;}items.push({desc,qty,rate,total:qty*rate});}
+  const items=[];for(const el of document.querySelectorAll('#customBillItems .custom-bill-item')){const desc=(el.querySelector('.custom-item-desc').value||'').trim(),qty=Number(el.querySelector('.custom-item-qty').value||0),rate=Number(el.querySelector('.custom-item-rate').value||0);if(!desc&&!rate)continue;if(!desc||qty<=0||rate<0||!Number.isFinite(rate)){alert('Item description, quantity aur rate check karein.');return;}const saved=findSavedItemByName(desc);items.push({desc,description:saved?.description||'',unit:saved?.unit||'',qty,rate,total:qty*rate});}
   if(!items.length){alert('Kam az kam aik item add karein.');return;}
   const subtotal=items.reduce((a,x)=>a+x.total,0),pct=Math.min(100,Math.max(0,Number(document.getElementById('customBillDiscount').value||0))),discount=subtotal*pct/100,shipping=Math.max(0,Number(document.getElementById('customBillShipping').value||0)),total=Math.max(0,subtotal-discount+shipping);
   const timestamp=nowLocal(),date=document.getElementById('customBillDate').value||timestamp.date;
@@ -3207,7 +3217,7 @@ function generateCustomBill(){
     if(!desc&&!rate)continue;
     if(!desc){alert('Har item ki description likhein.');el.querySelector('.custom-item-desc').focus();return;}
     if(!(qty>0)||rate<0||!Number.isFinite(rate)){alert('Quantity aur rate check karein.');return;}
-    items.push({desc,qty,rate,total:qty*rate});
+    const saved=findSavedItemByName(desc);items.push({desc,description:saved?.description||'',unit:saved?.unit||'',qty,rate,total:qty*rate});
   }
   if(!items.length){alert('Kam az kam aik item/service aur us ka rate add karein.');return;}
   const subtotal=items.reduce((sum,x)=>sum+x.total,0);
@@ -3254,7 +3264,7 @@ function generateCustomBill(){
   if(summaryMonthEl)summaryMonthEl.value=monthKey(date);
   summaryMode='date';
   renderDashboard();renderSales();
-  const rows=items.map(x=>'<tr><td>'+esc(x.desc)+'</td><td style="text-align:right">'+esc(String(x.qty))+'</td><td style="text-align:right">'+money(x.rate)+'</td><td style="text-align:right">'+money(x.total)+'</td></tr>').join('');
+  const rows=items.map(x=>'<tr><td>'+itemNameCell(x)+'</td><td style="text-align:right">'+esc(String(x.qty))+'</td><td style="text-align:right">'+money(x.rate)+'</td><td style="text-align:right">'+money(x.total)+'</td></tr>').join('');
   const generated=new Date().toLocaleDateString('en-GB');
   document.getElementById('billContent').innerHTML=
     '<div class="bill-head"><div class="bill-brand-row"><div><div class="bill-brand">FOZAN PRINTING PRESS</div><div class="bill-sub">Digital Printing • Offset Printing • Panaflex Printing</div><div class="bill-sub">'+esc(branchLabel)+'</div></div></div><div style="text-align:right"><span class="bill-pill">TAX INVOICE</span><div class="bill-sub" style="margin-top:8px"><b>Invoice #:</b> '+esc(invoiceNo)+'</div><div class="bill-sub"><b>Invoice Date:</b> '+esc(fmtDate(date))+'</div><div class="bill-sub"><b>Due Date:</b> '+esc(fmtDate(dueDate))+'</div></div></div>'+
@@ -3300,7 +3310,7 @@ function editSavedInvoice(id){
   set('customBillDiscount',x.invoice_discount_percent??(Number(x.invoice_subtotal)?Number(x.invoice_discount||0)/Number(x.invoice_subtotal)*100:0));
   set('customBillShipping',x.invoice_shipping||0);set('customBillReceived',x.advance_payment||0);set('customBillNotes',x.invoice_notes||'');
   const wrap=document.getElementById('customBillItems');wrap.innerHTML='';
-  (x.invoice_items||[]).forEach((item,i)=>{if(i>0)addCustomBillItem();const row=wrap.querySelectorAll('.custom-bill-item')[i];if(row){row.querySelector('.custom-item-desc').value=item.desc||'';row.querySelector('.custom-item-qty').value=item.qty||1;row.querySelector('.custom-item-rate').value=item.rate||0;}});
+  (x.invoice_items||[]).forEach((item,i)=>{if(i>0)addCustomBillItem();const row=wrap.querySelectorAll('.custom-bill-item')[i];if(row){row.querySelector('.custom-item-desc').value=item.desc||'';row.querySelector('.custom-item-qty').value=item.qty||1;row.querySelector('.custom-item-rate').value=item.rate||0;applySavedItemToRow(row.querySelector('.custom-item-desc'));}});
   if(!wrap.children.length)addCustomBillItem();
   const heading=document.getElementById('customInvoiceHeading');if(heading)heading.textContent='Edit Invoice '+(x.invoice_no||'');
   const save=document.getElementById('customSaveButton');if(save)save.textContent='✓ Update Invoice';
@@ -3319,9 +3329,7 @@ function viewSavedInvoice(id){
   const fmtDate=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB'):'—';
   const findSavedItem=desc=>(data.items||[]).find(it=>String(it.name||'').trim().toLowerCase()===String(desc||'').trim().toLowerCase());
   const rows=items.map(v=>{
-    const saved=findSavedItem(v.desc);
-    const details=[saved?.description||'',saved?.unit?'Unit: '+saved.unit:''].filter(Boolean).join(' • ');
-    return '<tr><td><b>'+esc(v.desc||'')+'</b>'+(details?'<small class="bill-item-description">'+esc(details)+'</small>':'')+'</td><td style="text-align:right">'+esc(String(v.qty||0))+(saved?.unit?'<small class="bill-item-description">'+esc(saved.unit)+'</small>':'')+'</td><td style="text-align:right">'+money(v.rate||0)+'</td><td style="text-align:right">'+money(v.total??(Number(v.qty||0)*Number(v.rate||0)))+'</td></tr>';
+    return '<tr><td>'+itemNameCell(v)+'</td><td style="text-align:right">'+esc(String(v.qty||0))+'</td><td style="text-align:right">'+money(v.rate||0)+'</td><td style="text-align:right">'+money(v.total??(Number(v.qty||0)*Number(v.rate||0)))+'</td></tr>';
   }).join('');
   const total=Number(x.invoice_total??x.amount??0),advance=Number(x.advance_payment||0),balance=Number(x.balance_payment??(total-advance));
   const meta=[['Order Number',x.order_no],['Payment Terms',x.invoice_terms],['Salesperson',x.salesperson],['Subject',x.invoice_subject]]
@@ -3340,25 +3348,82 @@ function closeBillModal(){document.getElementById('billModal').style.display='no
 document.addEventListener('keydown',function(event){if(event.key==='Escape'){const modal=document.getElementById('billModal');if(modal&&modal.style.display==='flex')closeBillModal();}});
 
 function exportData(){
-  if(currentUserRole!=='admin'){alert('Backup صرف Admin بنا سکتا ہے۔');return;}
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fozan-daily-sale-backup.json';a.click();
+  if(!currentUserRole){alert('Please login first.');return;}
+  let backup,filename;
+  if(currentUserRole==='admin'){
+    backup={_fozanBackup:true,backupType:'full',createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(data))};
+    filename='fozan-daily-sale-full-backup.json';
+  }else{
+    const branch=String(FOZAN_USERS[currentUserKey].branch);
+    const branchData={};
+    Object.keys(data).forEach(key=>{
+      const value=data[key];
+      if(Array.isArray(value)){
+        // Branch-tagged records are exported only for the logged-in branch.
+        branchData[key]=value.filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')===branch);
+      }else if(value && typeof value==='object') branchData[key]=JSON.parse(JSON.stringify(value));
+      else branchData[key]=value;
+    });
+    backup={_fozanBackup:true,backupType:'branch',backupBranch:branch,createdAt:new Date().toISOString(),data:branchData};
+    filename='fozan-'+(branch==='1'?'head-office':'bahria-enclave')+'-backup.json';
+  }
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),500);
 }
 function importData(){
-  if(currentUserRole!=='admin'){alert('Restore صرف Admin کر سکتا ہے۔');return;}
+  if(!currentUserRole){alert('Please login first.');return;}
   const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
   input.onchange=()=>{
     const f=input.files[0];if(!f)return;
     const r=new FileReader();
-    r.onload=()=>{
+    r.onload=async()=>{
       try{
-        const x=JSON.parse(r.result);
-        if(!x.sales)throw 0;
-        data=x;if(!data.expenses)data.expenses=[];if(!Array.isArray(data.invoices))data.invoices=[];if(!Array.isArray(data.quotes))data.quotes=[];
+        const raw=JSON.parse(r.result);
+        const isWrapped=raw && raw._fozanBackup===true && raw.data && typeof raw.data==='object';
+        const incoming=isWrapped?raw.data:raw;
+        if(!incoming || !Array.isArray(incoming.sales) || !Array.isArray(incoming.expenses))throw 0;
+        if(currentUserRole==='admin'){
+          if(isWrapped && raw.backupType==='branch'){
+            const branch=String(raw.backupBranch||'');
+            if(!['1','2'].includes(branch))throw 0;
+            const current=data;
+            Object.keys(incoming).forEach(key=>{
+              if(Array.isArray(incoming[key])){
+                const old=Array.isArray(current[key])?current[key]:[];
+                const keep=old.filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')!==branch);
+                const add=incoming[key].filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')===branch);
+                current[key]=[...keep,...add];
+              }
+            });
+            data=current;
+          }else{
+            data=incoming;
+          }
+        }else{
+          const branch=String(FOZAN_USERS[currentUserKey].branch);
+          if(!isWrapped || raw.backupType!=='branch' || String(raw.backupBranch)!==branch){alert('یہ Backup اس برانچ کا نہیں ہے۔ صرف اپنی برانچ کا Backup Restore کریں۔');return;}
+          Object.keys(incoming).forEach(key=>{
+            if(!Array.isArray(incoming[key]))return;
+            const old=Array.isArray(data[key])?data[key]:[];
+            // Replace only this branch's records; keep every other branch intact.
+            const keep=old.filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')!==branch);
+            const add=incoming[key].filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')===branch);
+            data[key]=[...keep,...add];
+          });
+        }
+        if(!Array.isArray(data.sales))data.sales=[];if(!Array.isArray(data.expenses))data.expenses=[];
+        if(!Array.isArray(data.invoices))data.invoices=[];if(!Array.isArray(data.quotes))data.quotes=[];
         data.sales.forEach(v=>{v.branch_id=String(v.branch_id||'1')});data.expenses.forEach(v=>{v.branch_id=String(v.branch_id||'1')});
+        if(CLOUD_ENABLED && cloudReady && currentUserRole==='branch'){
+          const branch=String(FOZAN_USERS[currentUserKey].branch);
+          for(const table of ['fozan_sales','fozan_expenses']){
+            const {error}=await supabaseClient.from(table).delete().eq('branch_id',branch);
+            if(error)throw error;
+          }
+        }
         persist();renderDashboard();renderSales();alert('Backup restored successfully.');
-      }catch(e){alert('Invalid Daily Sale backup file.')}
+      }catch(e){console.error('Backup restore error:',e);alert('Invalid backup file or restore failed.');}
     };r.readAsText(f);
   };input.click();
 }
