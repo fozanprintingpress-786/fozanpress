@@ -760,6 +760,95 @@ body.invoices-register-fullscreen .invoice-register-tools input{width:100%!impor
 
 @media(max-width:760px){body.invoices-register-fullscreen #side-invoices .invoice-register-panel{padding:12px!important}body.invoices-register-fullscreen .invoice-register-tools{grid-template-columns:1fr!important}}
 
+
+/* Admin-only staff payroll and branch expenses workspace */
+.admin-only-menu{display:none!important}
+body.admin-role .admin-only-menu{display:flex!important}
+#side-expenses .payroll-panel{border-top:4px solid var(--fo-orange)!important}
+.payroll-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}
+.payroll-summary>div{background:#f6f7f9;border:1px solid #e8ebef;border-radius:10px;padding:12px;min-width:0}
+.payroll-summary small{display:block;color:#778294;font-size:11px;font-weight:700}
+.payroll-summary strong{display:block;font-size:17px;color:#202b3d;margin-top:5px;overflow-wrap:anywhere}
+.payroll-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.payroll-form-grid label{display:block;font-size:11px;font-weight:700;color:#52616d}
+.payroll-form-grid input,.payroll-form-grid select{margin:4px 0 8px;min-width:0}
+.payroll-table-wrap{overflow:auto}
+.payroll-table{min-width:900px}
+.payroll-table td,.payroll-table th{vertical-align:middle}
+.payroll-actions{display:flex;gap:5px;flex-wrap:wrap}
+.payroll-actions button{padding:6px 8px;font-size:11px}
+.payroll-branch-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.payroll-note{font-size:11px;color:#788394;line-height:1.5;margin:8px 0}
+
+.payroll-extra-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}
+.payroll-extra-fields label{display:block;font-size:11px;font-weight:700;color:#52616d}
+.payroll-extra-fields input{margin:4px 0 8px;min-width:0}
+.payroll-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 8px;padding-bottom:8px;border-bottom:1px solid #e8ebef}
+.payroll-section-title h3{margin:0;color:#202b3d}
+.payroll-print-tools{display:flex;gap:8px;flex-wrap:wrap}
+.payroll-print-tools button{font-weight:800}
+.payroll-table{min-width:1160px}
+.payroll-table th{white-space:nowrap}
+.payroll-column-chip{display:inline-block;background:#fff3e8;border:1px solid #f4d1b4;color:#99501c;padding:5px 8px;border-radius:20px;font-size:11px}
+@media(max-width:650px){.payroll-extra-fields{grid-template-columns:1fr 1fr}}
+@media print{body.payroll-print-mode *{visibility:hidden!important}body.payroll-print-mode #payrollPrintArea,body.payroll-print-mode #payrollPrintArea *{visibility:visible!important}body.payroll-print-mode #payrollPrintArea{display:block!important;position:absolute!important;inset:0!important;width:100%!important;background:#fff!important;color:#111!important;padding:8mm!important}body.payroll-print-mode #payrollPrintArea .print-actions{display:none!important}@page{size:A4 landscape;margin:8mm}}
+@media(max-width:650px){.payroll-form-grid{grid-template-columns:1fr 1fr}.payroll-summary{grid-template-columns:1fr 1fr}}
+
+/* Expenses & Staff Salary opens centered as a focused admin workspace */
+body.expenses-center-open::before{
+  content:"";position:fixed;inset:0;background:rgba(12,20,32,.62);
+  z-index:10030;backdrop-filter:blur(3px)
+}
+#side-expenses.side-view.active{
+  display:block!important;position:fixed!important;left:50%!important;top:50%!important;
+  transform:translate(-50%,-50%)!important;width:min(1320px,calc(100vw - 36px))!important;
+  max-width:1320px!important;max-height:calc(100vh - 36px)!important;height:auto!important;
+  overflow:auto!important;z-index:10031!important;background:#fff!important;
+  border:1px solid #f58220!important;border-top:6px solid #f58220!important;
+  border-radius:18px!important;padding:18px!important;
+  box-shadow:0 24px 80px #0006!important;grid-column:auto!important;grid-row:auto!important
+}
+#side-expenses .payroll-panel{width:100%!important;max-width:none!important;max-height:none!important;overflow:visible!important}
+@media(max-width:700px){
+ #side-expenses.side-view.active{width:calc(100vw - 16px)!important;max-height:calc(100vh - 16px)!important;padding:11px!important;border-radius:13px!important}
+}
+
+
+/* Back button for centered Expenses & Staff Salary window */
+#side-expenses .payroll-back-btn{flex:0 0 auto;background:linear-gradient(110deg,#202b3d,#34445b);color:#fff;border:1px solid #4a5870;border-radius:9px;padding:9px 15px;font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 3px 9px #17203320}
+#side-expenses .payroll-back-btn:hover{background:linear-gradient(110deg,#f58220,#ed7116);color:#fff}
+@media(max-width:480px){#side-expenses .report-heading{gap:7px}#side-expenses .payroll-back-btn{padding:8px 10px;font-size:12px}}
+
+/* Management menu: open each selected section as a centered workspace, not full-screen. */
+.side-view.active{
+  display:flex!important;position:fixed!important;inset:0!important;z-index:10040!important;
+  align-items:center!important;justify-content:center!important;padding:22px!important;
+  margin:0!important;background:rgba(13,23,38,.62)!important;overflow:auto!important;
+}
+.side-view.active>*{
+  width:min(1120px,calc(100vw - 44px))!important;max-width:1120px!important;
+  max-height:88vh!important;overflow:auto!important;margin:auto!important;
+  box-shadow:0 20px 65px #0004!important;border-radius:16px!important;
+}
+.side-view .management-back-btn{
+  display:inline-flex;align-items:center;gap:7px;position:sticky;top:0;z-index:20;
+  margin:0 0 12px auto;padding:9px 15px;border-radius:9px;
+  background:#202b3d;color:#fff;font-weight:800;border:1px solid #f58220;
+}
+.side-view .management-back-btn:hover{background:#f58220;color:#fff}
+@media(max-width:650px){.side-view.active{padding:10vh 10px 10px!important}.side-view.active>:not(.management-back-btn){width:calc(100vw - 20px)!important;max-height:88vh!important}.side-view .management-back-btn{top:10px;right:16px}}
+
+
+/* Centered application notifications */
+#fozanNoticeOverlay{display:none;position:fixed;inset:0;z-index:200000;background:rgba(15,23,42,.48);align-items:center;justify-content:center;padding:18px}
+#fozanNoticeOverlay.open{display:flex}
+#fozanNoticeOverlay .fozan-notice-box{width:min(440px,100%);background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 18px 60px #0005;border-top:5px solid #f58220;animation:fozanNoticeIn .16s ease-out}
+#fozanNoticeOverlay .fozan-notice-head{padding:13px 18px;background:#202b3d;color:#fff;font-weight:800;letter-spacing:.2px}
+#fozanNoticeOverlay .fozan-notice-message{padding:22px 20px;color:#263244;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+#fozanNoticeOverlay .fozan-notice-actions{display:flex;justify-content:flex-end;padding:0 18px 16px}
+#fozanNoticeOverlay button{min-width:86px;background:linear-gradient(115deg,#e96e12,#ff982f);color:#fff;font-weight:800}
+@keyframes fozanNoticeIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+
 </style>
 <style>
 
@@ -860,7 +949,143 @@ body.invoice-workspace-active #billGeneratorPanel .custom-generate-btn{width:aut
 .admin-data-table th{background:#fff5ed;color:#7a3b0c}
 .admin-row-delete{border:1px solid #d8dde4;background:#fff;color:#a33;border-radius:5px;padding:4px 9px;cursor:pointer}
 @media(max-width:650px){.customer-admin-form{grid-template-columns:1fr}}
-\n</style></head><body>\n<style>
+\n</style><style>
+
+/* Corrected Management Menu layout: one centered panel; Back button stays in its header tab */
+.side-view.active{
+  display:grid!important;
+  position:fixed!important;
+  inset:0!important;
+  z-index:10040!important;
+  place-items:center!important;
+  padding:22px!important;
+  margin:0!important;
+  background:rgba(13,23,38,.62)!important;
+  overflow:auto!important;
+  box-sizing:border-box!important;
+}
+.side-view.active > .management-back-btn{display:none!important}
+.side-view.active > :not(.management-back-btn){
+  width:min(1120px,calc(100vw - 44px))!important;
+  max-width:1120px!important;
+  max-height:88vh!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:auto!important;
+  margin:0!important;
+  justify-self:center!important;
+  align-self:center!important;
+  box-shadow:0 20px 65px #0004!important;
+  border-radius:16px!important;
+}
+.side-view .management-header-with-back{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:wrap!important;
+  gap:10px!important;
+}
+.side-view .management-header-with-back .management-back-btn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:max-content!important;
+  min-height:34px!important;
+  margin:0 0 0 auto!important;
+  padding:8px 13px!important;
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;
+  right:auto!important;
+  z-index:25!important;
+  white-space:nowrap!important;
+  border-radius:9px!important;
+  background:#202b3d!important;
+  color:#fff!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  border:1px solid #f58220!important;
+  box-shadow:none!important;
+}
+.side-view .management-header-with-back .management-back-btn:hover{
+  background:#f58220!important;color:#fff!important;
+}
+@media(max-width:650px){
+  .side-view.active{padding:12px!important}
+  .side-view.active > :not(.management-back-btn){
+    width:calc(100vw - 24px)!important;
+    max-height:calc(100vh - 24px)!important;
+  }
+  .side-view .management-header-with-back{gap:8px!important}
+  .side-view .management-header-with-back .management-back-btn{
+    padding:7px 9px!important;font-size:11px!important
+  }
+}
+
+</style>
+<style>
+
+/* Unified centered workspace for EVERY Management Menu tab */
+.side-view.active{
+  display:flex!important;
+  position:fixed!important;
+  inset:0!important;
+  z-index:10040!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:24px!important;
+  margin:0!important;
+  background:rgba(13,23,38,.64)!important;
+  backdrop-filter:blur(3px);
+  overflow:hidden!important;
+  transform:none!important;
+}
+.side-view.active > :first-child,
+#side-expenses.side-view.active > :first-child{
+  box-sizing:border-box!important;
+  width:min(1160px, calc(100vw - 48px))!important;
+  max-width:1160px!important;
+  height:min(820px, calc(100vh - 48px))!important;
+  max-height:calc(100vh - 48px)!important;
+  min-height:0!important;
+  margin:0 auto!important;
+  overflow:auto!important;
+  border-radius:16px!important;
+  box-shadow:0 20px 65px #0005!important;
+  align-self:center!important;
+}
+#side-expenses.side-view.active{
+  left:0!important;top:0!important;right:0!important;bottom:0!important;
+  transform:none!important;width:100%!important;max-width:none!important;
+  height:100%!important;max-height:none!important;
+  border:0!important;border-radius:0!important;padding:24px!important;
+  box-shadow:none!important;overflow:hidden!important;
+  background:rgba(13,23,38,.64)!important;
+}
+#side-expenses .payroll-panel{
+  height:min(820px, calc(100vh - 48px))!important;
+  max-height:calc(100vh - 48px)!important;
+  overflow:auto!important;
+  padding:16px!important;
+}
+@media(max-width:700px){
+  .side-view.active{padding:10px!important}
+  .side-view.active > :first-child,
+  #side-expenses.side-view.active > :first-child{
+    width:calc(100vw - 20px)!important;
+    height:calc(100vh - 20px)!important;
+    max-height:calc(100vh - 20px)!important;
+    border-radius:12px!important;
+  }
+  #side-expenses.side-view.active{padding:10px!important}
+  #side-expenses .payroll-panel{height:calc(100vh - 20px)!important;max-height:calc(100vh - 20px)!important;padding:12px!important}
+}
+
+</style>
+
+</head><body>\n<style>
 
 .customer-fullscreen-view.active{position:fixed!important;inset:0!important;z-index:10050!important;display:block!important;background:#fff!important;overflow:hidden!important;margin:0!important;padding:0!important}
 body.customer-form-open .sidebar,body.customer-form-open .main-sidebar,body.customer-form-open #sidebar,body.customer-form-open .topbar{visibility:hidden!important}
@@ -1124,6 +1349,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
     <button class="side-link" data-panel="items" onclick="showSidePanel('items')"><span>▤</span><b>Items</b><em id="itemNavCount">0</em></button>
     <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Overall Credit &amp; Balance</b><em id="overdueNavCount">›</em></button>
     <button class="side-link" data-panel="report" onclick="showSidePanel('report')"><span>▥</span><b>Monthly Report</b><em>›</em></button>
+    <button class="side-link admin-only-menu" id="expensesNavLink" data-panel="expenses" onclick="showSidePanel('expenses')"><span>💰</span><b>Expenses &amp; Staff Salary</b><em>›</em></button>
   </nav>
 </aside>
 <div class="right-sidebar-stack">
@@ -1275,10 +1501,12 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
           <div id="customBillBuilder" class="custom-bill-builder" style="display:none">
             <div class="custom-bill-note">New customer? Enter the name and add your own items and prices. This bill does not require a saved customer record.</div>
             <label for="customCustomerName">Customer Name</label>
-            <input id="customCustomerName" type="text" placeholder="Enter customer full name" autocomplete="off" required="">
+            <input id="customCustomerName" type="text" list="savedInvoiceCustomerList" placeholder="Enter or select saved customer" autocomplete="off" required="">
+            <datalist id="savedInvoiceCustomerList"></datalist>
             <div class="invoice-fields-grid customer-contact-fields">
               <div><label for="customCustomerMobile">Mobile Number</label><input id="customCustomerMobile" type="tel" placeholder="03XX-XXXXXXX"></div>
               <div><label for="customCompanyName">Company Name</label><input id="customCompanyName" type="text" placeholder="Company / Organization"></div>
+              <div><label for="customCustomerEmail">Email Address</label><input id="customCustomerEmail" type="email" placeholder="customer@email.com"></div>
               <div class="address-field"><label for="customCustomerAddress">Address</label><textarea id="customCustomerAddress" rows="2" placeholder="Customer address"></textarea></div>
             </div>
             <div class="invoice-fields-grid">
@@ -1295,8 +1523,13 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
             <div class="invoice-fields-grid invoice-bottom-fields">
               <div><label for="customBillDiscount">Discount (%)</label><input id="customBillDiscount" type="number" min="0" max="100" step="0.01" value="0"></div>
               <div><label for="customBillShipping">Shipping Charges (Rs.)</label><input id="customBillShipping" type="number" min="0" step="0.01" value="0"></div>
-              <div><label for="customBillReceived">Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0"></div>
+              <div><label for="customBillReceived">Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0" oninput="syncInvoiceDailySaleOption()"></div>
             </div>
+            <label style="display:flex;align-items:center;gap:9px;margin:8px 0 12px;padding:11px 12px;border:1px solid #f3c99f;border-radius:10px;background:#fff7ed;font-weight:700;color:#7c3d0b;cursor:pointer">
+              <input id="customAddToDailySale" type="checkbox" style="width:18px;height:18px;margin:0;accent-color:#f58220">
+              Add this invoice to Daily Sale
+            </label>
+            <div style="font-size:11px;color:#778294;margin:-5px 0 10px">Advance payment enter karne par option automatically select ho jayega. Aap chahein to isay manually on/off kar sakte hain.</div>
             <div class="custom-live-totals" aria-live="polite">
               <div><span>Subtotal</span><strong id="customLiveSubtotal">Rs. 0.00</strong></div>
               <div><span>Discount</span><strong id="customLiveDiscount">Rs. 0.00</strong></div>
@@ -1346,6 +1579,82 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
       <button class="bill-generate-btn" type="button" onclick="document.getElementById('summaryMonth').scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('summaryMonth').focus()">Open Full Monthly Report ↗</button>
     </div>
   </section>
+
+  <section class="side-view" id="side-expenses">
+    <div class="report-panel payroll-panel">
+      <div class="report-heading"><span class="report-icon">💰</span><div style="flex:1;min-width:0"><h2>Expenses &amp; Staff Salary</h2><p>Admin only • PWD Head Office + Bahria Enclave</p></div><button type="button" class="payroll-back-btn" onclick="showSidePanel('expenses')" title="Back to Dashboard">← Back</button></div>
+      <div class="expense-workspace-tabs"><button type="button" class="expense-tab active" id="staffTabBtn" onclick="switchExpenseWorkspace('staff')">👥 Staff Salary</button><button type="button" class="expense-tab" id="generalTabBtn" onclick="switchExpenseWorkspace('general')">💸 General Expenses</button></div>
+      <div id="staffSalarySection">
+      <div class="payroll-branch-head">
+        <label style="font-weight:700;font-size:12px">Payroll Month <input type="month" id="payrollMonth" style="display:block;margin:5px 0 0" onchange="renderStaffPayroll();previewStaffSalary()"></label>
+        <label style="font-weight:700;font-size:12px">Branch Filter <select id="payrollBranchFilter" style="display:block;margin:5px 0 0" onchange="renderStaffPayroll()"><option value="all">Both Branches</option><option value="1">PWD Head Office</option><option value="2">Bahria Enclave</option></select></label>
+      </div>
+      <div class="payroll-summary">
+        <div><small>Total Monthly Salary</small><strong id="payrollGross">Rs. 0</strong></div>
+        <div><small>Leave Salary Deduction</small><strong id="payrollDeduction" style="color:#c93636">Rs. 0</strong></div>
+        <div><small>Net Salary After Leave</small><strong id="payrollNet" style="color:#e96e12">Rs. 0</strong></div>
+        <div><small>Advance Salary</small><strong id="payrollAdvance" style="color:#198754">Rs. 0</strong></div>
+        <div><small>Salary Paid</small><strong id="payrollPaid" style="color:#198754">Rs. 0</strong></div>
+        <div><small>Pending Salary</small><strong id="payrollDue">Rs. 0</strong></div>
+        <div><small>Total Staff</small><strong id="payrollStaffCount">0</strong></div>
+      </div>
+      <div class="payroll-section-title"><h3>Staff Add / Edit</h3><span class="payroll-column-chip">Admin Payroll Register</span></div>
+      <input type="hidden" id="staffEditId">
+      <div class="payroll-form-grid">
+        <label>Staff Name<input id="staffName" placeholder="Enter staff name"></label>
+        <label>Designation<input id="staffDesignation" placeholder="e.g. Designer / Operator"></label>
+        <label>Branch<select id="staffBranch"><option value="1">PWD Head Office</option><option value="2">Bahria Enclave</option></select></label>
+        <label>Monthly Salary (Rs.)<input id="staffSalary" type="number" min="0" step="1" placeholder="Monthly salary" oninput="previewStaffSalary()" onchange="previewStaffSalary()"></label>
+        <label>Leave Days This Month<input id="staffLeaveDays" type="number" min="0" step="0.5" value="0" oninput="previewStaffSalary()" onchange="previewStaffSalary()"></label>
+        <label>Advance Salary This Month (Rs.)<input id="staffAdvance" type="number" min="0" step="1" value="0" placeholder="Advance paid" oninput="previewStaffSalary()" onchange="previewStaffSalary()"></label>
+        <label>Regular Salary Paid This Month (Rs.)<input id="staffPaid" type="number" min="0" step="1" value="0" placeholder="Salary paid" oninput="previewStaffSalary()" onchange="previewStaffSalary()"></label>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+        <button class="muted" type="button" onclick="addStaffAdvanceEntry()">＋ Add Advance Entry</button>
+        <button class="muted" type="button" onclick="addStaffLeaveEntry()">＋ Add Leave Entry</button>
+      </div>
+      <div id="staffSalaryLivePreview" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:2px 0 12px;padding:12px;border:1px solid #f2c69f;border-radius:11px;background:#fff8f1">
+        <div><small style="display:block;color:#80502b">Leave Deduction</small><b id="staffPreviewDeduction">Rs. 0</b></div>
+        <div><small style="display:block;color:#80502b">Net Salary</small><b id="staffPreviewNet">Rs. 0</b></div>
+        <div><small style="display:block;color:#80502b">Total Advance</small><b id="staffPreviewAdvance">Rs. 0</b></div>
+        <div><small style="display:block;color:#80502b">Salary Paid</small><b id="staffPreviewPaid">Rs. 0</b></div>
+        <div style="grid-column:span 2"><small style="display:block;color:#80502b">Remaining Salary</small><b id="staffPreviewDue" style="font-size:18px;color:#c45a13">Rs. 0</b></div>
+        <div style="grid-column:1/-1;font-size:11px;color:#80502b">Live calculation for the selected payroll month. Click Save Staff to store changes.</div>
+      </div>
+      <div class="payroll-section-title" style="margin-top:8px"><h3 style="font-size:14px">Additional Staff Columns</h3><button class="muted" type="button" onclick="addStaffCustomField()">＋ Add Column</button></div>
+      <p class="payroll-note">Add fields such as CNIC, mobile number, joining date, duty timing, overtime, bonus or remarks. These columns appear in the staff register.</p>
+      <div id="staffCustomFields" class="payroll-extra-fields"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px">
+        <button class="primary" type="button" onclick="saveStaff()">＋ Save Staff</button>
+        <button class="muted" type="button" onclick="resetStaffForm()">Cancel / Clear</button>
+      </div>
+      <p class="payroll-note">Leave deduction = Monthly Salary ÷ calendar days in selected month × Leave Days. Pending Salary = Net Salary − Advance Salary − Regular Salary Paid. Advance and paid amounts are tracked separately month-wise. Use Add Advance Entry and Add Leave Entry to record extra amounts or leave days.</p>
+      <div class="payroll-section-title"><h3>Monthly Salary Sheet</h3><div class="payroll-print-tools"><button class="success" type="button" onclick="printStaffPayroll(true)">⬇ Save PDF</button><button class="muted" type="button" onclick="printStaffPayroll(false)">🖨 Print Sheet</button></div></div>
+      <div class="payroll-table-wrap"><div id="staffPayrollTable"><div class="empty">No staff added yet. Add your first employee above.</div></div></div>
+      <div id="payrollPrintArea" style="display:none"></div>
+      </div>
+      <div id="generalExpenseSection" style="display:none">
+        <div class="payroll-branch-head">
+          <label>Expense Month <input type="month" id="generalExpenseMonth" onchange="renderGeneralExpenses()"></label>
+          <label>Branch <select id="generalExpenseBranch" onchange="renderGeneralExpenses()"><option value="all">Both Branches</option><option value="1">PWD Head Office</option><option value="2">Bahria Enclave</option></select></label>
+        </div>
+        <div class="payroll-section-title"><h3>Add General Expense</h3><span class="payroll-column-chip">Admin Control</span></div>
+        <div class="payroll-form-grid">
+          <label>Category<select id="generalExpenseCategory"></select></label>
+          <label>Amount (Rs.)<input id="generalExpenseAmount" type="number" min="1" step="1" placeholder="Enter amount"></label>
+          <label>Expense Date<input id="generalExpenseDate" type="date"></label>
+          <label>Paid From<select id="generalExpenseBranchEntry"><option value="1">PWD Head Office</option><option value="2">Bahria Enclave</option></select></label>
+          <label style="grid-column:1/-1">Description / Details<input id="generalExpenseDesc" placeholder="Expense details"></label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px"><button class="primary" type="button" onclick="saveGeneralExpense()">＋ Save Expense</button><button class="muted" type="button" onclick="resetGeneralExpenseForm()">Clear</button></div>
+        <div class="payroll-section-title"><h3>Expense Categories</h3><button class="muted" type="button" onclick="manageExpenseCategories()">＋ Add / Rename / Delete Category</button></div>
+        <p class="payroll-note">صرف Admin ان categories کو manage کر سکتا ہے۔ مثال: Rent, Electricity, Internet, Tea / Food, Repair, Transport, Printing Material وغیرہ۔</p>
+        <div id="generalExpenseCategoryChips" class="expense-category-chips"></div>
+        <div class="payroll-section-title"><h3>General Expense Register</h3><strong id="generalExpenseTotal">Rs. 0</strong></div>
+        <div class="payroll-table-wrap"><div id="generalExpenseTable"></div></div>
+      </div>
+    </div>
+  </section>
 </div></div>
 </div>
 
@@ -1389,12 +1698,12 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
   <h2 id="saleModalTitle">New Daily Sale</h2>
   <label>Sale Type</label>
   <select id="sType" onchange="updateSaleFields()">
-    <option value="cash_balance">Cash + Balance</option>
-    <option value="cash_full">Full Cash</option>
-    <option value="online_balance">Online + Balance</option>
-    <option value="online_full">Full Online</option>
-    <option value="credit">Credit</option>
-    <option value="credit_balance_received">Credit + Balance Received</option>
+    <option value="cash_balance">Cash Received with Balance</option>
+    <option value="cash_full">Full Cash Received</option>
+    <option value="online_balance">Online Cash Received + Balance</option>
+    <option value="online_full">Full Online Cash Received</option>
+    <option value="credit">Full Credit</option>
+    <option value="credit_balance_received">Credit + Balance Amount Received</option>
     <option value="balance_payment" hidden="">Old Balance Received</option>
   </select>
   <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
@@ -1417,7 +1726,9 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
 <div class="modal" id="expenseModal"><div class="box">
   <h2>Add Expense / Payment</h2>
   <label>Amount</label><input id="eAmount" type="number" min="0" step="0.01" placeholder="0">
-  <label>Description</label><input id="eDesc" placeholder="e.g. Paper purchase / Staff payment" dir="ltr">
+  <label>Description</label><input id="eDesc" placeholder="e.g. Paper purchase / Ali advance salary" dir="ltr" oninput="autoMatchExpenseStaff()">
+  <label>Staff (optional — auto detected from description)</label><select id="eStaff"><option value="">Not a staff payment</option></select>
+  <label>Staff Payment Type</label><select id="eStaffPayType"><option value="advance">Advance Salary</option><option value="salary">Regular Salary Payment</option></select>
   <label>Taken By</label><select id="eTakenBy"><option value="Bykia &amp; Indrive">Bykia &amp; Indrive</option><option value="Rahij">Rahij</option><option value="Fozan">Fozan</option><option value="Other">Other</option></select>
   <label>Date</label><input id="eDate" type="date">
   <label>Time</label><input id="eTime" type="time" step="1">
@@ -1486,6 +1797,19 @@ alter table public.fozan_expenses enable row level security;
 alter table public.fozan_expenses add column if not exists branch_id text not null default '1';
 alter table public.fozan_expenses add column if not exists taken_by text not null default ''; -- expense recipient: Bykia / Rahij / Fozan / Other
 
+-- Staff payroll (run once in Supabase SQL Editor to share staff/payroll across PCs):
+create table if not exists public.fozan_staff (
+  id text primary key, branch_id text not null default '1', name text not null,
+  designation text default '', monthly_salary numeric not null default 0,
+  leave_by_month jsonb not null default '{}'::jsonb, paid_by_month jsonb not null default '{}'::jsonb,
+  advance_by_month jsonb not null default '{}'::jsonb, custom_fields jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+alter table public.fozan_staff add column if not exists advance_by_month jsonb not null default '{}'::jsonb;
+alter table public.fozan_staff add column if not exists custom_fields jsonb not null default '{}'::jsonb;
+alter table public.fozan_staff enable row level security;
+create policy "fozan staff public access" on public.fozan_staff for all to anon using (true) with check (true);
+
 create policy "fozan sales public access" on public.fozan_sales
   for all to anon using (true) with check (true);
 
@@ -1500,10 +1824,11 @@ let supabaseClient = CLOUD_ENABLED
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-let data=JSON.parse(localStorage.getItem(KEY)||'{"sales":[],"expenses":[],"invoices":[]}');
+let data=JSON.parse(localStorage.getItem(KEY)||'{"sales":[],"expenses":[],"invoices":[],"staff":[]}');
 if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
 if(!Array.isArray(data.invoices)) data.invoices=[];
+if(!Array.isArray(data.staff)) data.staff=[];
 // In cloud mode, Supabase is the source of truth; stale local-only rows are not re-added.
 let cloudReady=!CLOUD_ENABLED;
 let editingSale=null;
@@ -1536,6 +1861,7 @@ function loginFozan(event){
   authorizedBranches.add(activeBranch);
   localStorage.setItem('fozan_active_branch',activeBranch);
   document.body.classList.add('fozan-authenticated');
+  document.body.classList.toggle('admin-role',user.role==='admin');
   const sel=document.getElementById('branchSelector');
   if(sel){
     sel.value=activeBranch;
@@ -1558,7 +1884,7 @@ function loginFozan(event){
 function logoutFozan(){
   currentUserRole=null;currentUserKey=null;
   sessionStorage.removeItem('fozan_user_session');
-  document.body.classList.remove('fozan-authenticated');
+  document.body.classList.remove('fozan-authenticated','admin-role');
   document.querySelectorAll('.fozan-login-password').forEach(el=>el.value='');
 }
 let previewMode=false;
@@ -1585,6 +1911,7 @@ function changeBranch(value){
   const combined=value==='all';
   document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=combined);
   updateBranchContact();renderDateHistory();renderDashboard();renderSales();
+  renderManagedCustomers();renderInvoiceRegister();renderQuoteRegister();
 }
 function canMutateRecord(record, kind='sale'){
   if(activeBranch==='all'){alert('Combined Report صرف دیکھنے کے لیے ہے۔');return false;}
@@ -1622,7 +1949,7 @@ async function cloudSyncData(){
       description:cleanDescription(x.desc||''),
       expense_date:x.date,
       expense_time:x.time||'',
-      taken_by:x.taken_by||''
+      taken_by:(x.staff_id?'[[FOZAN_STAFF:'+String(x.staff_id)+':'+(x.staff_pay_type||'advance')+']]':'')+(x.taken_by||'')
     }));
     if(salesRows.length){
       const {error}=await supabaseClient.from('fozan_sales').upsert(salesRows,{onConflict:'id'});
@@ -1630,6 +1957,11 @@ async function cloudSyncData(){
     }
     if(expenseRows.length){
       const {error}=await supabaseClient.from('fozan_expenses').upsert(expenseRows,{onConflict:'id'});
+      if(error) throw error;
+    }
+    if(currentUserRole==='admin' && data.staff.length){
+      const staffRows=data.staff.map(x=>({id:String(x.id),branch_id:String(x.branch_id||'1'),name:x.name||'',designation:x.designation||'',monthly_salary:Number(x.monthly_salary||0),leave_by_month:x.leave_by_month||{},paid_by_month:x.paid_by_month||{},advance_by_month:x.advance_by_month||{},custom_fields:x.custom_fields||{}}));
+      const {error}=await supabaseClient.from('fozan_staff').upsert(staffRows,{onConflict:'id'});
       if(error) throw error;
     }
     cloudStatus('Cloud saved • shared on all PCs', true);
@@ -1666,6 +1998,12 @@ async function cloudLoad(){
     ]);
     if(se) throw se;
     if(ee) throw ee;
+    let cloudStaff=[];
+    if(currentUserRole==='admin'){
+      const staffResult=await supabaseClient.from('fozan_staff').select('*');
+      if(staffResult.error) console.warn('Staff cloud table unavailable; run the fo zan_staff SQL migration in the source comments.',staffResult.error);
+      else cloudStaff=staffResult.data||[];
+    }
 
     const localSalesById=new Map(data.sales.map(x=>[String(x.id),x]));
     const cloudSales=(sales||[]).map(x=>({
@@ -1677,7 +2015,7 @@ async function cloudLoad(){
     }));
     const cloudExpenses=(expenses||[]).map(x=>({
       id:x.id,branch_id:String(x.branch_id||'1'),amount:Number(x.amount||0),desc:x.description||'',
-      date:x.expense_date,time:x.expense_time||'',taken_by:x.taken_by||''
+      date:x.expense_date,time:x.expense_time||'',taken_by:x.taken_by||'',...parseStaffExpenseCloudMeta(x.taken_by||'')
     }));
 
     // Replace the old local snapshot with cloud records. This prevents stale
@@ -1690,6 +2028,9 @@ async function cloudLoad(){
     addedDuringLoadExpenses.forEach(x=>{if(!expensesById.has(String(x.id)))expensesById.set(String(x.id),x);});
     data.sales=[...salesById.values()];
     data.expenses=[...expensesById.values()];
+    if(currentUserRole==='admin' && cloudStaff.length){
+      data.staff=cloudStaff.map(x=>({id:x.id,branch_id:String(x.branch_id||'1'),name:x.name||'',designation:x.designation||'',monthly_salary:Number(x.monthly_salary||0),leave_by_month:x.leave_by_month||{},paid_by_month:x.paid_by_month||{},advance_by_month:x.advance_by_month||{},custom_fields:x.custom_fields||{}}));
+    }
     localStorage.setItem(KEY,JSON.stringify(data));
     cloudReady=true;
     if(addedDuringLoadSales.length || addedDuringLoadExpenses.length) await cloudSyncData();
@@ -2044,6 +2385,7 @@ function saveManagedCustomer(){
   if(existingId){const i=data.customers.findIndex(c=>c.id===existingId);if(i>=0)data.customers[i]={...data.customers[i],...obj};}
   else data.customers.push(obj);
   persist();window.editingManagedCustomerId='';
+  refreshSavedInvoiceCustomerOptions();
   resetManagedCustomerForm();renderManagedCustomers();
   alert('Customer saved successfully.');
 }
@@ -2105,13 +2447,13 @@ function renderManagedCustomers(){
   const el=document.getElementById('managedCustomerList');if(!el)return;
   if(!Array.isArray(data.customers))data.customers=[];
   const q=(document.getElementById('manageCustomerSearch')?.value||'').toLowerCase();
-  const rows=data.customers.filter(c=>[c.name,c.mobile,c.company,c.address].some(v=>String(v||'').toLowerCase().includes(q)));
-  const count=document.getElementById('customerNavCount');if(count)count.textContent=String(data.customers.length);
+  const rows=data.customers.filter(c=>(activeBranch==='all'||String(c.branch_id||'1')===String(activeBranch))&&[c.name,c.mobile,c.company,c.address].some(v=>String(v||'').toLowerCase().includes(q)));
+  const count=document.getElementById('customerNavCount');if(count)count.textContent=String(rows.length);
   el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Customer</th><th>Mobile</th><th>Company</th><th>Address</th><th></th></tr></thead><tbody>'+
     rows.map(c=>'<tr><td>'+esc(c.name)+'</td><td>'+esc(c.mobile||'—')+'</td><td>'+esc(c.company||'—')+'</td><td>'+esc(c.address||c.billing?.address||'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(c.id)+'" onclick="editManagedCustomer(this.dataset.id)">Edit</button> <button class="admin-row-delete" data-id="'+esc(c.id)+'" onclick="deleteManagedCustomer(this.dataset.id)">Delete</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No customers saved yet.</div>';
 }
-function deleteManagedCustomer(id){
-  if(!confirm('Delete this customer record?'))return;
+async function deleteManagedCustomer(id){
+  if(!(await window.fozanConfirm('Delete this customer record?')))return;
   data.customers=data.customers.filter(c=>String(c.id)!==String(id));persist();renderManagedCustomers();
 }
 function saveManagedItem(){
@@ -2159,8 +2501,8 @@ function renderManagedItems(){
   el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Type</th><th>Item / Service</th><th>Selling Price</th><th>Unit</th><th>Tax</th><th>Actions</th></tr></thead><tbody>'+
     rows.map(x=>'<tr><td>'+esc(x.type||'Goods')+'</td><td>'+esc(x.name)+'</td><td>'+money(x.rate||0)+'</td><td>'+esc(x.unit||'—')+'</td><td>'+esc(x.tax?x.tax+'%':'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(x.id)+'" onclick="editManagedItem(this.dataset.id)">Edit</button> <button class="admin-row-delete" data-id="'+esc(x.id)+'" onclick="deleteManagedItem(this.dataset.id)">Delete</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No items saved yet.</div>';
 }
-function deleteManagedItem(id){
-  if(!confirm('Delete this item / service?'))return;
+async function deleteManagedItem(id){
+  if(!(await window.fozanConfirm('Delete this item / service?')))return;
   data.items=data.items.filter(x=>String(x.id)!==String(id));persist();renderManagedItems();
 }
 function backFromInvoiceRegister(){
@@ -2171,24 +2513,224 @@ function backFromInvoiceRegister(){
   const main=document.querySelector('.main-left');
   if(main) main.scrollIntoView({behavior:'smooth',block:'start'});
 }
+
+function payrollMonthValue(){
+  const el=document.getElementById('payrollMonth');
+  return el&&el.value?el.value:monthKey(nowLocal().date);
+}
+function payrollDaysInMonth(month){
+  const [y,m]=String(month).split('-').map(Number);
+  return new Date(y,m,0).getDate();
+}
+function payrollMoney(value){return money(Math.round((Number(value)||0)*100)/100);}
+function previewStaffSalary(){
+  const salary=Math.max(0,Number(document.getElementById('staffSalary')?.value||0));
+  const leave=Math.max(0,Number(document.getElementById('staffLeaveDays')?.value||0));
+  const advance=Math.max(0,Number(document.getElementById('staffAdvance')?.value||0));
+  const paid=Math.max(0,Number(document.getElementById('staffPaid')?.value||0));
+  const days=payrollDaysInMonth(payrollMonthValue());
+  const deduction=Math.min(salary,(salary/days)*leave);
+  const net=Math.max(0,salary-deduction);
+  const due=Math.max(0,net-advance-paid);
+  const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=payrollMoney(value);};
+  set('staffPreviewDeduction',deduction);set('staffPreviewNet',net);
+  set('staffPreviewAdvance',advance);set('staffPreviewPaid',paid);set('staffPreviewDue',due);
+}
+function addStaffAdvanceEntry(){
+  const amount=Number(prompt('Enter advance salary amount (Rs.):',''));
+  if(!Number.isFinite(amount)||amount<=0)return;
+  const el=document.getElementById('staffAdvance');
+  if(el){el.value=String(Number(el.value||0)+amount);previewStaffSalary();}
+}
+function addStaffLeaveEntry(){
+  const days=Number(prompt('Enter leave days to add (e.g. 1 or 0.5):',''));
+  if(!Number.isFinite(days)||days<=0)return;
+  const el=document.getElementById('staffLeaveDays');
+  const max=payrollDaysInMonth(payrollMonthValue());
+  if(el){const total=Number(el.value||0)+days;if(total>max)return alert('Leave days cannot exceed '+max+' days for this month.');el.value=String(total);previewStaffSalary();}
+}
+function addStaffCustomField(){
+  if(currentUserRole!=='admin')return alert('Admin access required.');
+  const label=prompt('New column name (e.g. CNIC, Mobile, Joining Date, Bonus, Remarks):');
+  if(label===null)return;
+  const clean=label.trim();
+  if(!clean)return alert('Please enter a column name.');
+  const key=clean.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,40)||('Field_'+Date.now());
+  const container=document.getElementById('staffCustomFields');
+  if(!container)return;
+  if([...container.querySelectorAll('[data-custom-key]')].some(el=>el.dataset.customKey.toLowerCase()===key.toLowerCase()))return alert('This column already exists in the form.');
+  const wrap=document.createElement('label');
+  wrap.innerHTML=`${esc(clean)}<input class="staff-custom-value" data-custom-key="${esc(key)}" placeholder="${esc(clean)}">`;
+  container.appendChild(wrap);
+}
+function resetStaffForm(){
+  ['staffEditId','staffName','staffDesignation','staffSalary'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const leave=document.getElementById('staffLeaveDays');if(leave)leave.value='0';
+  const paid=document.getElementById('staffPaid');if(paid)paid.value='0';
+  const advance=document.getElementById('staffAdvance');if(advance)advance.value='0';
+  const branch=document.getElementById('staffBranch');if(branch)branch.value='1';
+  const custom=document.getElementById('staffCustomFields');if(custom)custom.innerHTML='';
+  previewStaffSalary();
+}
+function saveStaff(){
+  if(currentUserRole!=='admin')return alert('Admin access required.');
+  if(previewMode)return alert('Preview mode is read-only.');
+  const name=document.getElementById('staffName').value.trim();
+  const designation=document.getElementById('staffDesignation').value.trim();
+  const branch_id=document.getElementById('staffBranch').value;
+  const monthly_salary=Number(document.getElementById('staffSalary').value);
+  const leaveDays=Number(document.getElementById('staffLeaveDays').value||0);
+  const paid=Number(document.getElementById('staffPaid').value||0);
+  const advance=Number(document.getElementById('staffAdvance').value||0);
+  const month=payrollMonthValue();
+  if(!name)return alert('Please enter staff name.');
+  if(!Number.isFinite(monthly_salary)||monthly_salary<0)return alert('Enter a valid monthly salary.');
+  if(!Number.isFinite(leaveDays)||leaveDays<0||leaveDays>payrollDaysInMonth(month))return alert('Leave days must be within the days of selected month.');
+  if(!Number.isFinite(paid)||paid<0||!Number.isFinite(advance)||advance<0)return alert('Enter valid paid and advance salary amounts.');
+  const custom_fields={};
+  document.querySelectorAll('#staffCustomFields .staff-custom-value').forEach(el=>{const k=el.dataset.customKey;if(k)custom_fields[k]=el.value.trim();});
+  const id=document.getElementById('staffEditId').value;
+  const record={name,designation,branch_id,monthly_salary};
+  if(id){
+    const staff=data.staff.find(x=>String(x.id)===String(id));
+    if(!staff)return alert('Staff record not found.');
+    Object.assign(staff,record);
+    staff.leave_by_month=staff.leave_by_month||{};
+    staff.paid_by_month=staff.paid_by_month||{};
+    staff.advance_by_month=staff.advance_by_month||{};
+    staff.custom_fields={...(staff.custom_fields||{}),...custom_fields};
+    staff.leave_by_month[month]=leaveDays;
+    staff.paid_by_month[month]=paid;
+    staff.advance_by_month[month]=advance;
+  }else{
+    data.staff.push({id:uid(),...record,leave_by_month:{[month]:leaveDays},paid_by_month:{[month]:paid},advance_by_month:{[month]:advance},custom_fields});
+  }
+  persist();resetStaffForm();renderStaffPayroll();
+}
+function editStaff(id){
+  if(currentUserRole!=='admin')return;
+  const x=data.staff.find(v=>String(v.id)===String(id));if(!x)return;
+  const month=payrollMonthValue();
+  document.getElementById('staffEditId').value=x.id;
+  document.getElementById('staffName').value=x.name||'';
+  document.getElementById('staffDesignation').value=x.designation||'';
+  document.getElementById('staffBranch').value=String(x.branch_id||'1');
+  document.getElementById('staffSalary').value=Number(x.monthly_salary||0);
+  document.getElementById('staffLeaveDays').value=Number(x.leave_by_month?.[month]||0);
+  document.getElementById('staffPaid').value=Number(x.paid_by_month?.[month]||0);
+  document.getElementById('staffAdvance').value=Number(x.advance_by_month?.[month]||0);
+  const custom=document.getElementById('staffCustomFields');
+  if(custom)custom.innerHTML=Object.entries(x.custom_fields||{}).map(([k,v])=>`<label>${esc(k)}<input class="staff-custom-value" data-custom-key="${esc(k)}" value="${esc(v??'')}"></label>`).join('');
+  document.getElementById('staffName').focus();
+  previewStaffSalary();
+}
+async function removeStaff(id){
+  if(currentUserRole!=='admin')return;
+  if(previewMode)return alert('Preview mode is read-only.');
+  const x=data.staff.find(v=>String(v.id)===String(id));if(!x)return;
+  if(!(await window.fozanConfirm('Remove '+(x.name||'this staff member')+'? This also removes their payroll record from this device/cloud.')))return;
+  data.staff=data.staff.filter(v=>String(v.id)!==String(id));
+  if(CLOUD_ENABLED)cloudDeleteRow('fozan_staff',id);
+  persist();renderStaffPayroll();
+}
+function renderStaffPayroll(){
+  if(currentUserRole!=='admin')return;
+  autoLinkExistingStaffExpenses();
+  const month=payrollMonthValue(),days=payrollDaysInMonth(month);
+  const filter=document.getElementById('payrollBranchFilter')?.value||'all';
+  const rows=data.staff.filter(x=>filter==='all'||String(x.branch_id||'1')===filter);
+  let gross=0,deduction=0,net=0,paid=0,advance=0,due=0;
+  const customKeys=[...new Set(rows.flatMap(x=>Object.keys(x.custom_fields||{})))];
+  const html=rows.map(x=>{
+    const salary=Number(x.monthly_salary||0),leave=Math.max(0,Number(x.leave_by_month?.[month]||0));
+    const cut=Math.min(salary,salary/days*leave),take=Math.max(0,salary-cut);
+    const linked=linkedStaffExpenseTotals(x,month);
+    const paidAmt=Math.max(0,Number(x.paid_by_month?.[month]||0)+linked.paid);
+    const advanceAmt=Math.max(0,Number(x.advance_by_month?.[month]||0)+linked.advance);
+    const remaining=Math.max(0,take-paidAmt-advanceAmt);
+    gross+=salary;deduction+=cut;net+=take;paid+=paidAmt;advance+=advanceAmt;due+=remaining;
+    const safeId=String(x.id).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const customCells=customKeys.map(k=>`<td>${esc(x.custom_fields?.[k]??'')}</td>`).join('');
+    return `<tr><td><b>${esc(x.name||'')}</b><br><small>${esc(x.designation||'')}</small></td><td>${esc(branchName(x.branch_id))}</td><td>${payrollMoney(salary)}</td><td>${leave}</td><td class="expense">${payrollMoney(cut)}</td><td><b>${payrollMoney(take)}</b></td><td class="cash">${payrollMoney(advanceAmt)}</td><td class="cash">${payrollMoney(paidAmt)}</td><td class="debit"><b>${payrollMoney(remaining)}</b></td>${customCells}<td><div class="payroll-actions"><button class="muted" type="button" onclick="editStaff('${safeId}')">Edit</button><button class="danger" type="button" onclick="removeStaff('${safeId}')">Remove</button></div></td></tr>`;
+  }).join('');
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  set('payrollGross',payrollMoney(gross));set('payrollDeduction',payrollMoney(deduction));
+  set('payrollNet',payrollMoney(net));set('payrollPaid',payrollMoney(paid));
+  set('payrollAdvance',payrollMoney(advance));set('payrollDue',payrollMoney(due));set('payrollStaffCount',String(rows.length));
+  const target=document.getElementById('staffPayrollTable');
+  const headers=['Staff / Designation','Branch','Monthly Salary','Leave Days','Leave Deduction','Net Salary','Advance','Paid','Pending Salary',...customKeys,'Actions'];
+  if(target)target.innerHTML=rows.length?`<table class="payroll-table"><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${html}</tbody></table>`:'<div class="empty">No staff found for this branch. Add staff above.</div>';
+}
+function printStaffPayroll(savePdf){
+  if(currentUserRole!=='admin')return alert('Admin access required.');
+  const month=payrollMonthValue(),days=payrollDaysInMonth(month);
+  const filter=document.getElementById('payrollBranchFilter')?.value||'all';
+  const rows=data.staff.filter(x=>filter==='all'||String(x.branch_id||'1')===filter);
+  const customKeys=[...new Set(rows.flatMap(x=>Object.keys(x.custom_fields||{})))];
+  let gross=0,deduction=0,net=0,advance=0,paid=0,pending=0;
+  const body=rows.map(x=>{
+    const salary=Number(x.monthly_salary||0),leave=Number(x.leave_by_month?.[month]||0);
+    const cut=Math.min(salary,salary/days*Math.max(0,leave)),take=Math.max(0,salary-cut);
+    const linked=linkedStaffExpenseTotals(x,month),adv=Number(x.advance_by_month?.[month]||0)+linked.advance,pay=Number(x.paid_by_month?.[month]||0)+linked.paid,due=Math.max(0,take-adv-pay);
+    gross+=salary;deduction+=cut;net+=take;advance+=adv;paid+=pay;pending+=due;
+    return `<tr><td>${esc(x.name||'')}<br><small>${esc(x.designation||'')}</small></td><td>${esc(branchName(x.branch_id))}</td><td>${payrollMoney(salary)}</td><td>${leave}</td><td>${payrollMoney(cut)}</td><td>${payrollMoney(take)}</td><td>${payrollMoney(adv)}</td><td>${payrollMoney(pay)}</td><td><b>${payrollMoney(due)}</b></td>${customKeys.map(k=>`<td>${esc(x.custom_fields?.[k]??'')}</td>`).join('')}</tr>`;
+  }).join('');
+  const branchLabel=filter==='all'?'Both Branches':(filter==='1'?'PWD Head Office':'Bahria Enclave');
+  const headers=['Staff / Designation','Branch','Monthly Salary','Leave Days','Leave Deduction','Net Salary','Advance','Paid','Pending Salary',...customKeys];
+  const area=document.getElementById('payrollPrintArea');
+  area.innerHTML=`<div style="font-family:Arial,sans-serif;color:#17212b"><div style="display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #f58220;padding-bottom:12px;margin-bottom:15px"><div><h1 style="margin:0;color:#202b3d">FOZAN PRINTING PRESS</h1><div style="color:#667085;margin-top:5px">Staff Salary & Attendance Register</div></div><div style="text-align:right"><b>Monthly Payroll Sheet</b><br>${esc(month)}<br>${esc(branchLabel)}</div></div><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:14px">${[['Gross Salary',gross],['Leave Deduction',deduction],['Net Salary',net],['Advance',advance],['Paid',paid],['Pending',pending]].map(([k,v])=>`<div style="border:1px solid #ddd;border-radius:7px;padding:8px"><small>${k}</small><br><b>Rs. ${Number(v).toLocaleString('en-PK',{maximumFractionDigits:2})}</b></div>`).join('')}</div><table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr>${headers.map(h=>`<th style="background:#202b3d;color:#fff;border:1px solid #ccc;padding:7px;text-align:left">${esc(h)}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="${headers.length}" style="padding:20px;text-align:center">No staff records for this selection.</td></tr>`}</tbody></table><div style="display:flex;justify-content:space-between;margin-top:28px;font-size:11px"><span>Prepared by: ____________________</span><span>Authorized Signature: ____________________</span></div><div style="text-align:center;margin-top:18px;color:#777;font-size:9px">FOZAN PRINTING PRESS • Confidential Staff Payroll</div><div class="print-actions" style="margin-top:16px;text-align:right"><button onclick="window.print()" style="padding:10px 16px;background:#f58220;border:0;border-radius:7px;font-weight:bold">${savePdf?'Save as PDF':'Print'} / Continue</button></div></div>`;
+  document.body.classList.add('payroll-print-mode');area.style.display='block';
+  const cleanup=()=>{document.body.classList.remove('payroll-print-mode');area.style.display='none';window.removeEventListener('afterprint',cleanup);};
+  window.addEventListener('afterprint',cleanup);
+  setTimeout(()=>window.print(),100);
+}
+function ensureManagementBackButtons(){
+  document.querySelectorAll('.side-view').forEach(section=>{
+    if(section.querySelector('.management-back-btn'))return;
+    const back=document.createElement('button');
+    back.type='button';back.className='management-back-btn';
+    back.textContent='← Back to Dashboard';
+    back.addEventListener('click',()=>closeManagementSection());
+    const panel=section.firstElementChild;
+    if(!panel){section.appendChild(back);return;}
+    const header=panel.querySelector(':scope > .monthly-dues-head, :scope > .report-heading, :scope > .sidebar-menu-head, :scope > .invoice-register-head, :scope > .page-heading');
+    if(header){
+      header.appendChild(back);
+      header.classList.add('management-header-with-back');
+    }else{
+      panel.insertBefore(back,panel.firstChild);
+    }
+  });
+}
+function closeManagementSection(){
+  document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
+  document.body.classList.remove('expenses-center-open','customer-form-open','item-form-open','invoices-register-fullscreen');
+  const report=document.getElementById('fullMonthlyReport');
+  if(report){report.classList.remove('open');report.setAttribute('aria-hidden','true');}
+}
+
 function showSidePanel(name){
+  ensureManagementBackButtons();
+  if(name==='expenses' && currentUserRole!=='admin'){alert('Staff Salary & Expenses is available to Admin only.');return;}
+  document.body.classList.toggle('expenses-center-open',name==='expenses' && !(document.querySelector('.side-view.active')?.id==='side-expenses'));
   document.body.classList.toggle('invoices-register-fullscreen',name==='invoices');
   if(name==='report'){
-    const report=document.getElementById('fullMonthlyReport');
-    const alreadyOpen=!!(report && report.classList.contains('open'));
-    document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
-    document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',!alreadyOpen && el.dataset.panel==='report'));
-    if(alreadyOpen){closeFullMonthlyReport();return;}
-    openFullMonthlyReport();
-    return;
+    const fullReport=document.getElementById('fullMonthlyReport');
+    if(fullReport)fullReport.classList.remove('open');
   }
   const current=document.querySelector('.side-view.active');
   const alreadyOpen=!!(current && current.id==='side-'+name);
   const target=alreadyOpen?'':name;
+  document.body.classList.toggle('expenses-center-open',target==='expenses');
   if(target!=='customers')document.body.classList.remove('customer-form-open');
   if(target!=='items')document.body.classList.remove('item-form-open');
   document.querySelectorAll('.side-view').forEach(el=>el.classList.toggle('active',!!target && el.id==='side-'+target));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',!!target && el.dataset.panel===target));
+  if(target==='expenses'){
+    const pm=document.getElementById('payrollMonth');if(pm&&!pm.value)pm.value=currentMonthKey();
+    renderStaffPayroll();
+  }
   if(target==='invoices')renderInvoiceRegister();
   if(target==='quotes')renderQuoteRegister();
   if(target==='customers'){document.body.classList.add('customer-form-open');renderManagedCustomers();toggleCustomerBusinessFields();}
@@ -2488,7 +3030,7 @@ function renderSales(){
     const shownBalance = ['cash','online'].includes(x.type)
       ? remainingSaleBalance
       : 0;
-    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${String(x.mobile).replace(/\D/g,'')}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`}</td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${String(x.mobile).replace(/\D/g,'')}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td><div class="item-description">${esc(x.desc||'-')}</div>${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td class="cash">${paymentCell('Cash',cash,'#198754')}</td><td class="online">${paymentCell('Online',online,'#1769aa')}</td><td>${paymentCell('Total',total,'#687785')}</td><td class="cash">${paymentCell(shownAdvance>0 ? ((x.advance_method||'cash')==='online'?'Online':'Cash') : 'Advance',shownAdvance,((x.advance_method||'cash')==='online'?'#1769aa':'#198754'))}</td><td class="online">${paymentCell('Balance',shownBalance,'#1769aa')}</td><td class="debit">${paymentCell('Credit',credit,'#c62828',x.type==='credit' && amount===0)}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':(currentUserRole==='admin'?`<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`:'View only')}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -2533,6 +3075,7 @@ function updateSaleFields(){
   if(onlineBalance||fullOnline)document.getElementById('sAdvanceMethod').value='online';
   refreshCustomerDescriptionSuggestions();
   updateBalanceDue();
+  fillCustomerOutstandingDetails();
 }
 function updateBalanceDue(){
   const type=document.getElementById('sType').value;
@@ -2545,19 +3088,43 @@ function updateBalanceDue(){
 function rebuildBalanceAllocations(customer){
   const key=(customer||'').trim().toLowerCase();
   if(!key)return;
-  const credits=salesInBranch(activeBranch)
+  const branchSales=salesInBranch(activeBranch);
+  const sortOldest=(a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+    String(a.time||'').localeCompare(String(b.time||'')) ||
+    String(a.id||'').localeCompare(String(b.id||''));
+  const credits=branchSales
     .filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===key)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
-                 String(a.time||'').localeCompare(String(b.time||'')) ||
-                 String(a.id||'').localeCompare(String(b.id||'')));
-  credits.forEach(x=>x.balance_payment=0);
-  const receipts=salesInBranch(activeBranch)
+    .sort(sortOldest);
+  const balanceEntries=branchSales
+    .filter(x=>['cash','online'].includes(x.type) &&
+      (x.customer||'').trim().toLowerCase()===key &&
+      Number(x.balance_payment||0)>0)
+    .sort(sortOldest);
+  const receipts=branchSales
     .filter(x=>isBalancePayment(x) && (x.customer||'').trim().toLowerCase()===key)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
-                 String(a.time||'').localeCompare(String(b.time||'')) ||
-                 String(a.id||'').localeCompare(String(b.id||'')));
+    .sort(sortOldest);
+
+  // Reset credit allocations and replay receipts oldest-first.
+  // Priority: previous unpaid invoice/cash-online balances first, then Credit.
+  credits.forEach(x=>x.balance_payment=0);
+  const remainingBalance=new Map(balanceEntries.map(x=>[
+    String(x.id),Math.max(0,Number(x.balance_payment||0))
+  ]));
   for(const receipt of receipts){
     let remaining=Math.max(0,Number(receipt.amount||0));
+
+    // First settle the customer's oldest unpaid invoice balance.
+    for(const entry of balanceEntries){
+      if(remaining<=0.0001)break;
+      const id=String(entry.id);
+      const due=remainingBalance.get(id)||0;
+      if(due<=0.0001)continue;
+      const paid=Math.min(due,remaining);
+      remainingBalance.set(id,due-paid);
+      remaining-=paid;
+    }
+
+    // Only the amount left after previous invoice balances is applied to Credit.
     let creditApplied=0;
     for(const credit of credits){
       if(remaining<=0.0001)break;
@@ -2642,6 +3209,7 @@ function newSale(){
   document.getElementById('saleModal').style.display='flex';
 }
 function editSale(id){
+  if(currentUserRole!=='admin')return alert('Only Admin can edit a sale.');
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
   const x=data.sales.find(s=>s.id===id); if(!x || String(x.branch_id||'1')!==activeBranch)return alert('یہ ریکارڈ دوسرے آفس کا ہے۔');
@@ -2737,12 +3305,13 @@ function saveSale(){
   persist();closeSaleModal();renderDateHistory();renderDashboard();renderSales();
 }
 
-function deleteSale(id){
+async function deleteSale(id){
+  if(currentUserRole!=='admin')return alert('Only Admin can delete a sale.');
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');
   const record=data.sales.find(x=>x.id===id);if(!record || String(record.branch_id||'1')!==activeBranch)return alert('یہ ریکارڈ دوسرے آفس کا ہے۔');
   if(!requireActionPassword())return;
-  if(!confirm('Delete this sale?'))return;
+  if(!(await window.fozanConfirm('Delete this sale?')))return;
   data.sales=data.sales.filter(x=>x.id!==id && String(x.branch_id||'1')===activeBranch || x.id!==id);
   cloudDeleteRow('fozan_sales',id);
   persist();renderDashboard();renderSales();
@@ -2750,6 +3319,43 @@ function deleteSale(id){
 
 function closeSaleModal(){document.getElementById('saleModal').style.display='none';editingSale=null}
 
+function parseStaffExpenseCloudMeta(value){
+  const m=String(value||'').match(/^\[\[FOZAN_STAFF:([^:]+):([^\]]+)\]\]/);
+  return m?{staff_id:m[1],staff_pay_type:m[2],taken_by:String(value).slice(m[0].length)}:{};
+}
+function populateExpenseStaffOptions(selected=''){
+  const el=document.getElementById('eStaff');if(!el)return;
+  el.innerHTML='<option value="">Not a staff payment</option>'+data.staff.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} — ${esc(branchName(x.branch_id))}</option>`).join('');
+  el.value=selected||'';
+}
+function autoMatchExpenseStaff(){
+  const desc=(document.getElementById('eDesc')?.value||'').toLocaleLowerCase();
+  const select=document.getElementById('eStaff');if(!select)return;
+  if(!select.value){
+    const match=data.staff.find(x=>x.name&&desc.includes(String(x.name).toLocaleLowerCase()));
+    if(match)select.value=String(match.id);
+  }
+  if(/\badvance\b|\badv\b|ایڈوانس/i.test(desc))document.getElementById('eStaffPayType').value='advance';
+  else if(select.value)document.getElementById('eStaffPayType').value='salary';
+}
+function linkedStaffExpenseTotals(staff,month){
+  const rows=data.expenses.filter(e=>String(e.staff_id||'')===String(staff.id)&&String(e.date||'').slice(0,7)===month);
+  return {advance:rows.filter(e=>(e.staff_pay_type||'advance')==='advance').reduce((n,e)=>n+Number(e.amount||0),0),
+    paid:rows.filter(e=>e.staff_pay_type==='salary').reduce((n,e)=>n+Number(e.amount||0),0)};
+}
+function autoLinkExistingStaffExpenses(){
+  let changed=false;
+  data.expenses.forEach(e=>{
+    if(e.staff_id)return;
+    const desc=String(e.desc||'').toLocaleLowerCase();
+    const staff=data.staff.find(x=>x.name&&desc.includes(String(x.name).toLocaleLowerCase()));
+    if(!staff)return;
+    e.staff_id=String(staff.id);
+    e.staff_pay_type=/\\badvance\\b|\\badv\\b|ایڈوانس/i.test(desc)?'advance':'salary';
+    changed=true;
+  });
+  if(changed)persist();
+}
 function newExpense(){
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(activeBranch==='all')return alert('Combined Report is view-only. Select Head Office or Bahria Enclave Office to add an expense.');
@@ -2757,6 +3363,7 @@ function newExpense(){
   window._editingExpense=null;
   document.getElementById('eAmount').value='';
   document.getElementById('eDesc').value='';
+  populateExpenseStaffOptions();document.getElementById('eStaffPayType').value='advance';
   document.getElementById('eTakenBy').value='Bykia & Indrive';
   const n=nowLocal();
   document.getElementById('eDate').value=getSummaryDate()||n.date;
@@ -2769,20 +3376,22 @@ function saveExpense(){
   if(!requireActionPassword())return;
   const amount=+document.getElementById('eAmount').value;
   if(!(amount>0))return alert('Please enter a valid amount.');
-  const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),taken_by:document.getElementById('eTakenBy').value||'Other',date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time};
+  const staffId=document.getElementById('eStaff')?.value||'';const staffPayType=document.getElementById('eStaffPayType')?.value||'advance';
+  const obj={amount,desc:cleanDescription(document.getElementById('eDesc').value),taken_by:document.getElementById('eTakenBy').value||'Other',date:document.getElementById('eDate').value,time:document.getElementById('eTime').value||nowLocal().time,...(staffId?{staff_id:staffId,staff_pay_type:staffPayType}:{})};
   const id=window._editingExpense;
   if(id){
     const x=data.expenses.find(e=>e.id===id); if(!canMutateRecord(x,'expense'))return;Object.assign(x,obj);
   }else data.expenses.push({id:uid(),branch_id:activeBranch,...obj});
   persist();closeExpenseModal();renderDashboard();renderSales();
 }
-function deleteExpense(id){if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');const record=data.expenses.find(x=>x.id===id);if(!canMutateRecord(record,'expense'))return;if(!confirm('Delete this expense?'))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
+async function deleteExpense(id){if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before deleting a record.');const record=data.expenses.find(x=>x.id===id);if(!canMutateRecord(record,'expense'))return;if(!(await window.fozanConfirm('Delete this expense?')))return;data.expenses=data.expenses.filter(x=>x.id!==id);cloudDeleteRow('fozan_expenses',id);persist();renderDashboard();renderSales();}
 function editExpense(id){
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(activeBranch==='all')return alert('Select Head Office or Bahria Enclave Office before editing a record.');
   const x=data.expenses.find(e=>e.id===id);if(!canMutateRecord(x,'expense'))return;
   document.getElementById('eAmount').value=x.amount;
   document.getElementById('eDesc').value=x.desc||'';
+  populateExpenseStaffOptions(x.staff_id||'');document.getElementById('eStaffPayType').value=x.staff_pay_type||'advance';
   document.getElementById('eTakenBy').value=(['Bykia','Bykia & Indrive','Rahij','Fozan','Other'].includes(x.taken_by)?(x.taken_by==='Bykia'?'Bykia & Indrive':x.taken_by):'Other');
   document.getElementById('eDate').value=x.date;
   document.getElementById('eTime').value=x.time||'00:00:00';
@@ -2905,17 +3514,63 @@ function toggleDailySalePrivacy(){
   ledger.classList.toggle('daily-private-hidden',!opening);
   button.innerHTML=opening?'▣ &nbsp; Hide Daily Sale &amp; Payment Summary':'▣ &nbsp; Open Daily Sale &amp; Payment Summary';
 }
+function fillCustomerOutstandingDetails(){
+  const customerInput=document.getElementById('sCustomer');
+  const customer=(customerInput?.value||'').trim();
+  if(!customer || activeBranch==='all')return;
+  const key=customer.toLocaleLowerCase();
+  const rows=salesInBranch(activeBranch).filter(x=>(x.customer||'').trim().toLocaleLowerCase()===key);
+  if(!rows.length)return;
+
+  // Gather this customer's still-unpaid credit and cash/online balances in this branch.
+  const outstanding=rows.map(x=>{
+    const due=x.type==='credit'
+      ? customerBalance(x)
+      : ['cash','online'].includes(x.type)
+        ? Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0))
+        : 0;
+    return {x,due};
+  }).filter(item=>item.due>0.0001)
+    .sort((a,b)=>String(b.x.date||'').localeCompare(String(a.x.date||'')) ||
+                 String(b.x.time||'').localeCompare(String(a.x.time||'')));
+
+  const mobileField=document.getElementById('sMobile');
+  if(mobileField && !mobileField.value.trim()){
+    const withMobile=[...rows].reverse().find(x=>String(x.mobile||'').trim());
+    if(withMobile)mobileField.value=withMobile.mobile;
+  }
+
+  const descField=document.getElementById('sDesc');
+  if(descField && !descField.value.trim() && outstanding.length){
+    const descriptions=[...new Set(outstanding.map(item=>cleanDescription(item.x.desc||'').trim()).filter(Boolean))];
+    if(descriptions.length)descField.value=descriptions.join(' / ');
+  }
+
+  // In a receipt entry, suggest the customer's total outstanding amount.
+  // Leave other sale types and any amount manually entered by the operator untouched.
+  const type=document.getElementById('sType')?.value||'';
+  const amountField=document.getElementById('sAmount');
+  if(['credit_balance_received','balance_payment'].includes(type) &&
+     amountField && !amountField.value.trim() && outstanding.length){
+    const total=outstanding.reduce((sum,item)=>sum+item.due,0);
+    amountField.value=Number(total.toFixed(2)).toString();
+  }
+  refreshCustomerDescriptionSuggestions();
+}
 function setupSaleAutocomplete(){
   attachSmartAutocomplete('sCustomer',savedSaleCustomers, item=>{
     if(item&&typeof item==='object'&&item.mobile&&!document.getElementById('sMobile').value.trim())
       document.getElementById('sMobile').value=item.mobile;
-    refreshCustomerDescriptionSuggestions();
+    fillCustomerOutstandingDetails();
   });
   attachSmartAutocomplete('sDesc',savedCustomerDescriptions);
   const customerInput=document.getElementById('sCustomer');
   if(customerInput){
-    customerInput.addEventListener('input',refreshCustomerDescriptionSuggestions);
-    customerInput.addEventListener('change',refreshCustomerDescriptionSuggestions);
+    customerInput.addEventListener('input',()=>{
+      refreshCustomerDescriptionSuggestions();
+      fillCustomerOutstandingDetails();
+    });
+    customerInput.addEventListener('change',fillCustomerOutstandingDetails);
   }
   refreshSaleSuggestions();
 }
@@ -3105,8 +3760,8 @@ function renderQuoteRegister(){
   if(!Array.isArray(data.quotes))data.quotes=[];
   const list=document.getElementById('quoteRegisterList');if(!list)return;
   const count=document.getElementById('quoteNavCount');if(count)count.textContent=String(data.quotes.length);
-  const q=(document.getElementById('quoteSearch')?.value||'').trim().toLowerCase();const branch=document.getElementById('quoteBranchFilter')?.value||'all';
-  const rows=data.quotes.filter(x=>(branch==='all'||String(x.branch_id)===branch)&&(!q||[x.quote_no,x.customer,x.mobile,x.company].some(v=>String(v||'').toLowerCase().includes(q)))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const q=(document.getElementById('quoteSearch')?.value||'').trim().toLowerCase();const branch=activeBranch==='all'?'all':String(activeBranch);const branchFilter=document.getElementById('quoteBranchFilter');if(branchFilter)branchFilter.value=branch;
+  const rows=data.quotes.filter(x=>(branch==='all'||String(x.branch_id||'1')===branch)&&(!q||[x.quote_no,x.customer,x.mobile,x.company].some(v=>String(v||'').toLowerCase().includes(q)))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   list.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="invoice-register-table"><thead><tr><th>Quote #</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Branch</th><th>Total</th><th>Expiry</th><th></th></tr></thead><tbody>'+rows.map(x=>'<tr><td><b>'+esc(x.quote_no||'')+'</b></td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.mobile||'—')+'</td><td>'+esc(branchName(x.branch_id))+'</td><td>'+money(x.quote_total||0)+'</td><td>'+esc(x.expiry_date||'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(x.id)+'" onclick="viewSavedQuote(this.dataset.id)">View / Print</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No matching saved quotes.</div>';
 }
 function viewSavedQuote(id){
@@ -3125,7 +3780,7 @@ function generateCustomQuote(){
   const timestamp=nowLocal(),date=document.getElementById('customBillDate').value||timestamp.date;
   const record={id:uid(),branch_id:activeBranch,quote_no:document.getElementById('customInvoiceNo').value||nextQuoteNumber(activeBranch),date,expiry_date:document.getElementById('customDueDate').value||'',reference:(document.getElementById('customOrderNo').value||'').trim(),customer:name,mobile:(document.getElementById('customCustomerMobile').value||'').trim(),company:(document.getElementById('customCompanyName').value||'').trim(),address:(document.getElementById('customCustomerAddress').value||'').trim(),salesperson:(document.getElementById('customSalesperson').value||'').trim(),subject:(document.getElementById('customSubject').value||'').trim(),quote_items:items,quote_subtotal:subtotal,quote_discount:discount,quote_discount_percent:pct,quote_shipping:shipping,quote_total:total,notes:(document.getElementById('customBillNotes').value||'').trim(),status:'saved',created_at:timestamp.date+' '+timestamp.time};
   if(!Array.isArray(data.quotes))data.quotes=[];data.quotes.push(record);
-  if(!Array.isArray(data.customers))data.customers=[];if(!data.customers.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase()&&String(c.mobile||'')===record.mobile))data.customers.push({id:uid(),name,mobile:record.mobile,company:record.company,address:record.address,branch_id:activeBranch});
+  if(!Array.isArray(data.customers))data.customers=[];if(!data.customers.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase()&&String(c.mobile||'')===record.mobile&&String(c.branch_id||'1')===String(activeBranch)))data.customers.push({id:uid(),name,mobile:record.mobile,company:record.company,address:record.address,branch_id:activeBranch});
   persist();renderQuoteRegister();viewSavedQuote(record.id);alert('Quote saved successfully.');
 }
 function nextBranchInvoiceNumber(branch){
@@ -3144,8 +3799,73 @@ function nextBranchInvoiceNumber(branch){
   localStorage.setItem(key,String(n));
   return prefix+String(n).padStart(6,'0');
 }
+function getInvoiceCustomerRecords(){
+  // Use the saved customer register first, then previous invoices/quotes/sales
+  // as a fallback so older customers also appear in the selector.
+  const sources=[
+    ...(Array.isArray(data.customers)?data.customers:[]),
+    ...(Array.isArray(data.invoices)?data.invoices:[]),
+    ...(Array.isArray(data.quotes)?data.quotes:[]),
+    ...(Array.isArray(data.sales)?data.sales:[])
+  ];
+  const records=[],seen=new Set();
+  sources.forEach(c=>{
+    if(!c)return;
+    const name=String(c.name||c.display_name||c.customer||'').trim();
+    if(!name)return;
+    const branch=String(c.branch_id||'1');
+    if(activeBranch!=='all' && branch!==String(activeBranch))return;
+    const key=branch+'|'+name.toLocaleLowerCase();
+    let existing=records.find(x=>String(x.branch_id)===branch&&x.name.toLocaleLowerCase()===name.toLocaleLowerCase());
+    const normalized={...c,name,branch_id:branch,
+      mobile:c.mobile||c.work_phone||c.billing?.phone||c.shipping?.phone||'',
+      email:c.email||'',company:c.company||c.company_name||'',
+      address:c.billing?.address||c.address||c.shipping?.address||'',
+      payment_terms:c.payment_terms||c.terms||''};
+    if(existing){
+      // Fill missing fields from older invoice records without overwriting
+      // the richer customer-register details.
+      ['mobile','email','company','address','payment_terms'].forEach(k=>{if(!existing[k]&&normalized[k])existing[k]=normalized[k];});
+    }else if(!seen.has(key)){seen.add(key);records.push(normalized);}
+  });
+  return records;
+}
+function refreshSavedInvoiceCustomerOptions(){
+  const list=document.getElementById('savedInvoiceCustomerList');
+  if(!list)return;
+  const options=getInvoiceCustomerRecords()
+    .sort((a,b)=>a.name.localeCompare(b.name))
+    .map(c=>{const o=document.createElement('option');o.value=c.name;return o;});
+  list.replaceChildren(...options);
+}
+function autofillInvoiceCustomerDetails(){
+  const input=document.getElementById('customCustomerName');
+  const typed=(input?.value||'').trim();
+  if(!typed)return;
+  const key=typed.toLocaleLowerCase();
+  const customer=getInvoiceCustomerRecords().find(c=>c.name.trim().toLocaleLowerCase()===key);
+  if(!customer)return; // Only fill when a saved customer is actually selected.
+  const put=(id,value)=>{const el=document.getElementById(id);if(el)el.value=value==null?'':String(value);};
+  put('customCustomerMobile',customer.mobile);
+  put('customCustomerEmail',customer.email);
+  put('customCompanyName',customer.company);
+  put('customCustomerAddress',customer.address);
+  const terms=document.getElementById('customTerms');
+  if(terms&&customer.payment_terms){const opt=[...terms.options].find(o=>o.text===customer.payment_terms||o.value===customer.payment_terms);if(opt)terms.value=opt.value;}
+}
+function bindInvoiceCustomerAutocomplete(){
+  const customerInput=document.getElementById('customCustomerName');
+  if(!customerInput||customerInput.dataset.autofillBound==='1')return;
+  customerInput.dataset.autofillBound='1';
+  ['input','change','blur'].forEach(evt=>customerInput.addEventListener(evt,autofillInvoiceCustomerDetails));
+  customerInput.addEventListener('keydown',e=>{if(e.key==='Enter'){setTimeout(autofillInvoiceCustomerDetails,0);}});
+}
+document.addEventListener('DOMContentLoaded',()=>{refreshSavedInvoiceCustomerOptions();bindInvoiceCustomerAutocomplete();});
+
 function openInvoiceWorkspace(mode='invoice'){
   document.body.classList.remove('invoices-register-fullscreen');
+  refreshSavedInvoiceCustomerOptions();
+  bindInvoiceCustomerAutocomplete();
   setDocumentMode(mode);
   if(activeBranch==='all'){alert('Invoice banane ke liye pehle Head Office ya Bahria Enclave select karein.');return;}
   const builder=document.getElementById('customBillBuilder');
@@ -3154,6 +3874,7 @@ function openInvoiceWorkspace(mode='invoice'){
   if(panel)panel.classList.remove('bill-collapsed');
   const no=document.getElementById('customInvoiceNo');
   if(no)no.value=nextBranchInvoiceNumber(activeBranch);
+  const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption)dailyOption.checked=false;
   const today=nowLocal().date;
   const date=document.getElementById('customBillDate');
   const due=document.getElementById('customDueDate');
@@ -3175,6 +3896,7 @@ function saveCustomInvoiceDraft(){
   const draft={
     id:window.editingCustomDraftId||uid(),branch_id:activeBranch,customer:name,
     mobile:(document.getElementById('customCustomerMobile').value||'').trim(),
+    email:(document.getElementById('customCustomerEmail')?.value||'').trim(),
     company:(document.getElementById('customCompanyName').value||'').trim(),
     address:(document.getElementById('customCustomerAddress').value||'').trim(),
     invoice_no:document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch),
@@ -3200,6 +3922,11 @@ function saveCustomInvoiceDraft(){
   if(index>=0)data.invoice_drafts[index]=draft;else data.invoice_drafts.push(draft);
   window.editingCustomDraftId=draft.id;persist();
   alert('Invoice draft saved. It is not included in daily sales until you save the invoice.');
+}
+function syncInvoiceDailySaleOption(){
+  const received=Number(document.getElementById('customBillReceived')?.value||0);
+  const option=document.getElementById('customAddToDailySale');
+  if(option && !window.editingSavedInvoiceId) option.checked=received>0;
 }
 function generateCustomBill(){
   if(window.customDocumentMode==='quote'){generateCustomQuote();return;}
@@ -3239,19 +3966,23 @@ function generateCustomBill(){
   const fmtDate=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB'):'—';
   const desc=items.map(x=>x.desc+' × '+x.qty+' @ '+money(x.rate)).join(' | ')+(subject?' — '+subject:'');
   const mobile=(document.getElementById('customCustomerMobile').value||'').trim();
+  const email=(document.getElementById('customCustomerEmail')?.value||'').trim();
   const company=(document.getElementById('customCompanyName').value||'').trim();
   const address=(document.getElementById('customCustomerAddress').value||'').trim();
   const totalQty=items.reduce((sum,x)=>sum+Number(x.qty||0),0);
   const timestamp=nowLocal();
-  const record={id:uid(),branch_id:activeBranch,type:'cash',amount:total,customer:name,mobile,company,address,desc:'Invoice '+invoiceNo+': '+desc,date,time:timestamp.time,advance_payment:received,advance_method:'cash',balance_payment:balance,invoice_no:invoiceNo,order_no:orderNo,invoice_due_date:dueDate,invoice_terms:terms,salesperson,invoice_subject:subject,invoice_items:items,invoice_qty:totalQty,invoice_subtotal:subtotal,invoice_discount:discount,invoice_discount_percent:discountPct,invoice_shipping:shipping,invoice_total:total,invoice_notes:notes};
-  if(window.editingSavedInvoiceId){
-    const oldInvoice=(data.invoices||[]).find(v=>String(v.id)===String(window.editingSavedInvoiceId));
-    const oldSaleIndex=data.sales.findIndex(v=>String(v.invoice_no||'')===String(oldInvoice?.invoice_no||'')&&String(v.branch_id)===String(oldInvoice?.branch_id||activeBranch));
+  const addToDailySale=!!document.getElementById('customAddToDailySale')?.checked;
+  const record={id:uid(),branch_id:activeBranch,type:'cash',amount:total,customer:name,mobile,email,company,address,desc:'Invoice '+invoiceNo+': '+desc,date,time:timestamp.time,advance_payment:received,advance_method:'cash',balance_payment:balance,invoice_no:invoiceNo,order_no:orderNo,invoice_due_date:dueDate,invoice_terms:terms,salesperson,invoice_subject:subject,invoice_items:items,invoice_qty:totalQty,invoice_subtotal:subtotal,invoice_discount:discount,invoice_discount_percent:discountPct,invoice_shipping:shipping,invoice_total:total,invoice_notes:notes,daily_sale_added:addToDailySale};
+  const oldInvoice=window.editingSavedInvoiceId?(data.invoices||[]).find(v=>String(v.id)===String(window.editingSavedInvoiceId)):null;
+  const oldSaleIndex=oldInvoice?data.sales.findIndex(v=>String(v.invoice_no||'')===String(oldInvoice.invoice_no||'')&&String(v.branch_id||'1')===String(oldInvoice.branch_id||'1')):-1;
+  if(addToDailySale){
     if(oldSaleIndex>=0)data.sales[oldSaleIndex]={...data.sales[oldSaleIndex],...record,id:data.sales[oldSaleIndex].id};
     else data.sales.push(record);
-  }else data.sales.push(record);
-  if(!data.customers.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase()&&String(c.mobile||'')===mobile)){
-    data.customers.push({id:uid(),name,mobile,company,address,branch_id:activeBranch});
+  }else if(oldSaleIndex>=0){
+    data.sales.splice(oldSaleIndex,1);
+  }
+  if(!data.customers.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase()&&String(c.mobile||'')===mobile&&String(c.branch_id||'1')===String(activeBranch))){
+    data.customers.push({id:uid(),name,mobile,email,company,address,branch_id:activeBranch});
   }
   const invoiceRecord={...record,status:'saved',created_at:timestamp.date+' '+timestamp.time};
   if(window.editingSavedInvoiceId){const invoiceIndex=data.invoices.findIndex(v=>String(v.id)===String(window.editingSavedInvoiceId));if(invoiceIndex>=0)data.invoices[invoiceIndex]={...data.invoices[invoiceIndex],...invoiceRecord,id:window.editingSavedInvoiceId};else data.invoices.push(invoiceRecord);window.editingSavedInvoiceId='';}else data.invoices.push(invoiceRecord);
@@ -3289,8 +4020,9 @@ if(!Array.isArray(data.customers))data.customers=[];
 if(!Array.isArray(data.items))data.items=[];
   const count=document.getElementById('invoiceNavCount');if(count)count.textContent=String(data.invoices.length);
   const q=(document.getElementById('invoiceSearch')?.value||'').trim().toLowerCase();
-  const branch=document.getElementById('invoiceBranchFilter')?.value||'all';
-  const rows=data.invoices.filter(x=>(branch==='all'||String(x.branch_id)===branch)&&
+  const branch=activeBranch==='all'?'all':String(activeBranch);
+  const branchFilter=document.getElementById('invoiceBranchFilter');if(branchFilter)branchFilter.value=branch;
+  const rows=data.invoices.filter(x=>(branch==='all'||String(x.branch_id||'1')===branch)&&
     (!q||[x.invoice_no,x.customer,x.mobile,x.company].some(v=>String(v||'').toLowerCase().includes(q))))
     .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
   if(!rows.length){list.innerHTML='<div class="empty">No matching saved invoices.</div>';return;}
@@ -3305,20 +4037,48 @@ function editSavedInvoice(id){
   window.editingSavedInvoiceId=x.id;
   openInvoiceWorkspace('invoice');
   const set=(field,value)=>{const el=document.getElementById(field);if(el)el.value=value??'';};
-  set('customCustomerName',x.customer);set('customCustomerMobile',x.mobile);set('customCompanyName',x.company);set('customCustomerAddress',x.address);
-  set('customInvoiceNo',x.invoice_no);set('customBillDate',x.date);set('customOrderNo',x.order_no);set('customTerms',x.invoice_terms||'Due on Receipt');set('customDueDate',x.invoice_due_date);set('customSalesperson',x.salesperson);set('customSubject',x.invoice_subject);
+  const linkedSale=(data.sales||[]).find(v=>String(v.invoice_no||'')===String(x.invoice_no||'')&&String(v.branch_id||'1')===String(x.branch_id||'1'));
+  const invoiceTotal=Number(x.invoice_total??x.amount??linkedSale?.amount??0);
+  const advance=Number(x.advance_payment??linkedSale?.advance_payment??0);
+  const savedItems=Array.isArray(x.invoice_items)&&x.invoice_items.length?x.invoice_items:[];
+  const legacyDescription=String(x.desc||linkedSale?.desc||'').replace(/^Invoice\\s+[^:]+:\\s*/i,'').trim();
+  const restoredItems=savedItems.length?savedItems:[{
+    desc:legacyDescription||'Previously saved invoice amount (item details not available in old record)',
+    description:'',unit:'',
+    qty:Number(x.invoice_qty||1),
+    rate:invoiceTotal/Math.max(Number(x.invoice_qty||1),0.000001),
+    total:invoiceTotal
+  }];
+  set('customCustomerName',x.customer);set('customCustomerMobile',x.mobile);set('customCustomerEmail',x.email);set('customCompanyName',x.company);set('customCustomerAddress',x.address);
+  set('customInvoiceNo',x.invoice_no);set('customBillDate',x.date);set('customOrderNo',x.order_no);set('customTerms',x.invoice_terms||'Due on Receipt');set('customDueDate',x.invoice_due_date||x.date);set('customSalesperson',x.salesperson);set('customSubject',x.invoice_subject);
   set('customBillDiscount',x.invoice_discount_percent??(Number(x.invoice_subtotal)?Number(x.invoice_discount||0)/Number(x.invoice_subtotal)*100:0));
-  set('customBillShipping',x.invoice_shipping||0);set('customBillReceived',x.advance_payment||0);set('customBillNotes',x.invoice_notes||'');
+  set('customBillShipping',x.invoice_shipping??0);set('customBillReceived',advance);set('customBillNotes',x.invoice_notes||'');
+  const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption)dailyOption.checked=typeof x.daily_sale_added==='boolean'?x.daily_sale_added:!!linkedSale;
   const wrap=document.getElementById('customBillItems');wrap.innerHTML='';
-  (x.invoice_items||[]).forEach((item,i)=>{if(i>0)addCustomBillItem();const row=wrap.querySelectorAll('.custom-bill-item')[i];if(row){row.querySelector('.custom-item-desc').value=item.desc||'';row.querySelector('.custom-item-qty').value=item.qty||1;row.querySelector('.custom-item-rate').value=item.rate||0;applySavedItemToRow(row.querySelector('.custom-item-desc'));}});
+  // Create the first row before restoring data; otherwise the first saved item
+  // has no row to populate and the editor displays a blank item.
+  if(restoredItems.length)addCustomBillItem();
+  restoredItems.forEach((item,i)=>{
+    if(i>0)addCustomBillItem();
+    const row=wrap.querySelectorAll('.custom-bill-item')[i];
+    if(row){
+      const descInput=row.querySelector('.custom-item-desc');
+      descInput.value=item.desc||item.description||'';
+      // Apply catalog metadata first, then restore the invoice's own saved
+      // quantity and rate so later catalog price changes do not alter old invoices.
+      applySavedItemToRow(descInput);
+      row.querySelector('.custom-item-qty').value=item.qty||1;
+      row.querySelector('.custom-item-rate').value=item.rate??(Number(item.total||0)/Math.max(Number(item.qty||1),0.000001));
+    }
+  });
   if(!wrap.children.length)addCustomBillItem();
   const heading=document.getElementById('customInvoiceHeading');if(heading)heading.textContent='Edit Invoice '+(x.invoice_no||'');
   const save=document.getElementById('customSaveButton');if(save)save.textContent='✓ Update Invoice';
   updateCustomBillTotals();
 }
-function deleteSavedInvoice(id){
+async function deleteSavedInvoice(id){
   const x=(data.invoices||[]).find(v=>String(v.id)===String(id));if(!x)return;
-  if(!confirm('Delete invoice '+(x.invoice_no||'')+'? Its linked Bill Generate sale entry will also be deleted.'))return;
+  if(!(await window.fozanConfirm('Delete invoice '+(x.invoice_no||'')+'? Its linked Bill Generate sale entry will also be deleted.')))return;
   data.invoices=data.invoices.filter(v=>String(v.id)!==String(id));
   data.sales=(data.sales||[]).filter(v=>!(String(v.invoice_no||'')===String(x.invoice_no||'')&&String(v.branch_id||'1')===String(x.branch_id||'1')));
   persist();renderInvoiceRegister();renderSales();renderDashboard();
@@ -3336,7 +4096,7 @@ function viewSavedInvoice(id){
     .filter(pair=>String(pair[1]||'').trim()).map(pair=>'<div><b>'+esc(pair[0])+':</b> '+esc(pair[1])+'</div>').join('');
   document.getElementById('billContent').innerHTML=
     '<div class="bill-head"><div class="bill-brand-row"><div><div class="bill-brand">FOZAN PRINTING PRESS</div><div class="bill-sub">Digital Printing • Offset Printing • Panaflex Printing</div><div class="bill-sub">'+esc(branchName(x.branch_id))+'</div></div></div><div style="text-align:right"><span class="bill-pill">INVOICE</span><div class="bill-sub"><b>Invoice #:</b> '+esc(x.invoice_no||'')+'</div><div class="bill-sub"><b>Invoice Date:</b> '+esc(fmtDate(x.date))+'</div><div class="bill-sub"><b>Due Date:</b> '+esc(fmtDate(x.invoice_due_date))+'</div></div></div>'+
-    '<div class="bill-customer"><div style="font-size:11px;color:#687785;font-weight:800;margin-bottom:8px">BILL TO / CUSTOMER DETAILS</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px"><div><div style="font-size:11px;color:#687785">CUSTOMER NAME</div><strong>'+esc(x.customer||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">MOBILE NUMBER</div><strong>'+esc(x.mobile||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">COMPANY NAME</div><strong>'+esc(x.company||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">ADDRESS</div><strong>'+esc(x.address||'—')+'</strong></div></div></div>'+
+    '<div class="bill-customer"><div style="font-size:11px;color:#687785;font-weight:800;margin-bottom:8px">BILL TO / CUSTOMER DETAILS</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px"><div><div style="font-size:11px;color:#687785">CUSTOMER NAME</div><strong>'+esc(x.customer||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">MOBILE NUMBER</div><strong>'+esc(x.mobile||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">COMPANY NAME</div><strong>'+esc(x.company||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">EMAIL ADDRESS</div><strong>'+esc(x.email||'—')+'</strong></div><div><div style="font-size:11px;color:#687785">ADDRESS</div><strong>'+esc(x.address||'—')+'</strong></div></div></div>'+
     (meta?'<div class="bill-meta-grid">'+meta+'</div>':'')+
     '<table class="bill-table"><thead><tr><th>ITEM DETAILS / DESCRIPTION</th><th style="text-align:right">QUANTITY</th><th style="text-align:right">RATE</th><th style="text-align:right">AMOUNT</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="bill-total-row"><div class="bill-total-card"><div class="bill-total-line"><span>Subtotal</span><strong>'+money(x.invoice_subtotal??items.reduce((a,v)=>a+Number(v.total??(Number(v.qty||0)*Number(v.rate||0)),0),0))+'</strong></div><div class="bill-total-line"><span>Discount'+(x.invoice_discount_percent?' ('+esc(String(x.invoice_discount_percent))+'%)':'')+'</span><strong>'+money(x.invoice_discount||0)+'</strong></div><div class="bill-total-line"><span>Shipping Charges</span><strong>'+money(x.invoice_shipping||0)+'</strong></div><div class="bill-total-line"><span>Total Payment</span><strong>'+money(total)+'</strong></div><div class="bill-total-line"><span>Amount Received / Advance</span><strong>'+money(advance)+'</strong></div><div class="bill-total-line due"><span>Balance Due</span><strong>'+money(balance)+'</strong></div></div></div>'+
@@ -3349,30 +4109,41 @@ document.addEventListener('keydown',function(event){if(event.key==='Escape'){con
 
 function exportData(){
   if(!currentUserRole){alert('Please login first.');return;}
-  let backup,filename;
-  if(currentUserRole==='admin'){
-    backup={_fozanBackup:true,backupType:'full',createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(data))};
-    filename='fozan-daily-sale-full-backup.json';
-  }else{
-    const branch=String(FOZAN_USERS[currentUserKey].branch);
-    const branchData={};
-    Object.keys(data).forEach(key=>{
-      const value=data[key];
-      if(Array.isArray(value)){
-        // Branch-tagged records are exported only for the logged-in branch.
-        branchData[key]=value.filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')===branch);
-      }else if(value && typeof value==='object') branchData[key]=JSON.parse(JSON.stringify(value));
-      else branchData[key]=value;
-    });
-    backup={_fozanBackup:true,backupType:'branch',backupBranch:branch,createdAt:new Date().toISOString(),data:branchData};
-    filename='fozan-'+(branch==='1'?'head-office':'bahria-enclave')+'-backup.json';
+  // A complete two-branch backup is an admin-only operation.
+  if(currentUserRole!=='admin'){
+    alert('دونوں برانچز کا مکمل Backup صرف Admin اکاؤنٹ سے بن سکتا ہے۔ براہِ کرم Admin سے Backup بنوائیں۔');
+    return;
   }
+  if(CLOUD_ENABLED && !cloudReady){
+    alert('Cloud data ابھی مکمل load نہیں ہوا۔ پہلے Refresh Cloud کریں، پھر دونوں برانچز کا Backup بنائیں۔');
+    return;
+  }
+  const snapshot=JSON.parse(JSON.stringify(data));
+  const branchCounts={
+    headOfficeSales:(snapshot.sales||[]).filter(x=>String(x.branch_id||'1')==='1').length,
+    bahriaSales:(snapshot.sales||[]).filter(x=>String(x.branch_id||'1')==='2').length,
+    headOfficeExpenses:(snapshot.expenses||[]).filter(x=>String(x.branch_id||'1')==='1').length,
+    bahriaExpenses:(snapshot.expenses||[]).filter(x=>String(x.branch_id||'1')==='2').length,
+    headOfficeStaff:(snapshot.staff||[]).filter(x=>String(x.branch_id||'1')==='1').length,
+    bahriaStaff:(snapshot.staff||[]).filter(x=>String(x.branch_id||'1')==='2').length
+  };
+  const backup={
+    _fozanBackup:true,backupType:'full',branchCoverage:['1','2'],
+    branchNames:['PWD Head Office','Bahria Enclave'],
+    createdAt:new Date().toISOString(),branchCounts,data:snapshot
+  };
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),500);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fozan-both-branches-full-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
 }
 function importData(){
   if(!currentUserRole){alert('Please login first.');return;}
+  if(currentUserRole!=='admin'){
+    alert('دونوں برانچز کا Backup Restore صرف Admin اکاؤنٹ سے ہو سکتا ہے۔');
+    return;
+  }
   const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
   input.onchange=()=>{
     const f=input.files[0];if(!f)return;
@@ -3381,51 +4152,32 @@ function importData(){
       try{
         const raw=JSON.parse(r.result);
         const isWrapped=raw && raw._fozanBackup===true && raw.data && typeof raw.data==='object';
-        const incoming=isWrapped?raw.data:raw;
-        if(!incoming || !Array.isArray(incoming.sales) || !Array.isArray(incoming.expenses))throw 0;
-        if(currentUserRole==='admin'){
-          if(isWrapped && raw.backupType==='branch'){
-            const branch=String(raw.backupBranch||'');
-            if(!['1','2'].includes(branch))throw 0;
-            const current=data;
-            Object.keys(incoming).forEach(key=>{
-              if(Array.isArray(incoming[key])){
-                const old=Array.isArray(current[key])?current[key]:[];
-                const keep=old.filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')!==branch);
-                const add=incoming[key].filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')===branch);
-                current[key]=[...keep,...add];
-              }
-            });
-            data=current;
-          }else{
-            data=incoming;
-          }
-        }else{
-          const branch=String(FOZAN_USERS[currentUserKey].branch);
-          if(!isWrapped || raw.backupType!=='branch' || String(raw.backupBranch)!==branch){alert('یہ Backup اس برانچ کا نہیں ہے۔ صرف اپنی برانچ کا Backup Restore کریں۔');return;}
-          Object.keys(incoming).forEach(key=>{
-            if(!Array.isArray(incoming[key]))return;
-            const old=Array.isArray(data[key])?data[key]:[];
-            // Replace only this branch's records; keep every other branch intact.
-            const keep=old.filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')!==branch);
-            const add=incoming[key].filter(v=>!v || typeof v!=='object' || !('branch_id' in v) || String(v.branch_id||'1')===branch);
-            data[key]=[...keep,...add];
-          });
+        if(!isWrapped || raw.backupType!=='full' || !Array.isArray(raw.branchCoverage) ||
+           !raw.branchCoverage.includes('1') || !raw.branchCoverage.includes('2')){
+          alert('یہ دونوں برانچز کا مکمل Backup نہیں ہے۔ Restore کے لیے Admin کا Full Backup منتخب کریں۔');
+          return;
         }
-        if(!Array.isArray(data.sales))data.sales=[];if(!Array.isArray(data.expenses))data.expenses=[];
-        if(!Array.isArray(data.invoices))data.invoices=[];if(!Array.isArray(data.quotes))data.quotes=[];
-        data.sales.forEach(v=>{v.branch_id=String(v.branch_id||'1')});data.expenses.forEach(v=>{v.branch_id=String(v.branch_id||'1')});
-        if(CLOUD_ENABLED && cloudReady && currentUserRole==='branch'){
-          const branch=String(FOZAN_USERS[currentUserKey].branch);
-          for(const table of ['fozan_sales','fozan_expenses']){
-            const {error}=await supabaseClient.from(table).delete().eq('branch_id',branch);
-            if(error)throw error;
-          }
+        const incoming=raw.data;
+        if(!Array.isArray(incoming.sales)||!Array.isArray(incoming.expenses))throw new Error('Invalid backup structure');
+        if(!(await window.fozanConfirm('یہ Backup PWD Head Office اور Bahria Enclave دونوں کا ڈیٹا Restore کرے گا۔ موجودہ ڈیٹا Backup کے ڈیٹا سے تبدیل ہو جائے گا۔ کیا آپ جاری رکھنا چاہتے ہیں؟')))return;
+        data=incoming;
+        if(!Array.isArray(data.staff))data.staff=[];
+        if(!Array.isArray(data.invoices))data.invoices=[];
+        if(!Array.isArray(data.quotes))data.quotes=[];
+        data.sales.forEach(v=>{v.branch_id=String(v.branch_id||'1')});
+        data.expenses.forEach(v=>{v.branch_id=String(v.branch_id||'1')});
+        if(Array.isArray(data.staff))data.staff.forEach(v=>{v.branch_id=String(v.branch_id||'1')});
+        persist();renderDashboard();renderSales();
+        if(CLOUD_ENABLED && cloudReady){
+          try{await cloudSyncData();}
+          catch(syncError){console.error('Cloud sync after restore failed:',syncError);alert('Local Restore مکمل ہو گیا، لیکن Cloud Sync میں مسئلہ آیا۔ Refresh Cloud کرنے سے پہلے Cloud status چیک کریں۔');return;}
         }
-        persist();renderDashboard();renderSales();alert('Backup restored successfully.');
+        alert('دونوں برانچز کا Backup کامیابی سے Restore ہو گیا۔');
       }catch(e){console.error('Backup restore error:',e);alert('Invalid backup file or restore failed.');}
-    };r.readAsText(f);
-  };input.click();
+    };
+    r.readAsText(f);
+  };
+  input.click();
 }
 
 const summaryDate=document.getElementById('summaryDate');
@@ -3516,6 +4268,9 @@ function startMonthlyDuesAutoScroll(){
 
 window.addEventListener('load',()=>{setTimeout(renderOverallOutstanding,1200);setTimeout(startMonthlyDuesAutoScroll,2500);});
 window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringify(data)));
+
+// Add in-page Back controls without reloading or refreshing the HTML.
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureManagementBackButtons);else ensureManagementBackButtons();
 </script>
 
 
@@ -3532,109 +4287,156 @@ window.addEventListener('beforeunload',()=>localStorage.setItem(KEY,JSON.stringi
 
 
 </div><div class="fozan-autocomplete-menu" style="display: none; position: fixed; z-index: 12000; max-height: 230px; overflow: auto; background: rgb(255, 255, 255); border: 1px solid rgb(216, 224, 234); border-radius: 9px; box-shadow: rgba(20, 36, 59, 0.19) 0px 8px 25px; padding: 4px;"></div><div class="fozan-autocomplete-menu" style="display: none; position: fixed; z-index: 12000; max-height: 230px; overflow: auto; background: rgb(255, 255, 255); border: 1px solid rgb(216, 224, 234); border-radius: 9px; box-shadow: rgba(20, 36, 59, 0.19) 0px 8px 25px; padding: 4px;"></div>
-<style id="fozanInvoiceCustomerAutocompleteStyles">
-  #customCustomerName{position:relative}
-  #fozanInvoiceCustomerDropdown{
-    display:none;position:fixed;z-index:12050;max-height:280px;overflow-y:auto;
-    background:#fff;border:1px solid #d8e0ea;border-radius:10px;
-    box-shadow:0 10px 28px #17203326;padding:5px
-  }
-  #fozanInvoiceCustomerDropdown .fozan-customer-option{
-    display:block;width:100%;text-align:left;background:#fff;color:#202b3d;
-    border:0;border-radius:7px;padding:10px 11px;margin:0;box-shadow:none;
-    transform:none;font-size:13px;line-height:1.4
-  }
-  #fozanInvoiceCustomerDropdown .fozan-customer-option:hover,
-  #fozanInvoiceCustomerDropdown .fozan-customer-option:focus{
-    background:#fff2e6;outline:1px solid #f58220;box-shadow:none;transform:none
-  }
-  #fozanInvoiceCustomerDropdown .fozan-customer-option strong{display:block;color:#172033}
-  #fozanInvoiceCustomerDropdown .fozan-customer-option small{display:block;color:#788394;margin-top:2px}
-  #fozanInvoiceCustomerDropdown .fozan-customer-empty{padding:12px;color:#788394;font-size:12px}
-  #fozanInvoiceCustomerHint{font-size:11px;color:#788394;margin:-3px 0 8px}
+<style>
+.expense-workspace-tabs{display:flex;gap:9px;margin:4px 0 17px;padding:5px;background:#f2f4f7;border-radius:12px}
+.expense-tab{flex:1;padding:12px 15px;background:transparent;color:#4b5563;font-weight:800;border:1px solid transparent}
+.expense-tab.active{background:linear-gradient(110deg,#f58220,#ff9b38);color:white;box-shadow:0 5px 13px #f5822038}
+.expense-category-chips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 16px}
+.expense-category-chip{background:#fff4e9;border:1px solid #f5d2b5;color:#9b4b0a;border-radius:20px;padding:7px 11px;font-size:11px;font-weight:800}
+#generalExpenseSection .payroll-branch-head{margin-bottom:14px}
+#generalExpenseSection .payroll-table-wrap{overflow:auto}
+#generalExpenseSection table{min-width:680px}
+#generalExpenseSection .expense-row-actions{display:flex;gap:5px}
+@media(max-width:600px){.expense-tab{padding:10px 6px;font-size:12px}}
 </style>
-<div id="fozanInvoiceCustomerDropdown" role="listbox" aria-label="Saved customers"></div>
-<script id="fozanInvoiceCustomerAutocomplete">
+<script>
+const FOZAN_EXPENSE_CATEGORY_KEY='fozan_general_expense_categories_v1';
+let fozanExpenseCategories=(()=>{try{const a=JSON.parse(localStorage.getItem(FOZAN_EXPENSE_CATEGORY_KEY)||'null');return Array.isArray(a)&&a.length?a:['Rent','Electricity','Internet','Tea / Food','Transport','Repair & Maintenance','Printing Material','Other'];}catch(e){return ['Rent','Electricity','Internet','Tea / Food','Transport','Repair & Maintenance','Printing Material','Other'];}})();
+let editingGeneralExpenseId=null;
+function switchExpenseWorkspace(which){
+  if(currentUserRole!=='admin')return alert('Admin access required.');
+  const staff=which==='staff';
+  document.getElementById('staffSalarySection').style.display=staff?'':'none';
+  document.getElementById('generalExpenseSection').style.display=staff?'none':'';
+  document.getElementById('staffTabBtn').classList.toggle('active',staff);
+  document.getElementById('generalTabBtn').classList.toggle('active',!staff);
+  if(!staff){const m=document.getElementById('generalExpenseMonth');if(m&&!m.value)m.value=currentMonthKey();const d=document.getElementById('generalExpenseDate');if(d&&!d.value)d.value=nowLocal().date;renderGeneralExpenseCategories();renderGeneralExpenses();}
+}
+function saveExpenseCategoryList(){localStorage.setItem(FOZAN_EXPENSE_CATEGORY_KEY,JSON.stringify(fozanExpenseCategories));}
+async function manageExpenseCategories(){
+  if(currentUserRole!=='admin')return alert('Admin access required.');
+  const action=prompt('Category Management:\n1 = Add category\n2 = Rename category\n3 = Delete category\n\nEnter 1, 2 or 3:');if(action===null)return;
+  if(action==='1'){const name=prompt('New category name:');if(name&&name.trim()){if(fozanExpenseCategories.some(x=>x.toLowerCase()===name.trim().toLowerCase()))return alert('Category already exists.');fozanExpenseCategories.push(name.trim());}}
+  else if(action==='2'){const old=prompt('Exact category name to rename:\n'+fozanExpenseCategories.join(', '));if(old===null)return;const i=fozanExpenseCategories.findIndex(x=>x.toLowerCase()===old.trim().toLowerCase());if(i<0)return alert('Category not found.');const name=prompt('New category name:',fozanExpenseCategories[i]);if(name&&name.trim())fozanExpenseCategories[i]=name.trim();}
+  else if(action==='3'){const old=prompt('Exact category name to delete:\n'+fozanExpenseCategories.join(', '));if(old===null)return;const i=fozanExpenseCategories.findIndex(x=>x.toLowerCase()===old.trim().toLowerCase());if(i<0)return alert('Category not found.');if(!(await window.fozanConfirm('Delete category "'+fozanExpenseCategories[i]+'"? Existing expense entries will remain in the register.')))return;fozanExpenseCategories.splice(i,1);if(!fozanExpenseCategories.length)fozanExpenseCategories=['Other'];}
+  else return alert('Please enter 1, 2 or 3.');
+  saveExpenseCategoryList();renderGeneralExpenseCategories();renderGeneralExpenses();
+}
+function renderGeneralExpenseCategories(){
+  const select=document.getElementById('generalExpenseCategory');if(select){const current=select.value;select.innerHTML=fozanExpenseCategories.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');if(fozanExpenseCategories.includes(current))select.value=current;}
+  const chips=document.getElementById('generalExpenseCategoryChips');if(chips)chips.innerHTML=fozanExpenseCategories.map(x=>'<span class="expense-category-chip">'+esc(x)+'</span>').join('');
+}
+function generalExpenseMeta(desc){const m=String(desc||'').match(/^\[\[FOZAN_CAT:([^\]]+)\]\]\s*/);if(!m)return {category:'Uncategorized',description:String(desc||'')};let category='Uncategorized';try{category=decodeURIComponent(m[1]);}catch(e){}return {category,description:String(desc||'').slice(m[0].length)};}
+function resetGeneralExpenseForm(){editingGeneralExpenseId=null;['generalExpenseAmount','generalExpenseDesc'].forEach(id=>document.getElementById(id).value='');document.getElementById('generalExpenseDate').value=nowLocal().date;}
+function saveGeneralExpense(){
+  if(currentUserRole!=='admin')return alert('Admin access required.');if(previewMode)return alert('Preview mode is read-only.');
+  const amount=Number(document.getElementById('generalExpenseAmount').value),category=document.getElementById('generalExpenseCategory').value,description=document.getElementById('generalExpenseDesc').value.trim(),date=document.getElementById('generalExpenseDate').value,branch_id=document.getElementById('generalExpenseBranchEntry').value;
+  if(!(amount>0))return alert('Please enter a valid amount.');if(!date)return alert('Please select expense date.');if(!category)return alert('Please add/select an expense category.');
+  const obj={amount,desc:'[[FOZAN_CAT:'+encodeURIComponent(category)+']] '+description,date,time:nowLocal().time};
+  if(editingGeneralExpenseId){const x=data.expenses.find(v=>String(v.id)===String(editingGeneralExpenseId));if(!x)return alert('Expense not found.');Object.assign(x,obj);}
+  else data.expenses.push({id:uid(),branch_id,...obj});
+  persist();resetGeneralExpenseForm();renderGeneralExpenses();renderDashboard();renderSales();
+}
+function editGeneralExpense(id){if(currentUserRole!=='admin')return;const x=data.expenses.find(v=>String(v.id)===String(id));if(!x)return;const meta=generalExpenseMeta(x.desc);editingGeneralExpenseId=x.id;document.getElementById('generalExpenseAmount').value=x.amount;document.getElementById('generalExpenseCategory').value=meta.category;document.getElementById('generalExpenseDesc').value=meta.description;document.getElementById('generalExpenseDate').value=x.date||nowLocal().date;document.getElementById('generalExpenseBranchEntry').value=String(x.branch_id||'1');}
+async function deleteGeneralExpense(id){if(currentUserRole!=='admin')return;if(previewMode)return alert('Preview mode is read-only.');const x=data.expenses.find(v=>String(v.id)===String(id));if(!x)return;if(!(await window.fozanConfirm('Delete this general expense?')))return;data.expenses=data.expenses.filter(v=>String(v.id)!==String(id));if(CLOUD_ENABLED)cloudDeleteRow('fozan_expenses',id);persist();renderGeneralExpenses();renderDashboard();renderSales();}
+function renderGeneralExpenses(){
+  if(currentUserRole!=='admin')return;renderGeneralExpenseCategories();const month=document.getElementById('generalExpenseMonth')?.value||currentMonthKey(),branch=document.getElementById('generalExpenseBranch')?.value||'all';
+  const rows=data.expenses.filter(x=>String(x.date||'').slice(0,7)===month&&(branch==='all'||String(x.branch_id||'1')===branch)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const total=rows.reduce((n,x)=>n+Number(x.amount||0),0);document.getElementById('generalExpenseTotal').textContent=money(total);
+  const host=document.getElementById('generalExpenseTable');if(!rows.length){host.innerHTML='<div class="empty">No general expenses for this month.</div>';return;}
+  host.innerHTML='<table><thead><tr><th>Date</th><th>Branch</th><th>Category</th><th>Description</th><th>Amount</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{const m=generalExpenseMeta(x.desc);return '<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(branchName(x.branch_id||'1'))+'</td><td><b>'+esc(m.category)+'</b></td><td>'+esc(m.description||'—')+'</td><td class="expense"><b>'+money(x.amount)+'</b></td><td><div class="expense-row-actions"><button class="muted" onclick="editGeneralExpense(\''+String(x.id).replace(/'/g,"\\'")+'\')">Edit</button><button class="danger" onclick="deleteGeneralExpense(\''+String(x.id).replace(/'/g,"\\'")+'\')">Delete</button></div></td></tr>';}).join('')+'</tbody></table>';
+}
+document.addEventListener('DOMContentLoaded',()=>{try{previewStaffSalary();}catch(e){}});
+</script>
+
+
+<style>
+/* Compact centered full-workspace tabs: retain the full page, with a little breathing room. */
+.side-view.active{
+  padding:18px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:auto!important;
+}
+.side-view.active > :first-child{
+  width:min(96vw, 1480px)!important;
+  max-width:1480px!important;
+  height:min(92vh, 980px)!important;
+  max-height:92vh!important;
+  min-height:0!important;
+  margin:auto!important;
+  overflow:auto!important;
+  border-radius:12px!important;
+  box-shadow:0 16px 48px #10182735!important;
+}
+.side-view.active .zoho-customer-page,
+.side-view.active .zoho-item-page{
+  height:100%!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+}
+.side-view.active .zoho-customer-scroll,
+.side-view.active .zoho-item-scroll{
+  min-height:0!important;
+  overflow:auto!important;
+}
+@media(max-width:700px){
+  .side-view.active{padding:8px!important}
+  .side-view.active > :first-child{
+    width:calc(100vw - 16px)!important;
+    height:calc(100vh - 16px)!important;
+    max-height:calc(100vh - 16px)!important;
+  }
+}
+</style>
+
+
+<div id="fozanNoticeOverlay" role="dialog" aria-modal="true" aria-labelledby="fozanNoticeTitle">
+  <div class="fozan-notice-box">
+    <div class="fozan-notice-head" id="fozanNoticeTitle">FOZAN Printing Press</div>
+    <div class="fozan-notice-message" id="fozanNoticeMessage"></div>
+    <div class="fozan-notice-actions" style="gap:10px"><button type="button" id="fozanNoticeCancel" style="display:none;background:#e5e7eb;color:#263244">Cancel</button><button type="button" id="fozanNoticeOk">OK</button></div>
+  </div>
+</div>
+<script>
 (function(){
-  const nameInput=document.getElementById('customCustomerName');
-  const dropdown=document.getElementById('fozanInvoiceCustomerDropdown');
-  if(!nameInput||!dropdown)return;
-  let activeIndex=-1, visibleCustomers=[];
-  const val=v=>String(v==null?'':v).trim();
-  const getCustomers=()=>{
-    const list=(window.data&&Array.isArray(data.customers))?data.customers:[];
-    const seen=new Set();
-    return list.filter(c=>{
-      const name=val(c.name||c.display_name);
-      if(!name)return false;
-      const key=(name+'|'+val(c.mobile)).toLowerCase();
-      if(seen.has(key))return false;
-      seen.add(key);return true;
-    }).sort((a,b)=>val(a.name||a.display_name).localeCompare(val(b.name||b.display_name)));
+  const nativeAlert=window.alert.bind(window);
+  const overlay=document.getElementById('fozanNoticeOverlay');
+  const message=document.getElementById('fozanNoticeMessage');
+  const ok=document.getElementById('fozanNoticeOk');
+  const cancel=document.getElementById('fozanNoticeCancel');
+  const title=document.getElementById('fozanNoticeTitle');
+  let active=null, queue=[];
+  function next(){
+    if(active||!queue.length||!overlay)return;
+    active=queue.shift();
+    message.textContent=active.message;
+    title.textContent=active.kind==='confirm'?'FOZAN Printing Press — Confirmation':'FOZAN Printing Press';
+    cancel.style.display=active.kind==='confirm'?'':'none';
+    overlay.classList.add('open');
+    ok.focus();
+  }
+  function finish(result){
+    if(!active)return;
+    const done=active.resolve;
+    active=null;
+    overlay.classList.remove('open');
+    done(result);
+    setTimeout(next,0);
+  }
+  ok.addEventListener('click',()=>finish(true));
+  cancel.addEventListener('click',()=>finish(false));
+  document.addEventListener('keydown',e=>{
+    if(!active)return;
+    if(e.key==='Escape'&&active.kind==='confirm'){e.preventDefault();finish(false);}
+    else if(e.key==='Enter'){e.preventDefault();finish(true);}
+  });
+  window.alert=function(text){
+    return new Promise(resolve=>{queue.push({kind:'alert',message:String(text??''),resolve:()=>resolve()});next();});
   };
-  const customerAddress=c=>val(c.address||c.billing?.address||c.billing_address);
-  function positionDropdown(){
-    const r=nameInput.getBoundingClientRect();
-    dropdown.style.left=Math.max(8,r.left)+'px';
-    dropdown.style.top=(r.bottom+3)+'px';
-    dropdown.style.width=Math.max(r.width,280)+'px';
-  }
-  function closeDropdown(){dropdown.style.display='none';activeIndex=-1;}
-  function chooseCustomer(c){
-    nameInput.value=val(c.name||c.display_name);
-    const mobile=document.getElementById('customCustomerMobile');
-    const company=document.getElementById('customCompanyName');
-    const address=document.getElementById('customCustomerAddress');
-    if(mobile)mobile.value=val(c.mobile||c.work_phone||c.billing?.phone);
-    if(company)company.value=val(c.company||c.company_name);
-    if(address)address.value=customerAddress(c);
-    closeDropdown();
-    nameInput.dispatchEvent(new Event('change',{bubbles:true}));
-    document.getElementById('customCustomerMobile')?.focus();
-  }
-  function renderDropdown(){
-    const q=val(nameInput.value).toLocaleLowerCase();
-    const all=getCustomers();
-    visibleCustomers=all.filter(c=>{
-      const hay=[c.name,c.display_name,c.mobile,c.company,c.address,c.billing?.address].map(val).join(' ').toLocaleLowerCase();
-      return !q||hay.includes(q);
-    }).slice(0,100);
-    activeIndex=-1;
-    dropdown.innerHTML='';
-    if(!visibleCustomers.length){
-      dropdown.innerHTML='<div class="fozan-customer-empty">'+(all.length?'No matching saved customer. You can enter a new customer.':'No saved customers yet. Save a customer first, or enter a new one.')+'</div>';
-    }else{
-      visibleCustomers.forEach((c,i)=>{
-        const button=document.createElement('button');
-        button.type='button';button.className='fozan-customer-option';button.setAttribute('role','option');
-        const strong=document.createElement('strong');strong.textContent=val(c.name||c.display_name);
-        const small=document.createElement('small');
-        small.textContent=[val(c.mobile),val(c.company)].filter(Boolean).join(' • ')||'Saved customer';
-        button.append(strong,small);
-        button.addEventListener('pointerdown',e=>{e.preventDefault();chooseCustomer(c);});
-        dropdown.appendChild(button);
-      });
-    }
-    positionDropdown();dropdown.style.display='block';
-  }
-  nameInput.addEventListener('focus',renderDropdown);
-  nameInput.addEventListener('click',renderDropdown);
-  nameInput.addEventListener('input',renderDropdown);
-  nameInput.addEventListener('keydown',e=>{
-    if(dropdown.style.display!=='block'&&(e.key==='ArrowDown'||e.key==='Enter'))renderDropdown();
-    if(e.key==='Escape'){closeDropdown();return;}
-    if(e.key==='ArrowDown'&&visibleCustomers.length){e.preventDefault();activeIndex=Math.min(activeIndex+1,visibleCustomers.length-1);}
-    else if(e.key==='ArrowUp'&&visibleCustomers.length){e.preventDefault();activeIndex=Math.max(activeIndex-1,0);}
-    else if(e.key==='Enter'&&activeIndex>=0&&visibleCustomers[activeIndex]){e.preventDefault();chooseCustomer(visibleCustomers[activeIndex]);}
-    [...dropdown.querySelectorAll('.fozan-customer-option')].forEach((el,i)=>el.style.background=i===activeIndex?'#fff2e6':'#fff');
-  });
-  document.addEventListener('pointerdown',e=>{
-    if(e.target!==nameInput&&!dropdown.contains(e.target))closeDropdown();
-  });
-  window.addEventListener('resize',()=>{if(dropdown.style.display==='block')positionDropdown();});
-  window.addEventListener('scroll',()=>{if(dropdown.style.display==='block')positionDropdown();},true);
-  // Keep the list fresh when customer records are added or changed elsewhere in the app.
-  window.refreshInvoiceCustomerSuggestions=()=>{if(document.activeElement===nameInput&&dropdown.style.display==='block')renderDropdown();};
+  window.fozanConfirm=function(text){
+    return new Promise(resolve=>{queue.push({kind:'confirm',message:String(text??''),resolve});next();});
+  };
 })();
 </script>
 
