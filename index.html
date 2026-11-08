@@ -1698,12 +1698,12 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
   <h2 id="saleModalTitle">New Daily Sale</h2>
   <label>Sale Type</label>
   <select id="sType" onchange="updateSaleFields()">
-    <option value="cash_balance">Cash + Balance</option>
-    <option value="cash_full">Full Cash</option>
-    <option value="online_balance">Online + Balance</option>
-    <option value="online_full">Full Online</option>
-    <option value="credit">Credit</option>
-    <option value="credit_balance_received">Credit + Balance Received</option>
+    <option value="cash_balance">Cash Received with Balance</option>
+    <option value="cash_full">Full Cash Received</option>
+    <option value="online_balance">Online Cash Received + Balance</option>
+    <option value="online_full">Full Online Cash Received</option>
+    <option value="credit">Full Credit</option>
+    <option value="credit_balance_received">Credit + Balance Amount Received</option>
     <option value="balance_payment" hidden="">Old Balance Received</option>
   </select>
   <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
