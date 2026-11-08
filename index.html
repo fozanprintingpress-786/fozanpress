@@ -849,6 +849,9 @@ body.expenses-center-open::before{
 #fozanNoticeOverlay button{min-width:86px;background:linear-gradient(115deg,#e96e12,#ff982f);color:#fff;font-weight:800}
 @keyframes fozanNoticeIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 
+
+.zoho-item-qty{max-width:310px;margin-top:10px}
+#manageItemUnitCustom{margin-top:7px}
 </style>
 <style>
 
@@ -1467,8 +1470,9 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
           </div>
           <div class="zoho-item-grid">
             <div class="zoho-field"><label for="manageItemName">Name <b class="required-star">*</b></label><input id="manageItemName" required=""></div>
-            <div class="zoho-field"><label for="manageItemUnit">Unit ⓘ</label><input id="manageItemUnit" list="managedItemUnits" placeholder="Select or Type to add"><datalist id="managedItemUnits"><option value="piece"></option><option value="pcs"></option><option value="set"></option><option value="box"></option><option value="page"></option><option value="ream"></option><option value="sheet"></option><option value="sq. ft."></option><option value="job"></option><option value="copy"></option><option value="pack"></option></datalist></div>
+            <div class="zoho-field"><label for="manageItemUnit">Unit ⓘ</label><select id="manageItemUnit" onchange="handleManagedItemUnitChange()"><option value="">Select Unit</option><option value="piece">piece</option><option value="pcs">pcs</option><option value="set">set</option><option value="box">box</option><option value="page">page</option><option value="ream">ream</option><option value="sheet">sheet</option><option value="sq. ft.">sq. ft.</option><option value="job">job</option><option value="copy">copy</option><option value="pack">pack</option><option value="Chian Flex">Chian Flex</option><option value="Star Flex">Star Flex</option><option value="Back Light">Back Light</option><option value="Front Light">Front Light</option><option value="Onevision">Onevision</option><option value="Vinyl Sticker">Vinyl Sticker</option><option value="__more__">＋ More (Add Custom Unit)</option></select><input id="manageItemUnitCustom" type="text" placeholder="Enter custom unit" style="display:none" autocomplete="off"></div>
           </div>
+          <div class="zoho-field zoho-item-qty"><label for="manageItemQty">QTY</label><input id="manageItemQty" type="number" min="0" step="1" value="1" placeholder="Enter quantity"></div>
           <div class="zoho-item-divider"></div>
           <div class="zoho-field zoho-item-price"><label for="manageItemRate">Selling Price <b class="required-star">*</b></label><div class="zoho-price-input"><span>PKR</span><input id="manageItemRate" type="number" min="0" step="0.01" placeholder="0.00" required=""></div></div>
           <div class="zoho-field zoho-item-description"><label for="manageItemDescription">Description</label><textarea id="manageItemDescription" rows="3"></textarea></div>
@@ -2524,22 +2528,37 @@ async function deleteManagedCustomer(id){
   if(!(await window.fozanConfirm('Delete this customer record?')))return;
   data.customers=data.customers.filter(c=>String(c.id)!==String(id));persist();renderManagedCustomers();
 }
+function handleManagedItemUnitChange(){
+  const unit=document.getElementById('manageItemUnit');
+  const custom=document.getElementById('manageItemUnitCustom');
+  if(!unit||!custom)return;
+  const more=unit.value==='__more__';
+  custom.style.display=more?'block':'none';
+  if(more){custom.value='';custom.focus();}
+}
 function saveManagedItem(){
   const name=(document.getElementById('manageItemName')?.value||'').trim();
   if(!name){alert('Item Name is required.');document.getElementById('manageItemName')?.focus();return;}
   const rate=Number(document.getElementById('manageItemRate')?.value||0);
   if(!Number.isFinite(rate)||rate<0){alert('Please enter a valid Selling Price.');return;}
-  const unit=(document.getElementById('manageItemUnit')?.value||'').trim();
+  const unitSelect=(document.getElementById('manageItemUnit')?.value||'').trim();
+  const unit=(unitSelect==='__more__'?(document.getElementById('manageItemUnitCustom')?.value||'').trim():unitSelect);
+  if(unitSelect==='__more__'&&!unit){alert('Please enter a custom Unit.');document.getElementById('manageItemUnitCustom')?.focus();return;}
+  const qtyValue=document.getElementById('manageItemQty')?.value;
+  const qty=qtyValue===''?0:Number(qtyValue);
+  if(!Number.isFinite(qty)||qty<0){alert('Please enter a valid QTY.');return;}
   const existingId=window.editingManagedItemId||'';
   if(data.items.some(x=>String(x.id)!==String(existingId)&&x.name.toLowerCase()===name.toLowerCase())){alert('This item is already saved.');return;}
-  const obj={id:existingId||uid(),name,rate,unit,type:document.querySelector('input[name="managedItemType"]:checked')?.value||'Goods',description:(document.getElementById('manageItemDescription')?.value||'').trim(),tax:document.getElementById('manageItemTax')?.value||''};
+  const obj={id:existingId||uid(),name,rate,unit,qty,type:document.querySelector('input[name="managedItemType"]:checked')?.value||'Goods',description:(document.getElementById('manageItemDescription')?.value||'').trim(),tax:document.getElementById('manageItemTax')?.value||''};
   if(existingId){const i=data.items.findIndex(x=>String(x.id)===String(existingId));if(i>=0)data.items[i]={...data.items[i],...obj};}
   else data.items.push(obj);
   persist();resetManagedItemForm();renderManagedItems();alert('Item saved successfully.');
 }
 function resetManagedItemForm(){
   window.editingManagedItemId='';
-  ['manageItemName','manageItemRate','manageItemUnit','manageItemDescription','manageItemTax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['manageItemName','manageItemRate','manageItemUnit','manageItemUnitCustom','manageItemDescription','manageItemTax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const qty=document.getElementById('manageItemQty');if(qty)qty.value='1';
+  const unitCustom=document.getElementById('manageItemUnitCustom');if(unitCustom)unitCustom.style.display='none';
   document.querySelector('input[name="managedItemType"][value="Goods"]')?.click();
   const h=document.getElementById('itemFormHeading');if(h)h.textContent='Add Item';
 }
@@ -2548,7 +2567,12 @@ function editManagedItem(id){
   window.editingManagedItemId=x.id;
   document.getElementById('manageItemName').value=x.name||'';
   document.getElementById('manageItemRate').value=x.rate??0;
-  document.getElementById('manageItemUnit').value=x.unit||'';
+  const unitSelect=document.getElementById('manageItemUnit');
+  const unitCustom=document.getElementById('manageItemUnitCustom');
+  const knownUnits=Array.from(unitSelect.options).map(o=>o.value);
+  if(knownUnits.includes(x.unit||'')){unitSelect.value=x.unit||'';unitCustom.value='';unitCustom.style.display='none';}
+  else{unitSelect.value='__more__';unitCustom.value=x.unit||'';unitCustom.style.display='block';}
+  document.getElementById('manageItemQty').value=x.qty??1;
   document.getElementById('manageItemDescription').value=x.description||'';
   document.getElementById('manageItemTax').value=x.tax||'';
   document.querySelector('input[name="managedItemType"][value="'+(x.type||'Goods')+'"]')?.click();
@@ -2566,7 +2590,7 @@ function renderManagedItems(){
   const q=(document.getElementById('manageItemSearch')?.value||'').toLowerCase();
   const rows=data.items.filter(x=>[x.name,x.unit,x.type,x.description].some(v=>String(v||'').toLowerCase().includes(q)));
   const count=document.getElementById('itemNavCount');if(count)count.textContent=String(data.items.length);
-  el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Type</th><th>Item / Service</th><th>Selling Price</th><th>Unit</th><th>Tax</th><th>Actions</th></tr></thead><tbody>'+
+  el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Type</th><th>Item / Service</th><th>Selling Price</th><th>QTY</th><th>Unit</th><th>Tax</th><th>Actions</th></tr></thead><tbody>'+
     rows.map(x=>'<tr><td>'+esc(x.type||'Goods')+'</td><td>'+esc(x.name)+'</td><td>'+money(x.rate||0)+'</td><td>'+esc(x.unit||'—')+'</td><td>'+esc(x.tax?x.tax+'%':'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(x.id)+'" onclick="editManagedItem(this.dataset.id)">Edit</button> <button class="admin-row-delete" data-id="'+esc(x.id)+'" onclick="deleteManagedItem(this.dataset.id)">Delete</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No items saved yet.</div>';
 }
 async function deleteManagedItem(id){
