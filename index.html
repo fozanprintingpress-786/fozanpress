@@ -1698,12 +1698,12 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
   <h2 id="saleModalTitle">New Daily Sale</h2>
   <label>Sale Type</label>
   <select id="sType" onchange="updateSaleFields()">
-    <option value="cash_balance">Cash Received with Balance</option>
-    <option value="cash_full">Full Cash Received</option>
-    <option value="online_balance">Online Cash Received + Balance</option>
-    <option value="online_full">Full Online Cash Received</option>
-    <option value="credit">Full Credit</option>
-    <option value="credit_balance_received">Credit + Balance Amount Received</option>
+    <option value="cash_balance">Cash + Balance</option>
+    <option value="cash_full">Full Cash</option>
+    <option value="online_balance">Online + Balance</option>
+    <option value="online_full">Full Online</option>
+    <option value="credit">Credit</option>
+    <option value="credit_balance_received">Credit + Balance Received</option>
     <option value="balance_payment" hidden="">Old Balance Received</option>
   </select>
   <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
@@ -1831,6 +1831,11 @@ if(!Array.isArray(data.invoices)) data.invoices=[];
 if(!Array.isArray(data.staff)) data.staff=[];
 // In cloud mode, Supabase is the source of truth; stale local-only rows are not re-added.
 let cloudReady=!CLOUD_ENABLED;
+// Supabase Realtime: keep other signed-in devices in sync without manual refresh.
+let fozanRealtimeChannel=null;
+let fozanRealtimeTimer=null;
+let fozanRealtimeRefreshBusy=false;
+let fozanRealtimeRefreshPending=false;
 let editingSale=null;
 let summaryMode='date';
 const BRANCH_PASSWORDS={'1':'PWD92','2':'bahria786'};
@@ -1882,6 +1887,7 @@ function loginFozan(event){
   return false;
 }
 function logoutFozan(){
+  stopFozanRealtime();
   currentUserRole=null;currentUserKey=null;
   sessionStorage.removeItem('fozan_user_session');
   document.body.classList.remove('fozan-authenticated','admin-role');
@@ -2040,14 +2046,76 @@ async function cloudLoad(){
     document.getElementById('summaryMonth').value=monthKey(todayNow.date);
     summaryMode='date';
     renderDateHistory(); renderDashboard(); renderSales();
-    cloudStatus('Cloud connected • cloud data loaded', true);
+    startFozanRealtime();
+    cloudStatus('Cloud connected • live sync starting', true);
+    return true;
   }catch(e){
     console.error(e);
     // Do not upload a local cache when the cloud request fails.
     cloudReady=false;
     cloudStatus('Cloud connection failed — local copy kept; no local data uploaded');
+    return false;
   }
 }
+function stopFozanRealtime(){
+  if(fozanRealtimeTimer){clearTimeout(fozanRealtimeTimer);fozanRealtimeTimer=null;}
+  if(fozanRealtimeChannel && supabaseClient){
+    try{supabaseClient.removeChannel(fozanRealtimeChannel);}catch(e){console.warn('Realtime channel close:',e);}
+  }
+  fozanRealtimeChannel=null;
+  fozanRealtimeRefreshPending=false;
+}
+function startFozanRealtime(){
+  if(!CLOUD_ENABLED || !supabaseClient || !currentUserRole || fozanRealtimeChannel)return;
+  const branchFilter=currentUserRole==='branch' && currentUserKey && FOZAN_USERS[currentUserKey]
+    ? 'branch_id=eq.'+FOZAN_USERS[currentUserKey].branch : null;
+  let channel=supabaseClient.channel('fozan-live-sync-'+(currentUserKey||'user'));
+  const salesConfig={event:'*',schema:'public',table:'fozan_sales'};
+  const expensesConfig={event:'*',schema:'public',table:'fozan_expenses'};
+  if(branchFilter){salesConfig.filter=branchFilter;expensesConfig.filter=branchFilter;}
+  const onRemoteChange=()=>scheduleFozanRealtimeRefresh();
+  channel=channel
+    .on('postgres_changes',salesConfig,onRemoteChange)
+    .on('postgres_changes',expensesConfig,onRemoteChange)
+    .subscribe((status)=>{
+      if(status==='SUBSCRIBED') cloudStatus('Live sync connected • changes appear automatically',true);
+      else if(status==='CHANNEL_ERROR' || status==='TIMED_OUT') cloudStatus('Live sync reconnecting — use Refresh Cloud if needed');
+    });
+  fozanRealtimeChannel=channel;
+}
+function scheduleFozanRealtimeRefresh(){
+  if(fozanRealtimeTimer)clearTimeout(fozanRealtimeTimer);
+  // Debounce bursts (for example, several rows saved together) into one refresh.
+  fozanRealtimeTimer=setTimeout(()=>{fozanRealtimeTimer=null;refreshFozanFromRealtime();},450);
+}
+async function refreshFozanFromRealtime(){
+  if(fozanRealtimeRefreshBusy){fozanRealtimeRefreshPending=true;return;}
+  if(!currentUserRole)return;
+  fozanRealtimeRefreshBusy=true;
+  const dateEl=document.getElementById('summaryDate');
+  const monthEl=document.getElementById('summaryMonth');
+  const keepDate=dateEl?dateEl.value:'';
+  const keepMonth=monthEl?monthEl.value:'';
+  const keepMode=summaryMode;
+  try{
+    const loaded=await cloudLoad();
+    if(loaded){
+      // Keep the user's selected date/month instead of jumping back to today.
+      if(dateEl && keepDate)dateEl.value=keepDate;
+      if(monthEl && keepMonth)monthEl.value=keepMonth;
+      summaryMode=keepMode;
+      renderDateHistory();renderDashboard();renderSales();
+      if(fozanRealtimeChannel)cloudStatus('Live sync connected • latest changes received',true);
+    }
+  }finally{
+    fozanRealtimeRefreshBusy=false;
+    if(fozanRealtimeRefreshPending){
+      fozanRealtimeRefreshPending=false;
+      scheduleFozanRealtimeRefresh();
+    }
+  }
+}
+
 function persist(){
   localStorage.setItem(KEY,JSON.stringify(data));
   const s=document.getElementById('saveStatus');
@@ -2686,7 +2754,14 @@ function printStaffPayroll(savePdf){
 }
 function ensureManagementBackButtons(){
   document.querySelectorAll('.side-view').forEach(section=>{
-    if(section.querySelector('.management-back-btn'))return;
+    // Keep exactly one dashboard-return control in each management tab.
+    // Remove older tab-specific Back buttons that otherwise appeared beside it.
+    section.querySelectorAll('.invoice-register-back, .payroll-back-btn').forEach(oldBack=>oldBack.remove());
+    const existing=section.querySelectorAll('.management-back-btn');
+    if(existing.length){
+      existing.forEach((btn,index)=>{if(index>0)btn.remove();});
+      return;
+    }
     const back=document.createElement('button');
     back.type='button';back.className='management-back-btn';
     back.textContent='← Back to Dashboard';
@@ -4109,11 +4184,7 @@ document.addEventListener('keydown',function(event){if(event.key==='Escape'){con
 
 function exportData(){
   if(!currentUserRole){alert('Please login first.');return;}
-  // A complete two-branch backup is an admin-only operation.
-  if(currentUserRole!=='admin'){
-    alert('دونوں برانچز کا مکمل Backup صرف Admin اکاؤنٹ سے بن سکتا ہے۔ براہِ کرم Admin سے Backup بنوائیں۔');
-    return;
-  }
+  // Any logged-in user can create a complete backup covering both branches.
   if(CLOUD_ENABLED && !cloudReady){
     alert('Cloud data ابھی مکمل load نہیں ہوا۔ پہلے Refresh Cloud کریں، پھر دونوں برانچز کا Backup بنائیں۔');
     return;
@@ -4140,10 +4211,7 @@ function exportData(){
 }
 function importData(){
   if(!currentUserRole){alert('Please login first.');return;}
-  if(currentUserRole!=='admin'){
-    alert('دونوں برانچز کا Backup Restore صرف Admin اکاؤنٹ سے ہو سکتا ہے۔');
-    return;
-  }
+  // Any logged-in user can restore a validated full backup covering both branches.
   const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
   input.onchange=()=>{
     const f=input.files[0];if(!f)return;
