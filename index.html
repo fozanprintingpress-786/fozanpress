@@ -3,7 +3,7 @@
 <html lang="en" dir="ltr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FOZAN Printing — Customer Khata</title>
+<title>Fozan Press</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f3f6f9;color:#17212b}
@@ -717,6 +717,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid #f5822038;border-color
 .daily-privacy-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:10px 0 12px;padding:12px 15px;background:linear-gradient(110deg,#202b3d,#35445b);color:#fff;border:1px solid #f58220;border-radius:10px;font-weight:800;letter-spacing:.2px}
 .daily-privacy-toggle:hover{background:linear-gradient(110deg,#f58220,#e96e12);color:#fff}
 .daily-private-hidden{display:none!important}
+.customer-privacy-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:10px 14px;background:linear-gradient(110deg,#202b3d,#35445b);color:#fff;border:1px solid #f58220;border-radius:9px;font-weight:800;cursor:pointer}
+.customer-privacy-toggle:hover{background:linear-gradient(110deg,#f58220,#e96e12);color:#fff}
+#savedCustomersPrivate{margin-top:12px}
+
 
 /* Three independent sign-in cards, matching the supplied reference */
 #fozanLogin{position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;padding:34px 5.6%;background:radial-gradient(circle at 12% 18%,#273449 0,#172131 38%,#101827 78%);font-family:Inter,Arial,sans-serif;overflow-y:auto}
@@ -897,8 +901,45 @@ body.expenses-center-open::before{
 #billContent .fozan-invoice-totals .fozan-total-strong{font-weight:800;border-top:1px solid #8b8b8b;margin-top:4px;padding-top:8px}
 #billContent .fozan-invoice-totals .fozan-balance-line{font-size:14px;font-weight:800;border-top:1px solid #3b3b39;border-bottom:0;margin-top:4px;padding-top:8px}
 #billContent .fozan-invoice-footer{margin-top:28px;padding-top:10px;border-top:1px solid #dedede;text-align:center;color:#687785;font-size:10px}
+#billContent .fozan-invoice-notes{font-size:10px;line-height:1.5;color:#52616d;white-space:normal}
+#billContent .fozan-note-section,#billContent .fozan-terms-section{margin:0 0 22px}
+#billContent .fozan-note-section>b,#billContent .fozan-terms-section>b{display:block;font-size:14px;font-weight:700;color:#52616d;margin-bottom:7px}
+#billContent .fozan-note-rule{letter-spacing:-.35px;white-space:nowrap;overflow:hidden;margin:4px 0}
+#billContent .fozan-extra-notes{margin-top:12px;padding-top:8px;border-top:1px dashed #ccd5dd}
+#billContent .fozan-invoice-footer{line-height:1.6}
+#billContent .fozan-footer-address{font-weight:700;color:#52616d;margin-bottom:2px}
+
 @media(max-width:650px){#billContent .fozan-invoice-top{gap:10px}#billContent .fozan-company-block{max-width:60%;gap:8px}#billContent .fozan-invoice-logo{width:42px;height:42px;flex-basis:42px}#billContent .fozan-company-name{font-size:12px}#billContent .fozan-invoice-title{min-width:120px}#billContent .fozan-invoice-title>div{font-size:27px}#billContent .fozan-invoice-info{grid-template-columns:1fr;gap:16px}#billContent .fozan-invoice-bottom{grid-template-columns:1fr}}
 @media print{#billContent .fozan-invoice-layout{font-size:10px}#billContent .fozan-invoice-top{padding-bottom:22px}#billContent .fozan-invoice-table td{padding:8px 7px}#billContent .fozan-invoice-bottom{margin-top:14px}}
+
+
+/* Daily Sale modal: match the supplied reference layout without changing sale logic */
+#saleModal{z-index:10000;align-items:center;justify-content:center;padding:15px;background:rgba(20,27,38,.48)}
+#saleModal .sale-modal-box{width:min(566px,100%);max-height:92vh;overflow:hidden;padding:0;border:1px solid #cbd4df;border-radius:15px;background:#fff;box-shadow:0 18px 55px #0003;transition:width .2s,height .2s}
+#saleModal .sale-modal-titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:linear-gradient(110deg,#202b3d,#34445d);border-bottom:4px solid #f58220;color:#fff}
+#saleModal .sale-modal-titlebar h2{margin:0;color:#fff;font-size:16px;font-weight:800}
+#saleModal .sale-window-controls{display:flex;gap:6px;flex:0 0 auto}
+#saleModal .sale-window-btn{width:30px;height:28px;padding:0;border:1px solid #64748b;border-radius:7px;background:#46546a;color:#fff;font-size:19px;line-height:1;font-weight:700}
+#saleModal .sale-window-btn:hover{filter:brightness(1.18);transform:none}
+#saleModal .sale-window-close{background:#dc3545;border-color:#f16b78;font-size:22px}
+#saleModal .sale-modal-content{padding:17px 16px 16px;max-height:calc(92vh - 52px);overflow-y:auto}
+#saleModal .sale-field{min-width:0;margin:0 0 10px}
+#saleModal .sale-field label{display:block;margin:0 0 4px;color:#354052;font-size:13px;font-weight:750}
+#saleModal .sale-field label small{color:#8490a0;font-size:10px;font-weight:500}
+#saleModal .sale-field input,#saleModal .sale-field select{display:block;width:100%;height:39px;margin:0;padding:8px 11px;border:1px solid #d5dce5;border-radius:9px;background:#fff;color:#202b3d;font-size:14px}
+#saleModal .sale-field input:focus,#saleModal .sale-field select:focus{outline:2px solid #f5822030;border-color:#f58220}
+#saleModal .sale-customer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#saleModal .sale-quantity-grid{display:grid;grid-template-columns:minmax(0,202px);margin-bottom:0}
+#saleModal .sale-type-help{margin:0 0 12px;padding:0;color:#778294;font-size:11px;line-height:1.4}
+#saleModal .sale-modal-actions{display:flex;gap:8px;align-items:center}
+#saleModal .sale-modal-actions button{min-width:88px;font-weight:750}
+#saleModal.sale-minimized{align-items:flex-end}
+#saleModal.sale-minimized .sale-modal-box{width:min(566px,100%);max-height:54px}
+#saleModal.sale-minimized .sale-modal-content{display:none}
+#saleModal.sale-maximized{padding:8px}
+#saleModal.sale-maximized .sale-modal-box{width:100%;height:100%;max-height:100%;border-radius:12px}
+#saleModal.sale-maximized .sale-modal-content{max-height:calc(100vh - 65px)}
+@media(max-width:560px){#saleModal .sale-customer-grid{grid-template-columns:1fr;gap:0}#saleModal .sale-modal-content{padding:14px}#saleModal .sale-quantity-grid{grid-template-columns:1fr}}
 
 </style>
 <style>
@@ -1176,6 +1217,286 @@ body.invoice-workspace-active #billGeneratorPanel .custom-generate-btn{width:aut
 
 <link rel="icon" type="image/png" sizes="64x64" href="data:image/png;base64,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">
 <link rel="shortcut icon" type="image/png" href="data:image/png;base64,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">
+
+<style>
+/* Expense / Payment window controls — matched to the Daily Sale modal */
+#expenseModal{z-index:10000;align-items:center;justify-content:center;padding:15px;background:rgba(20,27,38,.48)}
+#expenseModal .expense-modal-box{width:min(500px,100%);max-height:92vh;overflow:hidden;padding:0;border:1px solid #cbd4df;border-radius:15px;background:#fff;box-shadow:0 18px 55px #0003;transition:width .2s,height .2s}
+#expenseModal .expense-modal-titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:linear-gradient(110deg,#202b3d,#34445d);border-bottom:4px solid #f58220;color:#fff}
+#expenseModal .expense-modal-titlebar h2{margin:0;color:#fff;font-size:16px;font-weight:800}
+#expenseModal .expense-window-controls{display:flex;gap:6px;flex:0 0 auto}
+#expenseModal .expense-window-btn{width:30px;height:28px;padding:0;border:1px solid #64748b;border-radius:7px;background:#46546a;color:#fff;font-size:19px;line-height:1;font-weight:700}
+#expenseModal .expense-window-btn:hover{filter:brightness(1.18);transform:none}
+#expenseModal .expense-window-close{background:#dc3545;border-color:#f16b78;font-size:22px}
+#expenseModal .expense-modal-content{padding:17px 16px 16px;max-height:calc(92vh - 52px);overflow-y:auto}
+#expenseModal.sale-minimized{align-items:flex-end}
+#expenseModal.sale-minimized .expense-modal-box{width:min(500px,100%);max-height:54px}
+#expenseModal.sale-minimized .expense-modal-content{display:none}
+#expenseModal.sale-maximized{padding:8px}
+#expenseModal.sale-maximized .expense-modal-box{width:100%;height:100%;max-height:100%;border-radius:12px}
+#expenseModal.sale-maximized .expense-modal-content{max-height:calc(100vh - 65px)}
+@media(max-width:560px){#expenseModal .expense-modal-content{padding:14px}}
+</style>
+<style>
+
+/* Monthly Credit & Balance window controls (minimize / maximize / close) */
+#side-credit .credit-window-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:nowrap!important}
+#side-credit .credit-window-controls{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+#side-credit .credit-window-btn{width:36px;height:34px;min-width:36px;padding:0;border-radius:8px;background:#40516a;color:#fff;border:1px solid #64748b;font-size:20px;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:none}
+#side-credit .credit-window-btn:hover{filter:brightness(1.18);transform:translateY(-1px)}
+#side-credit .credit-window-btn.close{background:#e6384d;border-color:#ff6575;font-size:23px}
+#side-credit.credit-window-minimized>aside.monthly-dues-panel{height:auto!important;max-height:none!important;overflow:hidden!important}
+#side-credit.credit-window-minimized .monthly-dues-content{display:none!important}
+#side-credit.credit-window-maximized{padding:0!important;inset:0!important;overflow:auto!important}
+#side-credit.credit-window-maximized>aside.monthly-dues-panel{width:100vw!important;max-width:100vw!important;height:100vh!important;max-height:100vh!important;min-height:100vh!important;margin:0!important;border-radius:0!important;overflow:auto!important;align-self:stretch!important}
+#side-credit.credit-window-maximized .monthly-dues-content{max-height:calc(100vh - 85px)!important;overflow-y:auto!important}
+@media(max-width:560px){
+ #side-credit .credit-window-controls{gap:5px}
+ #side-credit .credit-window-btn{width:32px;height:32px;min-width:32px}
+ #side-credit .monthly-dues-head h2{font-size:13px!important}
+}
+</style>\n
+<style>
+/* Invoice register window controls — matching Monthly Credit & Balance */
+#side-invoices .invoice-window-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:nowrap!important}
+#side-invoices .invoice-window-controls{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+#side-invoices .invoice-window-btn{width:36px;height:34px;min-width:36px;padding:0;border-radius:8px;background:#40516a;color:#fff;border:1px solid #64748b;font-size:20px;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:none}
+#side-invoices .invoice-window-btn:hover{filter:brightness(1.18);transform:translateY(-1px)}
+#side-invoices .invoice-window-btn.close{background:#e6384d;border-color:#ff6575;font-size:23px}
+#side-invoices.invoice-window-minimized .monthly-dues-content,
+#side-invoices.invoice-window-minimized #billGeneratorPanel{display:none!important}
+#side-invoices.invoice-window-minimized .invoice-register-panel{min-height:0!important;height:auto!important;max-height:none!important;padding:14px!important}
+#side-invoices.invoice-window-maximized{position:fixed!important;inset:0!important;z-index:10060!important;display:block!important;width:100vw!important;height:100vh!important;overflow:auto!important;background:#eef1f5!important;padding:12px!important;margin:0!important}
+#side-invoices.invoice-window-maximized>.invoice-register-panel{width:100%!important;min-height:calc(100vh - 24px)!important;height:auto!important;max-height:none!important;margin:0!important;border-radius:14px!important;overflow:visible!important}
+#side-invoices.invoice-window-maximized #billGeneratorPanel{display:none!important}
+@media(max-width:560px){#side-invoices .invoice-window-controls{gap:5px}#side-invoices .invoice-window-btn{width:32px;height:32px;min-width:32px}}
+</style>
+<style>
+/* Saved Quotes window controls — same appearance and behavior as Saved Invoices */
+#side-quotes .quote-window-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;flex-wrap:nowrap!important}
+#side-quotes .quote-window-controls{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+#side-quotes .quote-window-btn{width:36px;height:34px;min-width:36px;padding:0;border-radius:8px;background:#40516a;color:#fff;border:1px solid #64748b;font-size:20px;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:none}
+#side-quotes .quote-window-btn:hover{filter:brightness(1.18);transform:translateY(-1px)}
+#side-quotes .quote-window-btn.close{background:#e6384d;border-color:#ff6575;font-size:23px}
+#side-quotes.quote-window-minimized .monthly-dues-content{display:none!important}
+#side-quotes.quote-window-minimized .invoice-register-panel{min-height:0!important;height:auto!important;max-height:none!important;padding:14px!important}
+#side-quotes.quote-window-maximized{position:fixed!important;inset:0!important;z-index:10060!important;display:block!important;width:100vw!important;height:100vh!important;overflow:auto!important;background:#eef1f5!important;padding:12px!important;margin:0!important}
+#side-quotes.quote-window-maximized>.invoice-register-panel{width:100%!important;min-height:calc(100vh - 24px)!important;height:auto!important;max-height:none!important;margin:0!important;border-radius:14px!important;overflow:visible!important}
+@media(max-width:560px){#side-quotes .quote-window-controls{gap:5px}#side-quotes .quote-window-btn{width:32px;height:32px;min-width:32px}}
+</style>
+
+<style>
+/* Add Customer window controls: match the New Daily Sale title bar */
+.zoho-customer-topbar{
+  height:66px!important;flex:0 0 66px!important;
+  padding:0 22px!important;
+  color:#fff!important;
+  background:linear-gradient(110deg,#202b3d,#34445d)!important;
+  border-bottom:4px solid #f58220!important;
+}
+.zoho-customer-topbar h2{color:#fff!important;font-size:20px!important;font-weight:800!important}
+.zoho-customer-topbar-actions{display:flex;align-items:center;gap:7px;min-width:0}
+.zoho-customer-topbar-actions>.zoho-save-btn,.zoho-customer-topbar-actions>.zoho-cancel-btn{margin-left:0!important}
+.zoho-customer-window-controls{display:flex;align-items:center;gap:6px;margin-left:5px}
+.zoho-customer-window-btn{
+  width:38px;height:36px;min-width:38px;padding:0!important;
+  border:1px solid #64748b!important;border-radius:8px!important;
+  background:#46546a!important;color:#fff!important;
+  font-size:23px!important;line-height:1!important;font-weight:800!important;
+  display:grid;place-items:center;box-shadow:none!important
+}
+.zoho-customer-window-btn:hover{filter:brightness(1.18);transform:none!important}
+.zoho-customer-window-btn.close{background:#dc3545!important;border-color:#f16b78!important;font-size:25px!important}
+.customer-fullscreen-view.customer-windowed.active{
+  position:fixed!important;inset:0!important;z-index:10050!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:12px!important;background:rgba(15,23,42,.58)!important;overflow:auto!important
+}
+.customer-fullscreen-view.customer-windowed.active>.zoho-customer-page{
+  width:min(1120px,calc(100vw - 44px))!important;height:88vh!important;
+  max-height:88vh!important;margin:auto!important;border-radius:14px!important;
+  overflow:hidden!important;box-shadow:0 20px 65px #0004!important
+}
+.customer-fullscreen-view.customer-window-maximized.active{
+  position:fixed!important;inset:0!important;z-index:10060!important;
+  display:block!important;padding:0!important;background:#fff!important;overflow:hidden!important
+}
+.customer-fullscreen-view.customer-window-maximized.active>.zoho-customer-page{
+  width:100vw!important;height:100vh!important;max-height:none!important;
+  margin:0!important;border-radius:0!important;box-shadow:none!important
+}
+.customer-fullscreen-view.customer-window-minimized.active{
+  position:fixed!important;inset:0!important;z-index:10060!important;
+  display:block!important;padding:0!important;background:transparent!important;
+  overflow:visible!important;pointer-events:none!important
+}
+.customer-fullscreen-view.customer-window-minimized.active>.zoho-customer-page{
+  position:fixed!important;right:16px!important;bottom:16px!important;
+  width:min(520px,calc(100vw - 32px))!important;height:66px!important;
+  max-height:66px!important;margin:0!important;border-radius:12px!important;
+  overflow:hidden!important;box-shadow:0 10px 35px #0005!important;pointer-events:auto!important
+}
+.customer-fullscreen-view.customer-window-minimized .zoho-customer-scroll{display:none!important}
+@media(max-width:650px){
+  .zoho-customer-topbar{padding:0 10px!important;gap:7px}
+  .zoho-customer-topbar h2{font-size:15px!important}
+  .zoho-customer-topbar-actions{gap:4px}
+  .zoho-customer-topbar-actions>.zoho-save-btn,.zoho-customer-topbar-actions>.zoho-cancel-btn{padding:7px 8px!important;font-size:11px!important}
+  .zoho-customer-window-controls{gap:4px;margin-left:1px}
+  .zoho-customer-window-btn{width:30px;height:30px;min-width:30px;font-size:18px!important}
+}
+</style>
+
+<style>
+/* Add Item window controls: match the New Daily Sale title bar */
+.zoho-item-topbar{
+  height:66px!important;flex:0 0 66px!important;padding:0 22px!important;
+  color:#fff!important;background:linear-gradient(110deg,#202b3d,#34445d)!important;
+  border-bottom:4px solid #f58220!important
+}
+.zoho-item-topbar h2{color:#fff!important;font-size:20px!important;font-weight:800!important}
+.zoho-item-window-controls{display:flex;align-items:center;gap:6px;margin-left:5px}
+.zoho-item-window-btn{
+  width:38px;height:36px;min-width:38px;padding:0!important;
+  border:1px solid #64748b!important;border-radius:8px!important;
+  background:#46546a!important;color:#fff!important;font-size:23px!important;
+  line-height:1!important;font-weight:800!important;display:grid;place-items:center;
+  box-shadow:none!important
+}
+.zoho-item-window-btn:hover{filter:brightness(1.18);transform:none!important}
+.zoho-item-window-btn.close{background:#dc3545!important;border-color:#f16b78!important;font-size:25px!important}
+.zoho-item-save-row{display:flex;justify-content:flex-end;max-width:740px;margin:0 0 8px}
+.item-fullscreen-view.item-windowed.active{
+  position:fixed!important;inset:0!important;z-index:10050!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:12px!important;background:rgba(15,23,42,.58)!important;overflow:auto!important
+}
+.item-fullscreen-view.item-windowed.active>.zoho-item-page{
+  width:min(1120px,calc(100vw - 44px))!important;height:88vh!important;
+  max-height:88vh!important;margin:auto!important;border-radius:14px!important;
+  overflow:hidden!important;box-shadow:0 20px 65px #0004!important
+}
+.item-fullscreen-view.item-window-maximized.active{
+  position:fixed!important;inset:0!important;z-index:10060!important;
+  display:block!important;padding:0!important;background:#fff!important;overflow:hidden!important
+}
+.item-fullscreen-view.item-window-maximized.active>.zoho-item-page{
+  width:100vw!important;height:100vh!important;max-height:none!important;
+  margin:0!important;border-radius:0!important;box-shadow:none!important
+}
+.item-fullscreen-view.item-window-minimized.active{
+  position:fixed!important;inset:0!important;z-index:10060!important;
+  display:block!important;padding:0!important;background:transparent!important;
+  overflow:visible!important;pointer-events:none!important
+}
+.item-fullscreen-view.item-window-minimized.active>.zoho-item-page{
+  position:fixed!important;right:16px!important;bottom:16px!important;
+  width:min(520px,calc(100vw - 32px))!important;height:66px!important;
+  max-height:66px!important;margin:0!important;border-radius:12px!important;
+  overflow:hidden!important;box-shadow:0 10px 35px #0005!important;pointer-events:auto!important
+}
+.item-fullscreen-view.item-window-minimized .zoho-item-scroll{display:none!important}
+@media(max-width:650px){
+ .zoho-item-topbar{padding:0 10px!important;gap:7px}
+ .zoho-item-topbar h2{font-size:15px!important}
+ .zoho-item-window-controls{gap:4px;margin-left:1px}
+ .zoho-item-window-btn{width:30px;height:30px;min-width:30px;font-size:18px!important}
+}
+</style>
+
+<style>
+/* Overall Credit & Balance: New Daily Sale-style window title bar and controls */
+#side-overdue .outstanding-panel{padding:0!important;overflow:hidden!important;border-radius:15px!important}
+#side-overdue .outstanding-window-head{
+  min-height:66px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:0 22px;color:#fff;background:linear-gradient(110deg,#202b3d,#34445d);
+  border-bottom:4px solid #f58220
+}
+#side-overdue .outstanding-title-copy{display:flex;align-items:center;gap:12px;min-width:0}
+#side-overdue .outstanding-title-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:9px;background:#ffffff18;color:#ffad63;font-size:21px;flex:0 0 auto}
+#side-overdue .outstanding-window-head h2{margin:0;color:#fff;font-size:20px;font-weight:800}
+#side-overdue .outstanding-window-head p{margin:3px 0 0;color:#c4cfdd;font-size:11px}
+#side-overdue .outstanding-window-controls{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+#side-overdue .outstanding-window-btn{
+  width:40px;height:38px;min-width:40px;padding:0;border:1px solid #64748b;border-radius:9px;
+  background:#46546a;color:#fff;font-size:24px;line-height:1;font-weight:800;display:grid;place-items:center;box-shadow:none
+}
+#side-overdue .outstanding-window-btn:hover{filter:brightness(1.18);transform:none}
+#side-overdue .outstanding-window-btn.close{background:#dc3545;border-color:#f16b78;font-size:26px}
+#side-overdue .outstanding-panel>.outstanding-summary,
+#side-overdue .outstanding-panel>.outstanding-toolbar,
+#side-overdue .outstanding-panel>#overallOutstandingList{margin-left:17px;margin-right:17px}
+#side-overdue .outstanding-panel>.outstanding-summary{margin-top:16px}
+#side-overdue .outstanding-panel>#overallOutstandingList{margin-bottom:17px}
+#side-overdue.outstanding-window-minimized{position:fixed!important;inset:auto 18px 18px auto!important;z-index:10060!important;width:min(560px,calc(100vw - 36px))!important;height:66px!important;overflow:hidden!important;padding:0!important;background:transparent!important}
+#side-overdue.outstanding-window-minimized .outstanding-panel{height:66px!important;min-height:66px!important;overflow:hidden!important}
+#side-overdue.outstanding-window-minimized .outstanding-panel>:not(.outstanding-window-head){display:none!important}
+#side-overdue.outstanding-window-maximized{position:fixed!important;inset:0!important;z-index:10060!important;width:100vw!important;height:100vh!important;overflow:auto!important;padding:12px!important;margin:0!important;background:#eef1f5!important}
+#side-overdue.outstanding-window-maximized .outstanding-panel{width:100%!important;min-height:calc(100vh - 24px)!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;border-radius:14px!important}
+@media(max-width:560px){
+  #side-overdue .outstanding-window-head{padding:0 10px;gap:7px}
+  #side-overdue .outstanding-window-head h2{font-size:15px}
+  #side-overdue .outstanding-window-head p{font-size:10px}
+  #side-overdue .outstanding-window-controls{gap:4px}
+  #side-overdue .outstanding-window-btn{width:32px;height:32px;min-width:32px;font-size:19px}
+  #side-overdue .outstanding-window-btn.close{font-size:22px}
+}
+</style>
+
+<style>
+/* Expenses & Staff Salary: New Daily Sale-style window title bar and controls */
+#side-expenses .payroll-panel{padding:0!important;overflow:hidden!important;border-radius:15px!important}
+#side-expenses .expenses-window-head{
+  min-height:66px;display:flex!important;align-items:center;justify-content:space-between;gap:12px;
+  padding:0 22px!important;margin:0 0 14px!important;color:#fff;
+  background:linear-gradient(110deg,#202b3d,#34445d);border-bottom:4px solid #f58220;border-radius:0!important
+}
+#side-expenses .expenses-title-copy{display:flex;align-items:center;gap:12px;min-width:0}
+#side-expenses .expenses-window-head .report-icon{flex:0 0 38px;width:38px;height:38px;margin:0}
+#side-expenses .expenses-window-head h2{margin:0;color:#fff!important;font-size:20px;font-weight:800}
+#side-expenses .expenses-window-head p{margin:3px 0 0;color:#c4cfdd;font-size:11px}
+#side-expenses .expenses-window-controls{display:flex;align-items:center;gap:7px;flex:0 0 auto}
+#side-expenses .expenses-window-btn{
+  width:40px;height:38px;min-width:40px;padding:0!important;border:1px solid #64748b!important;
+  border-radius:9px!important;background:#46546a!important;color:#fff!important;
+  font-size:24px!important;line-height:1;font-weight:800;display:grid;place-items:center;box-shadow:none!important
+}
+#side-expenses .expenses-window-btn:hover{filter:brightness(1.18);transform:none!important}
+#side-expenses .expenses-window-btn.close{background:#dc3545!important;border-color:#f16b78!important;font-size:26px!important}
+#side-expenses .expense-workspace-tabs,#side-expenses #staffSalarySection,#side-expenses #generalExpenseSection{margin-left:11px;margin-right:11px}
+#side-expenses .expense-workspace-tabs{margin-top:0}
+#side-expenses.expenses-window-minimized{
+  position:fixed!important;inset:auto 18px 18px auto!important;z-index:10060!important;
+  display:block!important;width:min(560px,calc(100vw - 36px))!important;height:66px!important;
+  max-height:66px!important;overflow:hidden!important;padding:0!important;transform:none!important;background:transparent!important
+}
+#side-expenses.expenses-window-minimized .payroll-panel{height:66px!important;min-height:66px!important;overflow:hidden!important}
+#side-expenses.expenses-window-minimized .payroll-panel>:not(.expenses-window-head){display:none!important}
+#side-expenses.expenses-window-maximized{
+  position:fixed!important;inset:0!important;z-index:10060!important;display:block!important;
+  width:100vw!important;height:100vh!important;max-height:none!important;overflow:auto!important;
+  padding:12px!important;margin:0!important;transform:none!important;background:#eef1f5!important
+}
+#side-expenses.expenses-window-maximized .payroll-panel{
+  width:100%!important;max-width:none!important;min-height:calc(100vh - 24px)!important;
+  height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;border-radius:14px!important
+}
+@media(max-width:560px){
+  #side-expenses .expenses-window-head{padding:0 10px!important;gap:7px}
+  #side-expenses .expenses-window-head h2{font-size:15px}
+  #side-expenses .expenses-window-head p{font-size:10px}
+  #side-expenses .expenses-window-controls{gap:4px}
+  #side-expenses .expenses-window-btn{width:32px;height:32px;min-width:32px;font-size:19px!important}
+  #side-expenses .expenses-window-btn.close{font-size:22px!important}
+}
+</style>
+
+<style>
+/* Saved invoice register: show each saved item together with its description. */
+.invoice-register-table .invoice-register-item-details{min-width:230px;max-width:390px;white-space:normal;vertical-align:top;line-height:1.4;overflow-wrap:anywhere}
+.invoice-register-table .invoice-register-item-details b{display:block;color:#202b3d}
+.invoice-register-table .invoice-register-item-details .bill-item-description{display:block;white-space:normal;margin-top:3px;color:#687785;font-size:11px;line-height:1.4}
+</style>
 </head><body>\n<style>
 
 .customer-fullscreen-view.active{position:fixed!important;inset:0!important;z-index:10050!important;display:block!important;background:#fff!important;overflow:hidden!important;margin:0!important;padding:0!important}
@@ -1422,7 +1743,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
 
 <section class="card daily-private-hidden" id="dailyPrivateLedger">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-    <div><h2 style="margin-bottom:0">Daily Sales</h2><small style="color:#7b8796">Shortcuts: Alt+N Sale · Alt+E Expense · Alt+F Search · Enter Save · Esc Close</small></div>
+    <div><h2 style="margin-bottom:0">Daily Sales</h2></div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
       <label style="font-size:12px;font-weight:700;color:#52616d">From <input id="dailySaleFromDate" type="date" style="width:auto;max-width:145px;margin:0;padding:8px"></label>
       <label style="font-size:12px;font-weight:700;color:#52616d">To <input id="dailySaleToDate" type="date" style="width:auto;max-width:145px;margin:0;padding:8px"></label>
@@ -1442,7 +1763,8 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
   <div class="sidebar-menu-head"><span class="sidebar-menu-mark">▦</span><div><strong>MANAGEMENT MENU</strong><small>Navigate your workspace</small></div></div>
   <nav class="side-menu" aria-label="Management sections">
     <button class="side-link" data-panel="credit" onclick="showSidePanel('credit')"><span>◉</span><b>Credit Balance</b><em id="creditNavCount">›</em></button>
-    <button class="side-link" data-panel="invoices" onclick="showSidePanel('invoices')"><span>▧</span><b>Invoice</b><em id="invoiceNavCount">0</em></button>
+    <button class="side-link" type="button" onclick="openInvoiceWorkspace('invoice')"><span>＋</span><b>Invoice</b><em>Generate</em></button>
+    <button class="side-link" data-panel="invoices" onclick="showSidePanel('invoices')"><span>▧</span><b>Invoice Management</b><em id="invoiceNavCount">0</em></button>
     <button class="side-link" data-panel="quotes" onclick="showSidePanel('quotes')"><span>▤</span><b>Quotes</b><em id="quoteNavCount">0</em></button>
     <button class="side-link" data-panel="customers" onclick="showSidePanel('customers')"><span>♙</span><b>Customers</b><em id="customerNavCount">0</em></button>
     <button class="side-link" data-panel="items" onclick="showSidePanel('items')"><span>▤</span><b>Items</b><em id="itemNavCount">0</em></button>
@@ -1454,35 +1776,44 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
 <div class="right-sidebar-stack">
   <section class="side-view" id="side-credit">
     <aside class="monthly-dues-panel" id="monthlyDuesPanel" aria-label="Monthly credit and balance status">
-      <div class="monthly-dues-head"><div class="dues-heading-copy"><span class="dues-heading-icon">◉</span><h2>Monthly Credit &amp; Balance</h2></div><button class="dues-toggle" id="duesToggle" type="button" aria-label="Close monthly credit and balance" title="Close section" onclick="showSidePanel('credit')">×</button></div>
+      <div class="monthly-dues-head credit-window-head">
+        <div class="dues-heading-copy"><span class="dues-heading-icon">◉</span><h2>Monthly Credit &amp; Balance</h2></div>
+        <div class="credit-window-controls" role="group" aria-label="Window controls">
+          <button type="button" class="credit-window-btn minimize" onclick="minimizeCreditWindow()" aria-label="Minimize" title="Minimize">−</button>
+          <button type="button" class="credit-window-btn maximize" id="creditWindowMaximize" onclick="toggleCreditWindowMaximize()" aria-label="Maximize" title="Maximize">□</button>
+          <button type="button" class="credit-window-btn close" onclick="closeCreditWindow()" aria-label="Close" title="Close">×</button>
+        </div>
+      </div>
       <div class="monthly-dues-content"><div class="dues-subtitle" id="duesMonthLabel">November 2026 • Head Office</div>
       <div id="monthlyDues"><div class="dues-filter-tabs" role="group" aria-label="Filter credit and balance"><button type="button" class="active" onclick="setMonthlyDuesFilter('all')">All <b>0</b></button><button type="button" class="" onclick="setMonthlyDuesFilter('credit')">Credit <b>0</b></button><button type="button" class="" onclick="setMonthlyDuesFilter('balance')">Balance <b>0</b></button></div><div class="due-summary dues-three-summary"><div><small>Credit Due</small><strong style="color:#c62828">Rs. 0</strong></div><div><small>Balance Due</small><strong style="color:#b56b0a">Rs. 0</strong></div><div><small>Total Due</small><strong style="color:#1769aa">Rs. 0</strong></div></div><div class="empty">No credit or balance entries for this month.</div></div></div>
     </aside>
   </section>
   <section class="side-view" id="side-invoices">
     <aside class="monthly-dues-panel invoice-register-panel">
-      <div class="monthly-dues-head invoice-register-heading"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><h2>Saved Invoices</h2></div><button type="button" class="invoice-register-back" onclick="backFromInvoiceRegister()" aria-label="Back to dashboard">← Back</button></div>
+      <div class="monthly-dues-head invoice-register-heading invoice-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><h2>Invoice Management</h2></div><div class="invoice-window-controls" role="group" aria-label="Window controls"><button type="button" class="invoice-window-btn minimize" onclick="minimizeInvoiceRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="invoice-window-btn maximize" id="invoiceWindowMaximize" onclick="toggleInvoiceRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="invoice-window-btn close" onclick="closeInvoiceRegister()" aria-label="Close" title="Close">×</button></div></div>
       <div class="monthly-dues-content">
-        <div class="invoice-register-tools"><button type="button" class="bill-custom-toggle" onclick="openInvoiceWorkspace()">＋ Create New Invoice</button>
+        <div class="invoice-register-tools">
           <input id="invoiceSearch" type="search" placeholder="Search invoice number / customer..." oninput="renderInvoiceRegister()">
           <select id="invoiceBranchFilter" onchange="renderInvoiceRegister()"><option value="all">All Branches</option><option value="1">Head Office</option><option value="2">Bahria Enclave</option></select>
         </div>
         <div id="invoiceRegisterList"><div class="empty">No invoices saved yet.</div></div>
       </div>
-<aside class="bill-generator-panel" id="billGeneratorPanel" aria-label="Customer bill generator">
+<aside class="bill-generator-panel" id="billGeneratorPanel" aria-label="Customer bill generator" style="display:none">
       <div class="bill-generator">
         <div class="bill-generator-title zoho-invoice-topbar">
           <div class="zoho-invoice-heading"><span class="bill-icon">▣</span><h3 id="customInvoiceHeading">Add Invoice</h3></div>
           <div class="zoho-invoice-actions">
             <button type="button" class="zoho-draft-btn" id="customDraftButton" onclick="saveCustomInvoiceDraft()">Save as Draft</button>
             <button type="button" class="zoho-invoice-save-btn" id="customSaveButton" onclick="generateCustomBill()">✓ Save Invoice</button>
-            <button type="button" class="zoho-invoice-cancel-btn" onclick="closeInvoiceWorkspace()">× Back</button>
+          </div>
+          <div class="add-invoice-window-controls" role="group" aria-label="Add Invoice window controls">
+            <button type="button" class="add-invoice-window-btn minimize" id="addInvoiceMinimize" onclick="toggleAddInvoiceMinimize()" aria-label="Minimize" title="Minimize">−</button>
+            <button type="button" class="add-invoice-window-btn maximize" id="addInvoiceMaximize" onclick="toggleAddInvoiceMaximize()" aria-label="Maximize" title="Restore">□</button>
+            <button type="button" class="add-invoice-window-btn close" onclick="closeInvoiceWorkspace()" aria-label="Close" title="Close">×</button>
           </div>
         </div>
         <div class="bill-generator-content" id="billGeneratorContent">
-          <label for="billCustomer">Customer Name</label><input id="billCustomer" list="billCustomerList" placeholder="Enter customer name…" autocomplete="off"><datalist id="billCustomerList"><option value="+92 346 0482174"></option><option value="20 Sheet"></option><option value="7500 Balance"></option><option value="Abbasi"></option><option value="Abdul Hameed"></option><option value="Abdul Hannan (Imarat)"></option><option value="Abdul Jabbar"></option><option value="Abdullah Muhammad"></option><option value="Al Kareem"></option><option value="Al Mafaz Travels"></option><option value="Al Mafaz Travles"></option><option value="Al Makkah"></option><option value="Al Makkah Lights"></option><option value="Al Makkah Milk Shop"></option><option value="Al Qalam"></option><option value="Almafaz Travels (Ibrana Imran)"></option><option value="Altafia Gelania Electric Store Bill Book, Shine Card &amp; Flex"></option><option value="Alya Beauty"></option><option value="Amna Dental"></option><option value="Anzah Mehmood"></option><option value="Anzama"></option><option value="Arham Printer"></option><option value="Arham Printers"></option><option value="Arham Printing"></option><option value="Arslan"></option><option value="Asim"></option><option value="Awais Flex"></option><option value="Badges Due Payment"></option><option value="Birthday Flex"></option><option value="Blue Arc"></option><option value="Bulls &amp; Aether"></option><option value="Capital Corporation (2300 Balance)"></option><option value="Capital Eggs"></option><option value="card"></option><option value="Color Copy"></option><option value="Comfort King Head Office"></option><option value="Copy"></option><option value="Darvaish Menu Card 10"></option><option value="Daud"></option><option value="Dubai Gold"></option><option value="Ehsan Elahi"></option><option value="Faseeh ud Din"></option><option value="Hmmad Kiyani"></option><option value="Huda Beauty Parlor"></option><option value="Huda Khan Beauty Parlor"></option><option value="Huda Marketing"></option><option value="IAK Group"></option><option value="Imran Sab"></option><option value="Jabbar Khan"></option><option value="Jawana Labs"></option><option value="Jugnoo Gujar Electrcian"></option><option value="Jugnoo Gujjar Electric"></option><option value="Kaaf Cash &amp; Carry"></option><option value="Kanz Bariq"></option><option value="King Studio"></option><option value="LEGACY REALTORS"></option><option value="LUNX Corporate"></option><option value="MCB Investment"></option><option value="Meekhan Milk Shop"></option><option value="MGS"></option><option value="Milad Flex"></option><option value="Mohsin Tahir"></option><option value="Mohsin Tahir (Matt Star Flex Total Payment)"></option><option value="Mr. Haider Ali"></option><option value="Muhammad Ali Aziz"></option><option value="Musa Sohail"></option><option value="Nasir Karyana Store Wall Paper"></option><option value="Nemat Khan General Store"></option><option value="Online"></option><option value="Paak Khybar Naan Shop"></option><option value="Photo"></option><option value="Photo print"></option><option value="Popular Unilever"></option><option value="Punjab Cash &amp; Carry"></option><option value="Rahat Bakers"></option><option value="Rai Real Estate"></option><option value="Rizwan"></option><option value="Saeed Sab"></option><option value="Sheikh Autos"></option><option value="Siddique Plaza"></option><option value="Silere"></option><option value="Sima Agency"></option><option value="Sir Ikram Received"></option><option value="Sir Ikran Received"></option><option value="Smilex"></option><option value="SolarPulze"></option><option value="Standi 2X5 (Just Flex)"></option><option value="Sticker 2"></option><option value="Sukh Cain Due Payment Sir Ikram Rec"></option><option value="Sumama Sagheer"></option><option value="Syed Haider Ali"></option><option value="Tanweer (Elite)"></option><option value="Tehzeeb Bakrs"></option><option value="The Mars Academy"></option><option value="Thursday"></option><option value="Usmans1"></option><option value="Watelr Bliss"></option><option value="X Loundry SHop Pads 10"></option><option value="Yasir Developers"></option><option value="Younas Qurashi"></option></datalist>
-          <div class="bill-date-grid"><div><label for="billFromDate">From Date</label><input id="billFromDate" type="date"></div><div><label for="billToDate">To Date</label><input id="billToDate" type="date"></div></div>
-          <button type="button" class="bill-generate-btn" onclick="generateCustomerBill()"><span>▣</span> Generate Saved Customer Bill</button>
+          
           <button type="button" class="bill-custom-toggle" onclick="openInvoiceWorkspace()"><span>＋</span> Create New / Custom Bill</button>
           <div id="customBillBuilder" class="custom-bill-builder" style="display:none">
             <div class="custom-bill-note">New customer? Enter the name and add your own items and prices. This bill does not require a saved customer record.</div>
@@ -1498,16 +1829,14 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
             <div class="invoice-fields-grid">
               <div><label id="customNumberLabel">Invoice #</label><input id="customInvoiceNo" readonly=""></div>
               <div><label id="customDateLabel" for="customBillDate">Invoice Date</label><input id="customBillDate" type="date"></div>
-              <div><label id="customRefLabel" for="customOrderNo">Order Number</label><input id="customOrderNo" placeholder="Optional order number"></div>
               <div><label for="customTerms">Terms</label><select id="customTerms"><option>Due on Receipt</option><option>Net 7</option><option>Net 15</option><option>Net 30</option><option>Net 45</option><option>Net 60</option></select></div>
               <div><label id="customDueLabel" for="customDueDate">Due Date</label><input id="customDueDate" type="date"></div>
               <div><label for="customSalesperson">Salesperson</label><input id="customSalesperson" list="fozanSalespersonList" placeholder="Select or type salesperson"><datalist id="fozanSalespersonList"><option value="Ikram Sohail"></option><option value="Imran Siddique"></option><option value="Jawad"></option></datalist></div>
             </div>
-            <label for="customSubject">Subject</label><textarea id="customSubject" rows="2" placeholder="What is this invoice for?"></textarea>
             <datalist id="quoteInvoiceItemList"></datalist><div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
             <button type="button" class="custom-add-item" onclick="addCustomBillItem()">＋ Add Another Item</button>
             <div class="invoice-fields-grid invoice-bottom-fields">
-              <div><label for="customBillDiscount">Discount (%)</label><input id="customBillDiscount" type="number" min="0" max="100" step="0.01" value="0"></div>
+              <div><label for="customBillDiscountRs">Discount (Rs.)</label><input id="customBillDiscountRs" type="number" min="0" step="0.01" value="0"></div><div><label for="customBillDiscount">Discount (%)</label><input id="customBillDiscount" type="number" min="0" max="100" step="0.01" value="0"></div>
               <div><label for="customBillShipping">Shipping Charges (Rs.)</label><input id="customBillShipping" type="number" min="0" step="0.01" value="0"></div>
               <div><label for="customBillReceived">Amount Received (Rs.)</label><input id="customBillReceived" type="number" min="0" step="0.01" value="0" oninput="syncInvoiceDailySaleOption()"></div>
             </div>
@@ -1534,7 +1863,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
   </section>
   <section class="side-view" id="side-quotes">
     <aside class="monthly-dues-panel invoice-register-panel">
-      <div class="monthly-dues-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▤</span><h2>Saved Quotes</h2></div></div>
+      <div class="monthly-dues-head quote-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▤</span><h2>Saved Quotes</h2></div><div class="quote-window-controls" role="group" aria-label="Window controls"><button type="button" class="quote-window-btn minimize" onclick="minimizeQuoteRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="quote-window-btn maximize" id="quoteWindowMaximize" onclick="toggleQuoteRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="quote-window-btn close" onclick="closeQuoteRegister()" aria-label="Close" title="Close">×</button></div></div>
       <div class="monthly-dues-content">
         <div class="invoice-register-tools"><button type="button" class="bill-custom-toggle" onclick="openQuoteWorkspace()">＋ Create New Quote</button>
           <input id="quoteSearch" type="search" placeholder="Search quote number / customer..." oninput="renderQuoteRegister()">
@@ -1547,8 +1876,13 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
     <div class="zoho-customer-page">
       <div class="zoho-customer-topbar">
         <h2 id="customerFormHeading">Add Customer</h2>
-        <div><button type="button" class="zoho-save-btn" onclick="saveManagedCustomer()">✓ Save</button>
-        <button type="button" class="zoho-cancel-btn" onclick="closeCustomerForm()">× Back</button></div>
+        <div class="zoho-customer-topbar-actions">
+          <div class="zoho-customer-window-controls" role="group" aria-label="Customer window controls">
+            <button type="button" class="zoho-customer-window-btn" title="Minimize" aria-label="Minimize" onclick="toggleCustomerMinimize()">−</button>
+            <button type="button" class="zoho-customer-window-btn" id="customerWindowMaximize" title="Maximize" aria-label="Maximize" onclick="toggleCustomerMaximize()">□</button>
+            <button type="button" class="zoho-customer-window-btn close" title="Close" aria-label="Close" onclick="closeCustomerForm()">×</button>
+          </div>
+        </div>
       </div>
       <div class="zoho-customer-scroll">
         <div class="zoho-customer-main">
@@ -1570,7 +1904,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
             <div class="zoho-field"><label for="manageCustomerName">Customer Display Name <b class="required-star">*</b></label><input id="manageCustomerName" required=""></div>
             <div class="zoho-field"><label for="manageCustomerEmail">Customer Email</label><input id="manageCustomerEmail" type="email"></div>
             <div class="zoho-field"><label>Customer Phone</label><div class="zoho-inline-inputs"><input id="manageCustomerWorkPhone" placeholder="Work Phone"><input id="manageCustomerMobile" placeholder="Mobile"></div></div>
-            <div class="zoho-field"><label for="manageCustomerWebsite">Website</label><input id="manageCustomerWebsite" type="url"></div>
+            <div class="zoho-field"><label for="manageCustomerWebsite">Address</label><input id="manageCustomerWebsite" type="text" placeholder="Customer Address"></div>
           </div>
           <button type="button" class="zoho-add-more" onclick="toggleCustomerExtraFields()">＋ Add More Fields</button>
           <div id="customerExtraFields" class="zoho-extra-fields" hidden="">
@@ -1578,6 +1912,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
             <div class="zoho-field"><label for="manageCustomerOpeningBalance">Opening Balance (PKR)</label><input id="manageCustomerOpeningBalance" type="number" min="0" step="0.01" value="0"></div>
           </div>
         </div>
+        <div id="customerAdvancedSections" hidden>
         <div class="zoho-customer-tabs" role="tablist">
           <button type="button" class="active" data-ctab="other" onclick="switchCustomerTab('other')">Other Details</button>
           <button type="button" data-ctab="address" onclick="switchCustomerTab('address')">Address</button>
@@ -1606,8 +1941,18 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
           <h3>Custom Fields</h3><p class="zoho-muted">Add any additional customer information below.</p><div class="zoho-field narrow"><label>Field 1</label><input id="manageCustomerCustom1" placeholder="Custom information"></div><div class="zoho-field narrow"><label>Field 2</label><input id="manageCustomerCustom2" placeholder="Custom information"></div>
         </div>
         <div class="zoho-tab-content" id="customerTab-remarks"><div class="zoho-field"><label for="manageCustomerRemarks">Remarks</label><textarea id="manageCustomerRemarks" rows="5" placeholder="Notes about this customer..."></textarea></div></div>
+        </div><!-- Customer advanced sections hidden as requested -->
         <div class="zoho-customer-footer"><button type="button" class="zoho-save-btn" onclick="saveManagedCustomer()">✓ Save Customer</button><button type="button" class="zoho-cancel-btn" onclick="closeCustomerForm()">Back</button></div>
-        <div class="zoho-customer-list-area"><h3>Saved Customers</h3><div class="invoice-register-tools"><input id="manageCustomerSearch" placeholder="Search customers..." oninput="renderManagedCustomers()"><button type="button" class="zoho-add-more" onclick="resetManagedCustomerForm()">＋ Add New Customer</button></div><div id="managedCustomerList"></div></div>
+        <div class="zoho-customer-list-area">
+          <div class="invoice-register-tools" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="customer-privacy-toggle" id="customerPrivacyToggle" onclick="toggleSavedCustomers()">▣ Show Saved Customers</button>
+          </div>
+          <div id="savedCustomersPrivate" class="daily-private-hidden">
+            <h3>Saved Customers</h3>
+            <input id="manageCustomerSearch" placeholder="Search customers..." oninput="renderManagedCustomers()">
+            <div id="managedCustomerList"></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1615,11 +1960,15 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
     <div class="zoho-item-page">
       <div class="zoho-item-topbar">
         <h2 id="itemFormHeading">Add Item</h2>
-        <div><button type="button" class="zoho-save-btn" onclick="saveManagedItem()">▣ Save</button>
-        <button type="button" class="zoho-cancel-btn" onclick="closeItemForm()">× Back</button></div>
+        <div class="zoho-item-window-controls" role="group" aria-label="Item window controls">
+          <button type="button" class="zoho-item-window-btn" title="Minimize" aria-label="Minimize" onclick="toggleItemMinimize()">−</button>
+          <button type="button" class="zoho-item-window-btn" id="itemWindowMaximize" title="Maximize" aria-label="Maximize" onclick="toggleItemMaximize()">□</button>
+          <button type="button" class="zoho-item-window-btn close" title="Close" aria-label="Close" onclick="closeItemForm()">×</button>
+        </div>
       </div>
       <div class="zoho-item-scroll">
         <div class="zoho-item-form">
+          <div class="zoho-item-save-row"><button type="button" class="zoho-save-btn" onclick="saveManagedItem()">▣ Save</button></div>
           <div class="zoho-item-type">
             <label>Type ⓘ</label>
             <label><input type="radio" name="managedItemType" value="Goods" checked=""> Goods</label>
@@ -1634,6 +1983,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
           <div class="zoho-field zoho-item-price"><label for="manageItemRate">Selling Price <b class="required-star">*</b></label><div class="zoho-price-input"><span>PKR</span><input id="manageItemRate" type="number" min="0" step="0.01" placeholder="0.00" required=""></div></div>
           <div class="zoho-field zoho-item-description"><label for="manageItemDescription">Description</label><textarea id="manageItemDescription" rows="3"></textarea></div>
           <div class="zoho-field zoho-item-tax"><label for="manageItemTax">Tax ⓘ</label><select id="manageItemTax"><option value="">Select a Tax</option><option value="0">0%</option><option value="5">5%</option><option value="10">10%</option><option value="15">15%</option><option value="17">17%</option><option value="18">18%</option></select></div>
+          <div class="zoho-field"><label for="manageItemStatus">Status</label><select id="manageItemStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
         </div>
         <div class="zoho-item-list">
           <h3>Saved Items</h3>
@@ -1646,7 +1996,14 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
 
   <section class="side-view" id="side-overdue">
     <div class="report-panel outstanding-panel">
-      <div class="report-heading"><span class="report-icon">◷</span><div><h2>Overall Credit &amp; Balance</h2><p>All customers with unpaid amounts — all dates</p></div></div>
+      <div class="outstanding-window-head">
+        <div class="outstanding-title-copy"><span class="outstanding-title-icon">◷</span><div><h2>Overall Credit &amp; Balance</h2><p>All customers with unpaid amounts — all dates</p></div></div>
+        <div class="outstanding-window-controls" role="group" aria-label="Window controls">
+          <button type="button" class="outstanding-window-btn" onclick="minimizeOutstandingWindow()" aria-label="Minimize" title="Minimize">−</button>
+          <button type="button" class="outstanding-window-btn" id="outstandingWindowMaximize" onclick="toggleOutstandingWindowMaximize()" aria-label="Maximize" title="Maximize">□</button>
+          <button type="button" class="outstanding-window-btn close" onclick="closeOutstandingWindow()" aria-label="Close" title="Close">×</button>
+        </div>
+      </div>
       <div class="outstanding-summary">
         <div><small>Total Credit Due</small><strong id="overallCreditTotal">Rs. 4400</strong></div>
         <div><small>Total Balance Due</small><strong id="overallBalanceTotal">Rs. 0</strong></div>
@@ -1681,7 +2038,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
 
   <section class="side-view" id="side-expenses">
     <div class="report-panel payroll-panel">
-      <div class="report-heading"><span class="report-icon">💰</span><div style="flex:1;min-width:0"><h2>Expenses &amp; Staff Salary</h2><p>Admin only • PWD Head Office + Bahria Enclave</p></div><button type="button" class="payroll-back-btn" onclick="showSidePanel('expenses')" title="Back to Dashboard">← Back</button></div>
+      <div class="report-heading expenses-window-head"><div class="expenses-title-copy"><span class="report-icon">💰</span><div style="flex:1;min-width:0"><h2>Expenses &amp; Staff Salary</h2><p>Admin only • PWD Head Office + Bahria Enclave</p></div></div><div class="expenses-window-controls"><button type="button" class="expenses-window-btn" title="Minimize" aria-label="Minimize" onclick="minimizeExpensesWindow()">−</button><button type="button" class="expenses-window-btn" id="expensesWindowMaximize" title="Maximize" aria-label="Maximize" onclick="toggleExpensesWindowMaximize()">□</button><button type="button" class="expenses-window-btn close" title="Close" aria-label="Close" onclick="closeExpensesWindow()">×</button></div></div>
       <div class="expense-workspace-tabs"><button type="button" class="expense-tab active" id="staffTabBtn" onclick="switchExpenseWorkspace('staff')">👥 Staff Salary</button><button type="button" class="expense-tab" id="generalTabBtn" onclick="switchExpenseWorkspace('general')">💸 General Expenses</button></div>
       <div id="staffSalarySection">
       <div class="payroll-branch-head">
@@ -1724,7 +2081,8 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
           <label>Expense Month <input type="month" id="generalExpenseMonth" onchange="renderGeneralExpenses()"></label>
           <label>Branch <select id="generalExpenseBranch" onchange="renderGeneralExpenses()"><option value="all">Both Branches</option><option value="1">PWD Head Office</option><option value="2">Bahria Enclave</option></select></label>
         </div>
-        <div class="payroll-section-title"><h3>Add General Expense</h3><span class="payroll-column-chip">Admin Control</span></div>
+        <div class="payroll-section-title general-expense-entry-head"><h3>Add General Expense</h3><button class="danger general-expense-open-btn" type="button" onclick="toggleGeneralExpenseForm()">＋ Add Expense</button><span class="payroll-column-chip">Admin Control</span></div>
+        <div id="generalExpenseEntryPanel" style="display:none">
         <div class="payroll-form-grid">
           <label>Category<select id="generalExpenseCategory"></select></label>
           <label>Amount (Rs.)<input id="generalExpenseAmount" type="number" min="1" step="1" placeholder="Enter amount"></label>
@@ -1732,7 +2090,8 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
           <label>Paid From<select id="generalExpenseBranchEntry"><option value="1">PWD Head Office</option><option value="2">Bahria Enclave</option></select></label>
           <label style="grid-column:1/-1">Description / Details<input id="generalExpenseDesc" placeholder="Expense details"></label>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px"><button class="primary" type="button" onclick="saveGeneralExpense()">＋ Save Expense</button><button class="muted" type="button" onclick="resetGeneralExpenseForm()">Clear</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px"><button class="primary" type="button" onclick="saveGeneralExpense()">＋ Save Expense</button><button class="muted" type="button" onclick="resetGeneralExpenseForm()">Clear</button><button class="muted" type="button" onclick="toggleGeneralExpenseForm(false)">Close</button></div>
+        </div>
         <div class="payroll-section-title"><h3>Expense Categories</h3><button class="muted" type="button" onclick="manageExpenseCategories()">＋ Add / Rename / Delete Category</button></div>
         <p class="payroll-note">صرف Admin ان categories کو manage کر سکتا ہے۔ مثال: Rent, Electricity, Internet, Tea / Food, Repair, Transport, Printing Material وغیرہ۔</p>
         <div id="generalExpenseCategoryChips" class="expense-category-chips"></div>
@@ -1779,38 +2138,59 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
  </div>
 </div>
 
-<div class="modal" id="saleModal" style="display: none;">
-<div class="box">
-  <h2 id="saleModalTitle">New Daily Sale</h2>
-  <label>Sale Type</label>
-  <select id="sType" onchange="updateSaleFields()">
-    <option value="cash_balance">Cash Received with Balance</option>
-    <option value="cash_full">Full Cash Received</option>
-    <option value="online_balance">Online Cash Received + Balance</option>
-    <option value="online_full">Full Online Cash Received</option>
-    <option value="credit">Full Credit</option>
-    <option value="credit_balance_received">Credit + Balance Amount Received</option>
-    <option value="balance_payment" hidden="">Old Balance Received</option>
-  </select>
-  <div id="balanceMethodField" class="field-hidden"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
-  <div id="totalPaymentMethodField" class="field-hidden"><label>Payment Received By</label><select id="sTotalPaymentMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
-  <div id="amountField"><label id="amountLabel">Cash Received</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="Enter amount received"></div>
-  <div id="advanceField" class="field-hidden"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
-  <div id="advanceMethodField" class="field-hidden"><label>Amount Received By</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
-  <div id="balanceField"><label id="balanceLabel">Balance Due (calculated)</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="Calculated automatically"></div>
-  <div class="notice" id="saleTypeHelp" style="margin:-8px 0 10px">Enter the Cash amount received and the remaining Balance Due separately. No Advance Payment or payment-method selection is needed.</div>
-  <label>Customer Name (Optional) <small style="color:#758397;font-weight:400">— type 1–2 words for saved customer suggestions</small></label><input id="sCustomer" list="saleCustomerSuggestions" autocomplete="off" placeholder="e.g. Muhammad Ali" data-smart-autocomplete="1"><datalist id="saleCustomerSuggestions"><option value="+92 346 0482174"></option><option value="20 Sheet"></option><option value="7500 Balance"></option><option value="Abbasi"></option><option value="Abdul Hameed"></option><option value="Abdul Hannan (Imarat)"></option><option value="Abdul Jabbar"></option><option value="Abdullah Muhammad"></option><option value="Al Kareem"></option><option value="Al Mafaz Travels"></option><option value="Al Mafaz Travles"></option><option value="Al Makkah"></option><option value="Al Makkah Lights"></option><option value="Al Makkah Milk Shop"></option><option value="Al Qalam"></option><option value="Almafaz Travels (Ibrana Imran)"></option><option value="Altafia Gelania Electric Store Bill Book, Shine Card &amp; Flex"></option><option value="Alya Beauty"></option><option value="Amna Dental"></option><option value="Anzah Mehmood"></option><option value="Anzama"></option><option value="Arham Printer"></option><option value="Arham Printers"></option><option value="Arham Printing"></option><option value="Arslan"></option><option value="Asim"></option><option value="Awais Flex"></option><option value="Badges Due Payment"></option><option value="Birthday Flex"></option><option value="Blue Arc"></option><option value="Bulls &amp; Aether"></option><option value="Capital Corporation (2300 Balance)"></option><option value="Capital Eggs"></option><option value="card"></option><option value="Color Copy"></option><option value="Comfort King Head Office"></option><option value="Copy"></option><option value="Darvaish Menu Card 10"></option><option value="Daud"></option><option value="Dubai Gold"></option><option value="Ehsan Elahi"></option><option value="Faseeh ud Din"></option><option value="Hmmad Kiyani"></option><option value="Huda Beauty Parlor"></option><option value="Huda Khan Beauty Parlor"></option><option value="Huda Marketing"></option><option value="IAK Group"></option><option value="Imran Sab"></option><option value="Jabbar Khan"></option><option value="Jawana Labs"></option><option value="Jugnoo Gujar Electrcian"></option><option value="Jugnoo Gujjar Electric"></option><option value="Kaaf Cash &amp; Carry"></option><option value="Kanz Bariq"></option><option value="King Studio"></option><option value="LEGACY REALTORS"></option><option value="LUNX Corporate"></option><option value="MCB Investment"></option><option value="Meekhan Milk Shop"></option><option value="MGS"></option><option value="Milad Flex"></option><option value="Mohsin Tahir"></option><option value="Mohsin Tahir (Matt Star Flex Total Payment)"></option><option value="Mr. Haider Ali"></option><option value="Muhammad Ali Aziz"></option><option value="Musa Sohail"></option><option value="Nasir Karyana Store Wall Paper"></option><option value="Nemat Khan General Store"></option><option value="Online"></option><option value="Paak Khybar Naan Shop"></option><option value="Photo"></option><option value="Photo print"></option><option value="Popular Unilever"></option><option value="Punjab Cash &amp; Carry"></option><option value="Rahat Bakers"></option><option value="Rai Real Estate"></option><option value="Rizwan"></option><option value="Saeed Sab"></option><option value="Sheikh Autos"></option><option value="Siddique Plaza"></option><option value="Silere"></option><option value="Sima Agency"></option><option value="Sir Ikram Received"></option><option value="Sir Ikran Received"></option><option value="Smilex"></option><option value="SolarPulze"></option><option value="Standi 2X5 (Just Flex)"></option><option value="Sticker 2"></option><option value="Sukh Cain Due Payment Sir Ikram Rec"></option><option value="Sumama Sagheer"></option><option value="Syed Haider Ali"></option><option value="Tanweer (Elite)"></option><option value="Tehzeeb Bakrs"></option><option value="The Mars Academy"></option><option value="Thursday"></option><option value="Usmans1"></option><option value="Watelr Bliss"></option><option value="X Loundry SHop Pads 10"></option><option value="Yasir Developers"></option><option value="Younas Qurashi"></option></datalist>
-  <label>Customer Mobile / WhatsApp Number</label><input id="sMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="e.g. 03001234567">
-  <label>Description / Item <small style="color:#758397;font-weight:400">— saved descriptions appear as you type</small></label><input id="sDesc" list="saleDescriptionSuggestions" autocomplete="off" placeholder="e.g. Visiting Cards / Banner" dir="ltr" data-smart-autocomplete="1"><datalist id="saleDescriptionSuggestions"></datalist>
-  <div style="display:flex;gap:8px">
-    <button class="success" onclick="saveSale()">Save Sale</button>
-    <button class="muted" onclick="closeSaleModal()">Back</button>
+<div class="modal" id="saleModal" style="display:none;" aria-modal="true" role="dialog" onclick="if(event.target===this)closeSaleModal()">
+  <div class="box sale-modal-box">
+    <div class="sale-modal-titlebar">
+      <h2 id="saleModalTitle">New Daily Sale</h2>
+      <div class="sale-window-controls">
+        <button type="button" class="sale-window-btn" title="Minimize" aria-label="Minimize" onclick="toggleSaleMinimize()">−</button>
+        <button type="button" class="sale-window-btn" title="Maximize" aria-label="Maximize" onclick="toggleSaleMaximize()">□</button>
+        <button type="button" class="sale-window-btn sale-window-close" title="Close" aria-label="Close" onclick="closeSaleModal()">×</button>
+      </div>
+    </div>
+    <div class="sale-modal-content">
+      <div class="sale-customer-grid">
+        <div class="sale-field"><label>Customer Name (Optional) </label><input id="sCustomer" list="saleCustomerSuggestions" autocomplete="off" placeholder="e.g. Muhammad Ali" data-smart-autocomplete="1"><datalist id="saleCustomerSuggestions"><option value="+92 346 0482174"></option><option value="20 Sheet"></option><option value="7500 Balance"></option><option value="Abbasi"></option><option value="Abdul Hameed"></option><option value="Abdul Hannan (Imarat)"></option><option value="Abdul Jabbar"></option><option value="Abdullah Muhammad"></option><option value="Al Kareem"></option><option value="Al Mafaz Travels"></option><option value="Al Mafaz Travles"></option><option value="Al Makkah"></option><option value="Al Makkah Lights"></option><option value="Al Makkah Milk Shop"></option><option value="Al Qalam"></option><option value="Almafaz Travels (Ibrana Imran)"></option><option value="Altafia Gelania Electric Store Bill Book, Shine Card &amp; Flex"></option><option value="Alya Beauty"></option><option value="Amna Dental"></option><option value="Anzah Mehmood"></option><option value="Anzama"></option><option value="Arham Printer"></option><option value="Arham Printers"></option><option value="Arham Printing"></option><option value="Arslan"></option><option value="Asim"></option><option value="Awais Flex"></option><option value="Badges Due Payment"></option><option value="Birthday Flex"></option><option value="Blue Arc"></option><option value="Bulls &amp; Aether"></option><option value="Capital Corporation (2300 Balance)"></option><option value="Capital Eggs"></option><option value="card"></option><option value="Color Copy"></option><option value="Comfort King Head Office"></option><option value="Copy"></option><option value="Darvaish Menu Card 10"></option><option value="Daud"></option><option value="Dubai Gold"></option><option value="Ehsan Elahi"></option><option value="Faseeh ud Din"></option><option value="Hmmad Kiyani"></option><option value="Huda Beauty Parlor"></option><option value="Huda Khan Beauty Parlor"></option><option value="Huda Marketing"></option><option value="IAK Group"></option><option value="Imran Sab"></option><option value="Jabbar Khan"></option><option value="Jawana Labs"></option><option value="Jugnoo Gujar Electrcian"></option><option value="Jugnoo Gujjar Electric"></option><option value="Kaaf Cash &amp; Carry"></option><option value="Kanz Bariq"></option><option value="King Studio"></option><option value="LEGACY REALTORS"></option><option value="LUNX Corporate"></option><option value="MCB Investment"></option><option value="Meekhan Milk Shop"></option><option value="MGS"></option><option value="Milad Flex"></option><option value="Mohsin Tahir"></option><option value="Mohsin Tahir (Matt Star Flex Total Payment)"></option><option value="Mr. Haider Ali"></option><option value="Muhammad Ali Aziz"></option><option value="Musa Sohail"></option><option value="Nasir Karyana Store Wall Paper"></option><option value="Nemat Khan General Store"></option><option value="Online"></option><option value="Paak Khybar Naan Shop"></option><option value="Photo"></option><option value="Photo print"></option><option value="Popular Unilever"></option><option value="Punjab Cash &amp; Carry"></option><option value="Rahat Bakers"></option><option value="Rai Real Estate"></option><option value="Rizwan"></option><option value="Saeed Sab"></option><option value="Sheikh Autos"></option><option value="Siddique Plaza"></option><option value="Silere"></option><option value="Sima Agency"></option><option value="Sir Ikram Received"></option><option value="Sir Ikran Received"></option><option value="Smilex"></option><option value="SolarPulze"></option><option value="Standi 2X5 (Just Flex)"></option><option value="Sticker 2"></option><option value="Sukh Cain Due Payment Sir Ikram Rec"></option><option value="Sumama Sagheer"></option><option value="Syed Haider Ali"></option><option value="Tanweer (Elite)"></option><option value="Tehzeeb Bakrs"></option><option value="The Mars Academy"></option><option value="Thursday"></option><option value="Usmans1"></option><option value="Watelr Bliss"></option><option value="X Loundry SHop Pads 10"></option><option value="Yasir Developers"></option><option value="Younas Qurashi"></option></datalist></div>
+        <div class="sale-field"><label>Customer Mobile / WhatsApp Number</label><input id="sMobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="e.g. 03001234567"></div>
+      </div>
+      <div class="sale-field"><label>Sale Type</label>
+        <select id="sType" onchange="updateSaleFields()">
+          <option value="cash_balance">Cash Received with Balance</option>
+          <option value="cash_full">Full Cash Received</option>
+          <option value="online_balance">Online Cash Received + Balance</option>
+          <option value="online_full">Full Online Cash Received</option>
+          <option value="credit">Full Credit</option>
+          <option value="credit_balance_received">Credit + Balance Amount Received</option>
+          <option value="balance_payment" hidden>Old Balance Received</option>
+        </select>
+      </div>
+      <div id="balanceMethodField" class="field-hidden sale-field"><label>Balance Payment Received By</label><select id="sBalanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
+      <div id="totalPaymentMethodField" class="field-hidden sale-field"><label>Payment Received By</label><select id="sTotalPaymentMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
+      <div class="sale-field"><label>Description / Item </label><input id="sDesc" list="saleDescriptionSuggestions" autocomplete="off" placeholder="e.g. Visiting Cards / Banner" dir="ltr" data-smart-autocomplete="1"><datalist id="saleDescriptionSuggestions"></datalist><small id="sSavedItemDetail" style="display:none;color:#687785;font-size:11px;line-height:1.45;margin-top:-5px;padding:0 3px"></small></div>
+      <div class="sale-quantity-grid">
+        <div class="sale-field"><label>Quantity</label><input id="sQty" type="number" min="1" step="1" value="1" placeholder="1"></div>
+      </div>
+      <div id="amountField" class="sale-field"><label id="amountLabel">Cash Received</label><input id="sAmount" type="number" min="0" step="0.01" placeholder="Enter amount received"></div>
+      <div id="advanceField" class="field-hidden sale-field"><label>Advance Payment</label><input id="sAdvance" type="number" min="0" step="0.01" value="0" placeholder="0"></div>
+      <div id="advanceMethodField" class="field-hidden sale-field"><label>Amount Received By</label><select id="sAdvanceMethod"><option value="cash">Cash</option><option value="online">Online (Bank / Easypaisa / JazzCash)</option></select></div>
+      <div id="balanceField" class="sale-field"><label id="balanceLabel">Balance Due (calculated)</label><input id="sBalancePayment" type="number" min="0" step="0.01" value="0" placeholder="Calculated automatically"></div>
+      <div class="notice sale-type-help" id="saleTypeHelp">Enter the Cash amount received and the remaining Balance Due separately. No Advance Payment or payment-method selection is needed.</div>
+      <div class="sale-modal-actions"><button class="success" type="button" onclick="saveSale()">Save Sale</button><button class="muted" type="button" onclick="closeSaleModal()">Close</button></div>
+    </div>
   </div>
 </div>
-</div>
 
-<div class="modal" id="expenseModal"><div class="box">
-  <h2>Add Expense / Payment</h2>
+<div class="modal" id="expenseModal" aria-modal="true" role="dialog">
+  <div class="box expense-modal-box">
+    <div class="expense-modal-titlebar">
+      <h2>Add Expense / Payment</h2>
+      <div class="expense-window-controls">
+        <button type="button" class="expense-window-btn" title="Minimize" aria-label="Minimize" onclick="toggleExpenseMinimize()">−</button>
+        <button type="button" class="expense-window-btn" title="Maximize" aria-label="Maximize" onclick="toggleExpenseMaximize()">□</button>
+        <button type="button" class="expense-window-btn expense-window-close" title="Close" aria-label="Close" onclick="closeExpenseModal()">×</button>
+      </div>
+    </div>
+    <div class="expense-modal-content">
   <label>Amount</label><input id="eAmount" type="number" min="0" step="0.01" placeholder="0">
   <label>Description</label><input id="eDesc" placeholder="e.g. Paper purchase / Ali advance salary" dir="ltr" oninput="autoMatchExpenseStaff()">
   <label>Staff (optional — auto detected from description)</label><select id="eStaff"><option value="">Not a staff payment</option></select>
@@ -1822,7 +2202,9 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
     <button class="danger" onclick="saveExpense()">Save Expense</button>
     <button class="muted" onclick="closeExpenseModal()">Back</button>
   </div>
-</div></div>
+    </div>
+  </div>
+</div>
 
 <div class="modal" id="billModal" aria-modal="true" role="dialog" onclick="if(event.target===this)closeBillModal()">
   <div class="box">
@@ -1894,6 +2276,25 @@ create table if not exists public.fozan_staff (
 alter table public.fozan_staff add column if not exists advance_by_month jsonb not null default '{}'::jsonb;
 alter table public.fozan_staff add column if not exists custom_fields jsonb not null default '{}'::jsonb;
 alter table public.fozan_staff enable row level security;
+
+-- Shared item/service register: one common list for BOTH branches and ALL PCs.
+create table if not exists public.fozan_items (
+  id text primary key,
+  name text not null,
+  rate numeric not null default 0,
+  unit text default '',
+  qty numeric not null default 0,
+  type text default 'Goods',
+  description text default '',
+  tax text default '',
+  status text default 'Active',
+  updated_at timestamptz not null default now()
+);
+alter table public.fozan_items enable row level security;
+drop policy if exists "fozan items public access" on public.fozan_items;
+create policy "fozan items public access" on public.fozan_items
+  for all to anon using (true) with check (true);
+
 create policy "fozan staff public access" on public.fozan_staff for all to anon using (true) with check (true);
 
 create policy "fozan sales public access" on public.fozan_sales
@@ -1915,6 +2316,7 @@ if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
 if(!Array.isArray(data.invoices)) data.invoices=[];
 if(!Array.isArray(data.staff)) data.staff=[];
+if(!Array.isArray(data.items)) data.items=[];
 // In cloud mode, Supabase is the source of truth; stale local-only rows are not re-added.
 let cloudReady=!CLOUD_ENABLED;
 // Supabase Realtime: keep other signed-in devices in sync without manual refresh.
@@ -1935,9 +2337,35 @@ function fozanUserKeyFromEmail(email){
   const normalized=String(email||'').trim().toLowerCase();
   return Object.keys(FOZAN_USERS).find(key=>FOZAN_USERS[key].email===normalized)||null;
 }
+
+// Update Management Menu counters immediately from the currently loaded data.
+// This runs after login and again after cloud data finishes loading, so users
+// do not need to open each section just to see its record count.
+function refreshManagementMenuCounts(){
+  const setCount=(id,value)=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=String(value);
+  };
+  if(!Array.isArray(data.invoices))data.invoices=[];
+  if(!Array.isArray(data.quotes))data.quotes=[];
+  if(!Array.isArray(data.customers))data.customers=[];
+  if(!Array.isArray(data.items))data.items=[];
+  const branch=activeBranch==='all'?'all':String(activeBranch);
+  const customers=data.customers.filter(c=>
+    branch==='all'||String(c.branch_id||'1')===branch
+  );
+  setCount('invoiceNavCount',data.invoices.length);
+  setCount('quoteNavCount',data.quotes.length);
+  setCount('customerNavCount',customers.length);
+  setCount('itemNavCount',data.items.filter(x=>x.status!=='Deleted').length);
+  setCount('overdueNavCount',getOverdueCustomerEntries().length);
+}
+
 function finishFozanLogin(key){
   const user=FOZAN_USERS[key];
   if(!user)return false;
+  // Keep this tab's login active across page reloads; explicit Logout clears it.
+  try{sessionStorage.setItem('fozan_user_session',key);}catch(e){console.warn('Could not save login session:',e);}
   currentUserRole=user.role;currentUserKey=key;
   activeBranch=user.role==='admin'?'1':user.branch;
   authorizedBranches.add(activeBranch);
@@ -1954,6 +2382,7 @@ function finishFozanLogin(key){
   document.querySelectorAll('.branch-entry-control').forEach(el=>el.disabled=user.role!=='admin' && activeBranch==='all');
   if(user.role==='branch')activeBranch=user.branch;
   updateBranchContact();renderDateHistory();renderDashboard();renderSales();
+  refreshManagementMenuCounts();
   cloudLoad();
   return true;
 }
@@ -2118,6 +2547,17 @@ async function cloudSyncData(){
       const {error}=await supabaseClient.from('fozan_staff').upsert(staffRows,{onConflict:'id'});
       if(error) throw error;
     }
+    // Items are global (no branch_id): both offices use the exact same register.
+    // Keep this sync independent so a missing item table never blocks sales/expenses.
+    if(Array.isArray(data.items) && data.items.length){
+      const itemRows=data.items.map(x=>({
+        id:String(x.id),name:String(x.name||''),rate:Number(x.rate||0),unit:x.unit||'',
+        qty:Number(x.qty||0),type:x.type||'Goods',description:x.description||'',
+        tax:String(x.tax||''),status:x.status||'Active',updated_at:new Date().toISOString()
+      }));
+      const {error:itemError}=await supabaseClient.from('fozan_items').upsert(itemRows,{onConflict:'id'});
+      if(itemError) console.warn('Shared item sync unavailable. Run the fo zan_items SQL setup in the source comments.',itemError);
+    }
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
     console.error('Cloud save error:',e);
@@ -2158,6 +2598,15 @@ async function cloudLoad(){
       if(staffResult.error) console.warn('Staff cloud table unavailable; run the fo zan_staff SQL migration in the source comments.',staffResult.error);
       else cloudStaff=staffResult.data||[];
     }
+    // Shared item list is intentionally not filtered by branch.
+    let cloudItems=[];
+    const itemResult=await supabaseClient.from('fozan_items').select('*');
+    if(itemResult.error) console.warn('Shared item table is not ready. Run the fo zan_items SQL setup in the source comments.',itemResult.error);
+    else cloudItems=(itemResult.data||[]).map(x=>({
+      id:String(x.id),name:x.name||'',rate:Number(x.rate||0),unit:x.unit||'',
+      qty:Number(x.qty||0),type:x.type||'Goods',description:x.description||'',
+      tax:String(x.tax||''),status:x.status||'Active'
+    }));
 
     const localSalesById=new Map(data.sales.map(x=>[String(x.id),x]));
     const cloudSales=(sales||[]).map(x=>({
@@ -2185,15 +2634,28 @@ async function cloudLoad(){
     if(currentUserRole==='admin' && cloudStaff.length){
       data.staff=cloudStaff.map(x=>({id:x.id,branch_id:String(x.branch_id||'1'),name:x.name||'',designation:x.designation||'',monthly_salary:Number(x.monthly_salary||0),leave_by_month:x.leave_by_month||{},paid_by_month:x.paid_by_month||{},advance_by_month:x.advance_by_month||{},custom_fields:x.custom_fields||{}}));
     }
+    // Merge by normalized item name, not by browser cache. This safely combines
+    // the full old-PC list with any partial list already seeded from another PC.
+    const sharedItemsByName=new Map();
+    (data.items||[]).forEach(x=>{
+      const k=String(x.name||'').trim().toLowerCase();
+      if(k)sharedItemsByName.set(k,x);
+    });
+    cloudItems.forEach(x=>{
+      const k=String(x.name||'').trim().toLowerCase();
+      if(k)sharedItemsByName.set(k,{...(sharedItemsByName.get(k)||{}),...x});
+    });
+    data.items=[...sharedItemsByName.values()];
     localStorage.setItem(KEY,JSON.stringify(data));
     cloudReady=true;
-    if(addedDuringLoadSales.length || addedDuringLoadExpenses.length) await cloudSyncData();
+    if(addedDuringLoadSales.length || addedDuringLoadExpenses.length || data.items.length) await cloudSyncData();
 
     const todayNow=nowLocal();
     document.getElementById('summaryDate').value=todayNow.date;
     document.getElementById('summaryMonth').value=monthKey(todayNow.date);
     summaryMode='date';
     renderDateHistory(); renderDashboard(); renderSales();
+    refreshManagementMenuCounts();
     startFozanRealtime();
     cloudStatus('Cloud connected • live sync starting', true);
     return true;
@@ -2220,11 +2682,13 @@ function startFozanRealtime(){
   let channel=supabaseClient.channel('fozan-live-sync-'+(currentUserKey||'user'));
   const salesConfig={event:'*',schema:'public',table:'fozan_sales'};
   const expensesConfig={event:'*',schema:'public',table:'fozan_expenses'};
+  const itemsConfig={event:'*',schema:'public',table:'fozan_items'};
   if(branchFilter){salesConfig.filter=branchFilter;expensesConfig.filter=branchFilter;}
   const onRemoteChange=()=>scheduleFozanRealtimeRefresh();
   channel=channel
     .on('postgres_changes',salesConfig,onRemoteChange)
     .on('postgres_changes',expensesConfig,onRemoteChange)
+    .on('postgres_changes',itemsConfig,onRemoteChange)
     .subscribe((status)=>{
       if(status==='SUBSCRIBED') cloudStatus('Live sync connected • changes appear automatically',true);
       else if(status==='CHANNEL_ERROR' || status==='TIMED_OUT') cloudStatus('Live sync reconnecting — use Refresh Cloud if needed');
@@ -2634,7 +3098,36 @@ function editManagedCustomer(id){
   document.getElementById('customerFormHeading').textContent='Edit Customer';
   switchCustomerTab('other');
 }
+function toggleCustomerMinimize(){
+  const section=document.getElementById('side-customers');
+  if(!section)return;
+  section.classList.toggle('customer-window-minimized');
+  if(section.classList.contains('customer-window-minimized'))section.classList.remove('customer-window-maximized');
+}
+function toggleCustomerMaximize(){
+  const section=document.getElementById('side-customers');
+  if(!section)return;
+  section.classList.remove('customer-window-minimized');
+  const maximized=section.classList.toggle('customer-window-maximized');
+  section.classList.toggle('customer-windowed',!maximized);
+  const button=document.getElementById('customerWindowMaximize');
+  if(button){
+    button.textContent=maximized?'❐':'□';
+    button.title=maximized?'Restore':'Maximize';
+    button.setAttribute('aria-label',maximized?'Restore':'Maximize');
+  }
+}
+function resetCustomerWindow(){
+  const section=document.getElementById('side-customers');
+  if(!section)return;
+  section.classList.remove('customer-window-minimized','customer-window-maximized');
+  section.classList.add('customer-windowed');
+  const button=document.getElementById('customerWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+}
 function closeCustomerForm(){
+  const section=document.getElementById('side-customers');
+  if(section)section.classList.remove('customer-window-minimized','customer-window-maximized','customer-windowed');
   document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
   document.body.classList.remove('customer-form-open');
@@ -2660,6 +3153,14 @@ function copyBillingToShipping(){
   if(!getCustomerFormChecked('sameAsBilling'))return;
   const pairs=[['Attention','Attention'],['Country','Country'],['Address','Address'],['City','City'],['State','State'],['Postal','Postal'],['Phone','Phone']];
   pairs.forEach(([a,b])=>{const x=document.getElementById('manageBilling'+a),y=document.getElementById('manageShipping'+b);if(x&&y)y.value=x.value;});
+}
+function toggleSavedCustomers(){
+  const panel=document.getElementById('savedCustomersPrivate');
+  const button=document.getElementById('customerPrivacyToggle');
+  if(!panel||!button)return;
+  const opening=panel.classList.contains('daily-private-hidden');
+  panel.classList.toggle('daily-private-hidden',!opening);
+  button.innerHTML=opening?'▣ Hide Saved Customers':'▣ Show Saved Customers';
 }
 function renderManagedCustomers(){
   const el=document.getElementById('managedCustomerList');if(!el)return;
@@ -2695,15 +3196,15 @@ function saveManagedItem(){
   const qty=qtyValue===''?0:Number(qtyValue);
   if(!Number.isFinite(qty)||qty<0){alert('Please enter a valid QTY.');return;}
   const existingId=window.editingManagedItemId||'';
-  if(data.items.some(x=>String(x.id)!==String(existingId)&&x.name.toLowerCase()===name.toLowerCase())){alert('This item is already saved.');return;}
-  const obj={id:existingId||uid(),name,rate,unit,qty,type:document.querySelector('input[name="managedItemType"]:checked')?.value||'Goods',description:(document.getElementById('manageItemDescription')?.value||'').trim(),tax:document.getElementById('manageItemTax')?.value||''};
+  if(data.items.some(x=>x.status!=='Deleted'&&String(x.id)!==String(existingId)&&String(x.name||'').toLowerCase()===name.toLowerCase())){alert('This item is already saved.');return;}
+  const obj={id:existingId||uid(),name,rate,unit,qty,type:document.querySelector('input[name="managedItemType"]:checked')?.value||'Goods',description:(document.getElementById('manageItemDescription')?.value||'').trim(),tax:document.getElementById('manageItemTax')?.value||'',status:document.getElementById('manageItemStatus')?.value||'Active'};
   if(existingId){const i=data.items.findIndex(x=>String(x.id)===String(existingId));if(i>=0)data.items[i]={...data.items[i],...obj};}
   else data.items.push(obj);
   persist();resetManagedItemForm();renderManagedItems();alert('Item saved successfully.');
 }
 function resetManagedItemForm(){
   window.editingManagedItemId='';
-  ['manageItemName','manageItemRate','manageItemUnit','manageItemUnitCustom','manageItemDescription','manageItemTax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['manageItemName','manageItemRate','manageItemUnit','manageItemUnitCustom','manageItemDescription','manageItemTax','manageItemStatus'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const qty=document.getElementById('manageItemQty');if(qty)qty.value='1';
   const unitCustom=document.getElementById('manageItemUnitCustom');if(unitCustom)unitCustom.style.display='none';
   document.querySelector('input[name="managedItemType"][value="Goods"]')?.click();
@@ -2722,11 +3223,41 @@ function editManagedItem(id){
   document.getElementById('manageItemQty').value=x.qty??1;
   document.getElementById('manageItemDescription').value=x.description||'';
   document.getElementById('manageItemTax').value=x.tax||'';
+  document.getElementById('manageItemStatus').value=x.status||'Active';
   document.querySelector('input[name="managedItemType"][value="'+(x.type||'Goods')+'"]')?.click();
   document.getElementById('itemFormHeading').textContent='Edit Item';
   document.querySelector('.zoho-item-scroll')?.scrollTo({top:0,behavior:'smooth'});
 }
+function toggleItemMinimize(){
+  const section=document.getElementById('side-items');
+  if(!section)return;
+  section.classList.toggle('item-window-minimized');
+  if(section.classList.contains('item-window-minimized'))section.classList.remove('item-window-maximized');
+}
+function toggleItemMaximize(){
+  const section=document.getElementById('side-items');
+  if(!section)return;
+  section.classList.remove('item-window-minimized');
+  const maximized=section.classList.toggle('item-window-maximized');
+  section.classList.toggle('item-windowed',!maximized);
+  const button=document.getElementById('itemWindowMaximize');
+  if(button){
+    button.textContent=maximized?'❐':'□';
+    button.title=maximized?'Restore':'Maximize';
+    button.setAttribute('aria-label',maximized?'Restore':'Maximize');
+  }
+}
+function resetItemWindow(){
+  const section=document.getElementById('side-items');
+  if(!section)return;
+  section.classList.remove('item-window-minimized','item-window-maximized');
+  section.classList.add('item-windowed');
+  const button=document.getElementById('itemWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+}
 function closeItemForm(){
+  const itemSection=document.getElementById('side-items');
+  if(itemSection)itemSection.classList.remove('item-window-minimized','item-window-maximized','item-windowed');
   document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
   document.body.classList.remove('item-form-open');
@@ -2735,16 +3266,83 @@ function renderManagedItems(){
   const el=document.getElementById('managedItemList');if(!el)return;
   if(!Array.isArray(data.items))data.items=[];
   const q=(document.getElementById('manageItemSearch')?.value||'').toLowerCase();
-  const rows=data.items.filter(x=>[x.name,x.unit,x.type,x.description].some(v=>String(v||'').toLowerCase().includes(q)));
-  const count=document.getElementById('itemNavCount');if(count)count.textContent=String(data.items.length);
-  el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Type</th><th>Item / Service</th><th>Selling Price</th><th>QTY</th><th>Unit</th><th>Tax</th><th>Actions</th></tr></thead><tbody>'+
-    rows.map(x=>'<tr><td>'+esc(x.type||'Goods')+'</td><td>'+esc(x.name)+'</td><td>'+money(x.rate||0)+'</td><td>'+esc(x.unit||'—')+'</td><td>'+esc(x.tax?x.tax+'%':'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(x.id)+'" onclick="editManagedItem(this.dataset.id)">Edit</button> <button class="admin-row-delete" data-id="'+esc(x.id)+'" onclick="deleteManagedItem(this.dataset.id)">Delete</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No items saved yet.</div>';
+  const rows=data.items.filter(x=>x.status!=='Deleted'&&[x.name,x.unit,x.type,x.description].some(v=>String(v||'').toLowerCase().includes(q)));
+  const count=document.getElementById('itemNavCount');if(count)count.textContent=String(data.items.filter(x=>x.status!=='Deleted').length);
+  el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table" style="min-width:1050px"><thead><tr><th>Type</th><th>Item / Service</th><th>Description</th><th>QTY</th><th>Unit</th><th>Selling Price</th><th>Tax</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
+    rows.map(x=>'<tr><td>'+esc(x.type||'Goods')+'</td><td>'+esc(x.name||'—')+'</td><td style="min-width:240px;max-width:380px;white-space:normal;overflow-wrap:anywhere;line-height:1.45;color:#52616d">'+esc(x.description||'—')+'</td><td>'+esc(x.qty??0)+'</td><td>'+esc(x.unit||'—')+'</td><td><strong style="font-weight:800;color:#17212b">'+money(x.rate||0)+'</strong></td><td>'+esc(x.tax?x.tax+'%':'—')+'</td><td><span style="display:inline-block;padding:4px 9px;border-radius:12px;font-size:11px;font-weight:800;background:'+(x.status==='Inactive'?'#fff0f0':'#e8f7ee')+';color:'+(x.status==='Inactive'?'#c62828':'#087f5b')+'">'+esc(x.status||'Active')+'</span></td><td><button class="invoice-view-btn" data-id="'+esc(x.id)+'" onclick="editManagedItem(this.dataset.id)">Edit</button> <button class="muted" data-id="'+esc(x.id)+'" onclick="toggleManagedItemStatus(this.dataset.id)">'+(x.status==='Inactive'?'Activate':'Deactivate')+'</button> <button class="admin-row-delete" data-id="'+esc(x.id)+'" onclick="deleteManagedItem(this.dataset.id)">Delete</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No items saved yet.</div>';
+}
+function toggleManagedItemStatus(id){
+  const item=data.items.find(x=>String(x.id)===String(id));if(!item)return;
+  item.status=(item.status==='Inactive'?'Active':'Inactive');
+  persist();renderManagedItems();
 }
 async function deleteManagedItem(id){
   if(!(await window.fozanConfirm('Delete this item / service?')))return;
-  data.items=data.items.filter(x=>String(x.id)!==String(id));persist();renderManagedItems();
+  // Keep a cloud tombstone so another PC cannot accidentally restore a stale copy.
+  const item=data.items.find(x=>String(x.id)===String(id));
+  if(item){item.status='Deleted';item.deleted_at=new Date().toISOString();}
+  persist();renderManagedItems();
+}
+function minimizeQuoteRegister(){
+  const section=document.getElementById('side-quotes');
+  if(!section)return;
+  section.classList.toggle('quote-window-minimized');
+}
+function toggleQuoteRegisterMaximize(){
+  const section=document.getElementById('side-quotes');
+  const button=document.getElementById('quoteWindowMaximize');
+  if(!section)return;
+  section.classList.remove('quote-window-minimized');
+  const maximized=section.classList.toggle('quote-window-maximized');
+  if(button){
+    button.textContent=maximized?'❐':'□';
+    button.title=maximized?'Restore':'Maximize';
+    button.setAttribute('aria-label',maximized?'Restore':'Maximize');
+  }
+}
+function closeQuoteRegister(){
+  const section=document.getElementById('side-quotes');
+  if(section)section.classList.remove('quote-window-minimized','quote-window-maximized');
+  const button=document.getElementById('quoteWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+  closeManagementSection();
+}
+function resetQuoteRegisterWindow(){
+  const section=document.getElementById('side-quotes');
+  if(section)section.classList.remove('quote-window-minimized','quote-window-maximized');
+  const button=document.getElementById('quoteWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+}
+
+function minimizeInvoiceRegister(){
+  const section=document.getElementById('side-invoices');
+  if(!section)return;
+  section.classList.toggle('invoice-window-minimized');
+}
+function toggleInvoiceRegisterMaximize(){
+  const section=document.getElementById('side-invoices');
+  const button=document.getElementById('invoiceWindowMaximize');
+  if(!section)return;
+  section.classList.remove('invoice-window-minimized');
+  const maximized=section.classList.toggle('invoice-window-maximized');
+  if(button){
+    button.textContent=maximized?'❐':'□';
+    button.title=maximized?'Restore':'Maximize';
+    button.setAttribute('aria-label',maximized?'Restore':'Maximize');
+  }
+}
+function closeInvoiceRegister(){
+  const section=document.getElementById('side-invoices');
+  if(section)section.classList.remove('invoice-window-minimized','invoice-window-maximized');
+  const button=document.getElementById('invoiceWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+  backFromInvoiceRegister();
 }
 function backFromInvoiceRegister(){
+  const invoiceSection=document.getElementById('side-invoices');
+  if(invoiceSection)invoiceSection.classList.remove('invoice-window-minimized','invoice-window-maximized');
+  const invoiceMaxButton=document.getElementById('invoiceWindowMaximize');
+  if(invoiceMaxButton){invoiceMaxButton.textContent='□';invoiceMaxButton.title='Maximize';invoiceMaxButton.setAttribute('aria-label','Maximize');}
   document.body.classList.remove('invoices-register-fullscreen');
   document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
@@ -3109,6 +3707,40 @@ function printStaffPayroll(savePdf){
 }
 function ensureManagementBackButtons(){
   document.querySelectorAll('.side-view').forEach(section=>{
+    // Monthly Credit & Balance uses its own window controls, not a dashboard button.
+    if(section.id==='side-credit'){
+      section.querySelectorAll('.management-back-btn').forEach(btn=>btn.remove());
+      section.querySelector('.monthly-dues-head')?.classList.remove('management-header-with-back');
+      return;
+    }
+    if(section.id==='side-expenses'){
+      section.querySelectorAll('.management-back-btn, .payroll-back-btn').forEach(btn=>btn.remove());
+      section.querySelector('.expenses-window-head')?.classList.remove('management-header-with-back');
+      return;
+    }
+    if(section.id==='side-overdue'){
+      section.querySelectorAll('.management-back-btn, .invoice-register-back, .payroll-back-btn').forEach(btn=>btn.remove());
+      section.querySelector('.outstanding-window-head')?.classList.remove('management-header-with-back');
+      return;
+    }
+    if(section.id==='side-invoices'){
+      section.querySelectorAll('.management-back-btn, .invoice-register-back').forEach(btn=>btn.remove());
+      section.querySelector('.invoice-register-heading')?.classList.remove('management-header-with-back');
+      return;
+    }
+    if(section.id==='side-quotes'){
+      section.querySelectorAll('.management-back-btn, .invoice-register-back').forEach(btn=>btn.remove());
+      section.querySelector('.quote-window-head')?.classList.remove('management-header-with-back');
+      return;
+    }
+    if(section.id==='side-customers'){
+      section.querySelectorAll('.management-back-btn, .invoice-register-back').forEach(btn=>btn.remove());
+      return;
+    }
+    if(section.id==='side-items'){
+      section.querySelectorAll('.management-back-btn, .invoice-register-back').forEach(btn=>btn.remove());
+      return;
+    }
     // Keep exactly one dashboard-return control in each management tab.
     // Remove older tab-specific Back buttons that otherwise appeared beside it.
     section.querySelectorAll('.invoice-register-back, .payroll-back-btn').forEach(oldBack=>oldBack.remove());
@@ -3132,6 +3764,84 @@ function ensureManagementBackButtons(){
     }
   });
 }
+function minimizeCreditWindow(){
+  const section=document.getElementById('side-credit');
+  if(!section)return;
+  section.classList.toggle('credit-window-minimized');
+}
+function toggleCreditWindowMaximize(){
+  const section=document.getElementById('side-credit');
+  const button=document.getElementById('creditWindowMaximize');
+  if(!section)return;
+  section.classList.remove('credit-window-minimized');
+  const maximized=section.classList.toggle('credit-window-maximized');
+  if(button){
+    button.textContent=maximized?'❐':'□';
+    button.title=maximized?'Restore':'Maximize';
+    button.setAttribute('aria-label',maximized?'Restore':'Maximize');
+  }
+}
+function closeCreditWindow(){
+  const section=document.getElementById('side-credit');
+  if(section)section.classList.remove('credit-window-minimized','credit-window-maximized');
+  const button=document.getElementById('creditWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+  closeManagementSection();
+}
+
+/* Overall Credit & Balance window controls */
+function minimizeOutstandingWindow(){
+  const section=document.getElementById('side-overdue');
+  if(!section)return;
+  section.classList.remove('outstanding-window-maximized');
+  section.classList.toggle('outstanding-window-minimized');
+  const button=document.getElementById('outstandingWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+}
+function toggleOutstandingWindowMaximize(){
+  const section=document.getElementById('side-overdue');
+  const button=document.getElementById('outstandingWindowMaximize');
+  if(!section)return;
+  section.classList.remove('outstanding-window-minimized');
+  const maximized=section.classList.toggle('outstanding-window-maximized');
+  if(button){button.textContent=maximized?'❐':'□';button.title=maximized?'Restore':'Maximize';button.setAttribute('aria-label',maximized?'Restore':'Maximize');}
+}
+function closeOutstandingWindow(){
+  const section=document.getElementById('side-overdue');
+  if(section)section.classList.remove('outstanding-window-minimized','outstanding-window-maximized');
+  const button=document.getElementById('outstandingWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+  closeManagementSection();
+}
+
+/* Expenses & Staff Salary window controls */
+function resetExpensesWindow(){
+  const section=document.getElementById('side-expenses');
+  if(section)section.classList.remove('expenses-window-minimized','expenses-window-maximized');
+  const button=document.getElementById('expensesWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+}
+function minimizeExpensesWindow(){
+  const section=document.getElementById('side-expenses');
+  if(!section)return;
+  section.classList.remove('expenses-window-maximized');
+  section.classList.toggle('expenses-window-minimized');
+  const button=document.getElementById('expensesWindowMaximize');
+  if(button){button.textContent='□';button.title='Maximize';button.setAttribute('aria-label','Maximize');}
+}
+function toggleExpensesWindowMaximize(){
+  const section=document.getElementById('side-expenses');
+  const button=document.getElementById('expensesWindowMaximize');
+  if(!section)return;
+  section.classList.remove('expenses-window-minimized');
+  const maximized=section.classList.toggle('expenses-window-maximized');
+  if(button){button.textContent=maximized?'❐':'□';button.title=maximized?'Restore':'Maximize';button.setAttribute('aria-label',maximized?'Restore':'Maximize');}
+}
+function closeExpensesWindow(){
+  resetExpensesWindow();
+  closeManagementSection();
+}
+
 function closeManagementSection(){
   document.querySelectorAll('.side-view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.remove('active'));
@@ -3161,13 +3871,14 @@ function showSidePanel(name){
   document.querySelectorAll('.side-view').forEach(el=>el.classList.toggle('active',!!target && el.id==='side-'+target));
   document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',!!target && el.dataset.panel===target));
   if(target==='expenses'){
+    resetExpensesWindow();
     const pm=document.getElementById('payrollMonth');if(pm&&!pm.value)pm.value=currentMonthKey();
     renderStaffPayroll();
   }
   if(target==='invoices')renderInvoiceRegister();
-  if(target==='quotes')renderQuoteRegister();
-  if(target==='customers'){document.body.classList.add('customer-form-open');renderManagedCustomers();toggleCustomerBusinessFields();}
-  if(target==='items'){document.body.classList.add('item-form-open');renderManagedItems();resetManagedItemForm();}
+  if(target==='quotes'){resetQuoteRegisterWindow();renderQuoteRegister();}
+  if(target==='customers'){resetCustomerWindow();document.body.classList.add('customer-form-open');renderManagedCustomers();toggleCustomerBusinessFields();}
+  if(target==='items'){resetItemWindow();document.body.classList.add('item-form-open');renderManagedItems();resetManagedItemForm();}
   if(target==='overdue'){
     const count=document.getElementById('overdueNavCount');
     if(count)count.textContent=String(getOverdueCustomerEntries().length);
@@ -3655,6 +4366,11 @@ function newSale(){
   document.getElementById('sCustomer').value='';
   document.getElementById('sMobile').value='';
   document.getElementById('sDesc').value='';
+  delete document.getElementById('sDesc').dataset.savedItemId;
+  delete document.getElementById('sDesc').dataset.savedItemTotal;
+  const savedDetail=document.getElementById('sSavedItemDetail');if(savedDetail){savedDetail.textContent='';savedDetail.style.display='none';}
+  document.getElementById('sQty').value='1';
+  document.getElementById('saleModal').classList.remove('sale-minimized','sale-maximized');
   updateSaleFields();
   document.getElementById('saleModal').style.display='flex';
 }
@@ -3680,9 +4396,77 @@ function editSale(id){
   document.getElementById('sCustomer').value=x.customer||'';
   document.getElementById('sMobile').value=x.mobile||'';
   document.getElementById('sDesc').value=x.desc||'';
+  delete document.getElementById('sDesc').dataset.savedItemId;
+  delete document.getElementById('sDesc').dataset.savedItemTotal;
+  const savedDetail=document.getElementById('sSavedItemDetail');if(savedDetail){savedDetail.textContent='';savedDetail.style.display='none';}
+  document.getElementById('sQty').value=x.quantity||1;
+  document.getElementById('saleModal').classList.remove('sale-minimized','sale-maximized');
   updateSaleFields();
   document.getElementById('saleModal').style.display='flex';
 }
+function savedInvoiceOutstanding(invoice){
+  if(!invoice)return 0;
+  // The saved invoice is the source of truth: it includes later Daily Sale
+  // items and payments, even when those entries are stored as separate sales.
+  if(invoice.balance_payment!==undefined && invoice.balance_payment!==null && Number.isFinite(Number(invoice.balance_payment)))
+    return Math.max(0,Number(invoice.balance_payment));
+  const linked=(data.sales||[]).find(v=>String(v.invoice_no||'')===String(invoice.invoice_no||'')&&String(v.branch_id||'1')===String(invoice.branch_id||'1'));
+  if(linked?.type==='credit')return Math.max(0,customerBalance(linked));
+  if(linked&&['cash','online'].includes(linked.type))return Math.max(0,Number(linked.balance_payment||0)-Number(saleBalancePaymentInfo(linked)?.amount||0));
+  return Math.max(0,Number(invoice.invoice_total??invoice.amount??0)-Number(invoice.advance_payment||0));
+}
+function findOpenSavedInvoiceForCustomer(customer, branchId){
+  const key=String(customer||'').trim().toLowerCase();
+  if(!key)return null;
+  return (data.invoices||[]).filter(x=>
+    String(x.branch_id||'1')===String(branchId||'1') &&
+    String(x.customer||'').trim().toLowerCase()===key &&
+    savedInvoiceOutstanding(x)>0.0001
+  ).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||'')))[0]||null;
+}
+function addInvoiceActivity(invoice, activity){
+  if(!invoice)return;
+  if(!Array.isArray(invoice.activity_history))invoice.activity_history=[];
+  invoice.activity_history.push({...activity, recorded_at:nowLocal().date+' '+nowLocal().time});
+  invoice.updated_at=nowLocal().date+' '+nowLocal().time;
+}
+function applyDailySalePaymentToSavedInvoices(customer, amount, date, time, method, saleId){
+  let remaining=Math.max(0,Number(amount||0));
+  if(!remaining)return;
+  const key=String(customer||'').trim().toLowerCase();
+  const invoices=(data.invoices||[]).filter(x=>String(x.branch_id||'1')===String(activeBranch) && String(x.customer||'').trim().toLowerCase()===key)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||'')));
+  for(const invoice of invoices){
+    if(remaining<=0.0001)break;
+    const due=savedInvoiceOutstanding(invoice);
+    if(due<=0.0001)continue;
+    const applied=Math.min(due,remaining);
+    invoice.advance_payment=Number(invoice.advance_payment||0)+applied;
+    invoice.balance_payment=Math.max(0,due-applied);
+    addInvoiceActivity(invoice,{kind:'payment',date,time,amount:applied,method:method||'cash',sale_id:saleId,description:'Payment received from Daily Sale'});
+    remaining-=applied;
+  }
+}
+function appendDailySaleToSavedInvoice(invoice, sale, receivedAmount){
+  if(!invoice||!sale)return;
+  const qty=Math.max(1,Number(sale.quantity||1));
+  const catalogItem=findSavedItemByName(sale.desc||'');
+  const item={desc:sale.desc||'Additional Daily Sale',description:catalogItem?.description||'Added from Daily Sale on '+sale.date,unit:catalogItem?.unit||'',qty,rate:Number(sale.amount||0)/qty,total:Number(sale.amount||0),date:sale.date,added_from_daily_sale:true};
+  if(!Array.isArray(invoice.invoice_items))invoice.invoice_items=[];
+  invoice.invoice_items.push(item);
+  const add=Number(sale.amount||0);
+  invoice.invoice_subtotal=Number(invoice.invoice_subtotal||0)+add;
+  invoice.invoice_total=Number(invoice.invoice_total??invoice.amount??0)+add;
+  invoice.amount=invoice.invoice_total;
+  invoice.invoice_qty=Number(invoice.invoice_qty||0)+qty;
+  invoice.advance_payment=Number(invoice.advance_payment||0)+Math.max(0,Number(receivedAmount||0));
+  invoice.balance_payment=Math.max(0,Number(invoice.balance_payment||0)+add-Math.max(0,Number(receivedAmount||0)));
+  invoice.desc=(invoice.desc?invoice.desc+' | ':'')+sale.date+': '+(sale.desc||'Additional sale');
+  addInvoiceActivity(invoice,{kind:'sale_item',date:sale.date,time:sale.time,amount:add,quantity:qty,description:sale.desc||'Additional Daily Sale',sale_id:sale.id});
+  sale.invoice_no=invoice.invoice_no;
+  sale.linked_invoice_id=invoice.id;
+}
+
 function saveSale(){
   if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
   if(!requireActionPassword())return;
@@ -3694,6 +4478,8 @@ function saveSale(){
   if(mobile && (mobileDigits.length<10 || mobileDigits.length>15))
     return alert('Please enter a valid mobile / WhatsApp number (10 to 15 digits).');
   const desc=cleanDescription(document.getElementById('sDesc').value);
+  const quantity=Number(document.getElementById('sQty').value||1);
+  if(!Number.isFinite(quantity)||quantity<1||!Number.isInteger(quantity))return alert('Please enter a valid quantity (1 or more).');
   const type=document.getElementById('sType').value;
   const creditReceived=type==='credit_balance_received';
   const oldBalance=type==='balance_payment'||creditReceived;
@@ -3708,12 +4494,24 @@ function saveSale(){
   if(!customer && !desc)return alert('Please enter Customer Name or Description / Item.');
   if(oldBalance && !customer)return alert('For a balance payment, enter the customer name exactly as it appears on the credit entry.');
   const amountValue=document.getElementById('sAmount').value.trim();
-  const amount=amountValue===''?0:Number(amountValue);
+  let amount=amountValue===''?0:Number(amountValue);
   let advance=0;
   if(type==='cash_full'||type==='online_full')advance=amount;
   const enteredBalance=Number(document.getElementById('sBalancePayment').value||0);
   const initialBalance=isPaidPlusDue?enteredBalance:((isCash||isOnline)?Math.max(0,amount-advance):0);
   const advanceMethod=creditReceived?receivedBy:(type==='online_balance'||type==='online_full')?'online':'cash';
+  // If this customer already has an unpaid invoice in this branch, add the
+  // new daily sale as another dated invoice item instead of a separate sale.
+  const hasOpenCustomerInvoice=!editingSale && !oldBalance && !!customer &&
+    salesInBranch(activeBranch).some(x=>(x.customer||'').trim().toLowerCase()===customer.toLowerCase() &&
+      (x.type==='credit' ? customerBalance(x)>0.0001 :
+        (['cash','online'].includes(x.type) &&
+          Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0)>0.0001)));
+  const openSavedInvoice=!editingSale && !oldBalance ? findOpenSavedInvoiceForCustomer(customer,activeBranch) : null;
+  // For a customer with an outstanding saved invoice, Cash/Online Received
+  // with Balance records the new item's full value as received + still due.
+  // This allows a zero-advance item: e.g. received 0 + balance 1000 = item 1000.
+  if(isPaidPlusDue && openSavedInvoice) amount+=enteredBalance;
   if(!Number.isFinite(amount)||amount<0||(amount===0&&!oldBalance&&!isCredit))
     return alert(isCredit?'Please enter a valid bill amount (0 is allowed for an unpriced credit entry).':'Please enter an amount greater than zero.');
   if(!Number.isFinite(advance)||advance<0)return alert('Please enter a valid received amount.');
@@ -3728,7 +4526,7 @@ function saveSale(){
     const oldType=old.type;
     const oldCustomer=(old.customer||'').trim();
     const oldCustomerKey=oldCustomer.toLowerCase();
-    const obj={type:storedType,amount,customer,mobile,desc,date,time,
+    const obj={type:storedType,amount,customer,mobile,desc,quantity,date,time,
       advance_payment:advance,advance_method:advanceMethod,
       payment_method:advanceMethod,balance_payment:initialBalance,
       balance_entry_mode:isPaidPlusDue?'paid_plus_due':''};
@@ -3737,20 +4535,28 @@ function saveSale(){
       if(oldCustomerKey)rebuildBalanceAllocations(oldCustomer);
       if(customer && customer.toLowerCase()!==oldCustomerKey)rebuildBalanceAllocations(customer);
     }
-  }else if(isCredit){
-    const credit={id:uid(),branch_id:activeBranch,type:'credit',amount,customer,mobile,desc,date,time,
-      advance_payment:advance,advance_method:advanceMethod,balance_payment:0};
+  }else if(isCredit || hasOpenCustomerInvoice || openSavedInvoice){
+    // A new item on an open customer invoice remains part of that invoice.
+    // Any amount already received on this sale is recorded as its advance.
+    const itemAdvance=isCredit?advance:
+      (isCash||isOnline?Math.max(0,amount-initialBalance):advance);
+    const credit={id:uid(),branch_id:activeBranch,type:'credit',amount,customer,mobile,desc,quantity,date,time,
+      advance_payment:itemAdvance,advance_method:advanceMethod,balance_payment:0};
     data.sales.push(credit);
+    if(openSavedInvoice)appendDailySaleToSavedInvoice(openSavedInvoice,credit,itemAdvance);
     const monthlyCreditMonth=document.getElementById('summaryMonth');
     if(monthlyCreditMonth)monthlyCreditMonth.value=monthKey(date);
     applyUnallocatedAdvancesToCredit(customer);
   }else{
-    const obj={id:uid(),branch_id:activeBranch,type:storedType,amount,customer,mobile,desc,date,time,
+    const obj={id:uid(),branch_id:activeBranch,type:storedType,amount,customer,mobile,desc,quantity,date,time,
       advance_payment:advance,advance_method:advanceMethod,
       payment_method:advanceMethod,balance_payment:initialBalance,
       balance_entry_mode:isPaidPlusDue?'paid_plus_due':''};
     data.sales.push(obj);
-    if(oldBalance)applyBalancePayment(customer,amount,date,time,obj.id);
+    if(oldBalance){
+      applyBalancePayment(customer,amount,date,time,obj.id);
+      applyDailySalePaymentToSavedInvoices(customer,amount,date,time,receivedBy,obj.id);
+    }
   }
   persist();closeSaleModal();renderDateHistory();renderDashboard();renderSales();
 }
@@ -3767,7 +4573,17 @@ async function deleteSale(id){
   persist();renderDashboard();renderSales();
 }
 
-function closeSaleModal(){document.getElementById('saleModal').style.display='none';editingSale=null}
+function toggleSaleMinimize(){
+  const modal=document.getElementById('saleModal');
+  modal.classList.toggle('sale-minimized');
+  if(modal.classList.contains('sale-minimized'))modal.classList.remove('sale-maximized');
+}
+function toggleSaleMaximize(){
+  const modal=document.getElementById('saleModal');
+  modal.classList.toggle('sale-maximized');
+  modal.classList.remove('sale-minimized');
+}
+function closeSaleModal(){const modal=document.getElementById('saleModal');modal.style.display='none';modal.classList.remove('sale-minimized','sale-maximized');editingSale=null}
 
 function parseStaffExpenseCloudMeta(value){
   const m=String(value||'').match(/^\[\[FOZAN_STAFF:([^:]+):([^\]]+)\]\]/);
@@ -3858,7 +4674,17 @@ function editExpense(id){
   window._editingExpense=id;
   document.getElementById('expenseModal').style.display='flex';
 }
-function closeExpenseModal(){document.getElementById('expenseModal').style.display='none';window._editingExpense=null}
+function toggleExpenseMinimize(){
+  const modal=document.getElementById('expenseModal');
+  modal.classList.toggle('sale-minimized');
+  if(modal.classList.contains('sale-minimized'))modal.classList.remove('sale-maximized');
+}
+function toggleExpenseMaximize(){
+  const modal=document.getElementById('expenseModal');
+  modal.classList.toggle('sale-maximized');
+  modal.classList.remove('sale-minimized');
+}
+function closeExpenseModal(){const modal=document.getElementById('expenseModal');modal.style.display='none';modal.classList.remove('sale-minimized','sale-maximized');window._editingExpense=null}
 
 
 
@@ -3900,12 +4726,80 @@ function savedCustomerDescriptions(){
     .map(x=>cleanDescription(x.desc||'').trim()).filter(Boolean))]
     .sort((a,b)=>a.localeCompare(b));
 }
+function customerHasSavedInvoiceForDailySale(customer){
+  const key=String(customer||'').trim().toLowerCase();
+  if(!key)return false;
+  return (data.invoices||[]).some(inv=>
+    String(inv.branch_id||'1')===String(activeBranch) &&
+    String(inv.customer||'').trim().toLowerCase()===key
+  );
+}
 function refreshCustomerDescriptionSuggestions(){
   const list=document.getElementById('saleDescriptionSuggestions');
   if(!list)return;
-  list.replaceChildren(...savedCustomerDescriptions().map(value=>{
+  const customer=(document.getElementById('sCustomer')?.value||'').trim();
+  const values=savedCustomerDescriptions();
+  // Saved Item catalog suggestions are enabled only for customers who already
+  // have a saved invoice in the currently selected branch.
+  if(customerHasSavedInvoiceForDailySale(customer)){
+    (data.items||[]).filter(x=>x.status!=='Deleted'&&x.status!=='Inactive'&&String(x.name||'').trim())
+      .forEach(x=>values.push(String(x.name).trim()));
+  }
+  list.replaceChildren(...[...new Set(values)].map(value=>{
     const option=document.createElement('option');option.value=value;return option;
   }));
+}
+function applySavedItemToDailySale(){
+  const customer=(document.getElementById('sCustomer')?.value||'').trim();
+  const desc=document.getElementById('sDesc');
+  const detail=document.getElementById('sSavedItemDetail');
+  if(!desc)return;
+  const eligible=customerHasSavedInvoiceForDailySale(customer);
+  const item=eligible?findSavedItemByName(desc.value):null;
+  if(!item){
+    if(detail){detail.textContent='';detail.style.display='none';}
+    delete desc.dataset.savedItemId;
+    delete desc.dataset.savedItemTotal;
+    return;
+  }
+  const qty=Math.max(1,Number(document.getElementById('sQty')?.value||1));
+  const total=Math.max(0,Number(item.rate||0))*qty;
+  desc.dataset.savedItemId=String(item.id);
+  desc.dataset.savedItemTotal=String(total);
+  if(detail){
+    detail.textContent=[item.description||'',item.unit?'Unit: '+item.unit:'','Rate: '+money(item.rate||0)+' × '+qty+' = '+money(total)].filter(Boolean).join(' • ');
+    detail.style.display='block';
+  }
+  const type=document.getElementById('sType')?.value||'cash_balance';
+  const amount=document.getElementById('sAmount');
+  const balance=document.getElementById('sBalancePayment');
+  if(type==='cash_balance'||type==='online_balance'){
+    if(amount)amount.value='0';
+    if(balance)balance.value=String(total);
+  }else{
+    if(amount)amount.value=String(total);
+    if(type==='credit'&&balance)balance.value=String(total);
+  }
+}
+function updateDailySaleSavedItemPrice(){
+  const desc=document.getElementById('sDesc');
+  if(!desc?.dataset.savedItemId)return;
+  const item=(data.items||[]).find(x=>String(x.id)===String(desc.dataset.savedItemId));
+  if(!item||!customerHasSavedInvoiceForDailySale(document.getElementById('sCustomer')?.value||''))return;
+  const qty=Math.max(1,Number(document.getElementById('sQty')?.value||1));
+  const total=Math.max(0,Number(item.rate||0))*qty;
+  desc.dataset.savedItemTotal=String(total);
+  const detail=document.getElementById('sSavedItemDetail');
+  if(detail)detail.textContent=[item.description||'',item.unit?'Unit: '+item.unit:'','Rate: '+money(item.rate||0)+' × '+qty+' = '+money(total)].filter(Boolean).join(' • ');
+  const type=document.getElementById('sType')?.value||'cash_balance';
+  const amount=document.getElementById('sAmount'),balance=document.getElementById('sBalancePayment');
+  if(type==='cash_balance'||type==='online_balance'){
+    const received=Math.max(0,Number(amount?.value||0));
+    if(balance)balance.value=String(Math.max(0,total-received));
+  }else if(amount){
+    amount.value=String(total);
+    if(type==='credit'&&balance)balance.value=String(total);
+  }
 }
 function attachSmartAutocomplete(inputId,source,onChoose){
   const input=document.getElementById(inputId);if(!input||input.dataset.smartAutocomplete)return;
@@ -4112,6 +5006,23 @@ function toggleCustomBillBuilder(){
     if(name)name.focus();
   }
 }
+function syncCustomDiscountFields(source){
+  const pctField=document.getElementById('customBillDiscount');
+  const rsField=document.getElementById('customBillDiscountRs');
+  if(!pctField||!rsField)return;
+  const rows=[...document.querySelectorAll('#customBillItems .custom-bill-item')];
+  let subtotal=0;
+  rows.forEach(row=>subtotal+=Math.max(0,Number(row.querySelector('.custom-item-qty')?.value||0))*Math.max(0,Number(row.querySelector('.custom-item-rate')?.value||0)));
+  if(source==='amount'){
+    const amount=Math.max(0,Number(rsField.value||0));
+    pctField.value=subtotal>0?Math.min(100,amount/subtotal*100).toFixed(2):'0';
+    window.customDiscountMode='amount';
+  }else{
+    const pct=Math.min(100,Math.max(0,Number(pctField.value||0)));
+    rsField.value=(subtotal*pct/100).toFixed(2);
+    window.customDiscountMode='percent';
+  }
+}
 function updateCustomBillTotals(){
   const rows=[...document.querySelectorAll('#customBillItems .custom-bill-item')];
   let subtotal=0;
@@ -4127,8 +5038,16 @@ function updateCustomBillTotals(){
     }
     amount.textContent='Amount: '+money(line);
   });
-  const pct=Math.min(100,Math.max(0,Number(document.getElementById('customBillDiscount')?.value||0)));
-  const discount=subtotal*pct/100;
+  const pctField=document.getElementById('customBillDiscount');
+  const rsField=document.getElementById('customBillDiscountRs');
+  let pct=Math.min(100,Math.max(0,Number(pctField?.value||0)));
+  let discount=Math.max(0,Number(rsField?.value||0));
+  if(window.customDiscountMode==='amount'){
+    discount=Math.min(subtotal,discount);pct=subtotal>0?discount/subtotal*100:0;
+    if(pctField)pctField.value=pct.toFixed(2);
+  }else{
+    discount=subtotal*pct/100;if(rsField)rsField.value=discount.toFixed(2);
+  }
   const shipping=Math.max(0,Number(document.getElementById('customBillShipping')?.value||0));
   const total=Math.max(0,subtotal-discount+shipping);
   const advance=Math.max(0,Number(document.getElementById('customBillReceived')?.value||0));
@@ -4139,10 +5058,10 @@ function updateCustomBillTotals(){
   put('customLiveAdvance',advance);put('customLiveBalance',balance);
 }
 document.addEventListener('input',function(e){
-  if(e.target.matches('.custom-item-qty,.custom-item-rate,#customBillDiscount,#customBillShipping,#customBillReceived'))updateCustomBillTotals();
+  if(e.target.matches('#customBillDiscount'))syncCustomDiscountFields('percent');else if(e.target.matches('#customBillDiscountRs'))syncCustomDiscountFields('amount');if(e.target.matches('.custom-item-qty,.custom-item-rate,#customBillDiscount,#customBillDiscountRs,#customBillShipping,#customBillReceived'))updateCustomBillTotals();
 });
 document.addEventListener('change',function(e){
-  if(e.target.matches('.custom-item-qty,.custom-item-rate,#customBillDiscount,#customBillShipping,#customBillReceived'))updateCustomBillTotals();
+  if(e.target.matches('#customBillDiscount'))syncCustomDiscountFields('percent');else if(e.target.matches('#customBillDiscountRs'))syncCustomDiscountFields('amount');if(e.target.matches('.custom-item-qty,.custom-item-rate,#customBillDiscount,#customBillDiscountRs,#customBillShipping,#customBillReceived'))updateCustomBillTotals();
 });
 function addCustomBillItem(){
   const wrap=document.getElementById('customBillItems');if(!wrap)return;
@@ -4178,11 +5097,11 @@ function setDocumentMode(mode){
 function refreshSavedItemDatalist(){
   const list=document.getElementById('quoteInvoiceItemList');if(!list)return;
   if(!Array.isArray(data.items))data.items=[];
-  list.replaceChildren(...data.items.map(item=>{const o=document.createElement('option');o.value=item.name||'';o.label=[item.name,item.unit||'',item.rate!=null?'Rate: PKR '+Number(item.rate).toLocaleString('en-PK'):''].filter(Boolean).join(' — ');return o;}));
+  list.replaceChildren(...data.items.filter(item=>item.status!=='Deleted'&&item.status!=='Inactive').map(item=>{const o=document.createElement('option');o.value=item.name||'';o.label=[item.name,item.unit||'',item.rate!=null?'Rate: PKR '+Number(item.rate).toLocaleString('en-PK'):''].filter(Boolean).join(' — ');return o;}));
 }
 function showSavedItemOptions(input){refreshSavedItemDatalist();}
 function findSavedItemByName(name){
-  return (data.items||[]).find(x=>String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());
+  return (data.items||[]).find(x=>x.status!=='Deleted'&&x.status!=='Inactive'&&String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());
 }
 function savedItemDescription(item){
   return item?[item.description||'',item.unit?'Unit: '+item.unit:''].filter(Boolean).join(' • '):'';
@@ -4236,9 +5155,9 @@ function generateCustomQuote(){
   const name=(document.getElementById('customCustomerName').value||'').trim();if(!name){alert('Customer Name likhein.');return;}
   const items=[];for(const el of document.querySelectorAll('#customBillItems .custom-bill-item')){const desc=(el.querySelector('.custom-item-desc').value||'').trim(),qty=Number(el.querySelector('.custom-item-qty').value||0),rate=Number(el.querySelector('.custom-item-rate').value||0);if(!desc&&!rate)continue;if(!desc||qty<=0||rate<0||!Number.isFinite(rate)){alert('Item description, quantity aur rate check karein.');return;}const saved=findSavedItemByName(desc);items.push({desc,description:saved?.description||'',unit:saved?.unit||'',qty,rate,total:qty*rate});}
   if(!items.length){alert('Kam az kam aik item add karein.');return;}
-  const subtotal=items.reduce((a,x)=>a+x.total,0),pct=Math.min(100,Math.max(0,Number(document.getElementById('customBillDiscount').value||0))),discount=subtotal*pct/100,shipping=Math.max(0,Number(document.getElementById('customBillShipping').value||0)),total=Math.max(0,subtotal-discount+shipping);
+  const subtotal=items.reduce((a,x)=>a+x.total,0),discount=Math.min(subtotal,Math.max(0,Number(document.getElementById('customBillDiscountRs').value||0))),pct=subtotal>0?discount/subtotal*100:0,shipping=Math.max(0,Number(document.getElementById('customBillShipping').value||0)),total=Math.max(0,subtotal-discount+shipping);
   const timestamp=nowLocal(),date=document.getElementById('customBillDate').value||timestamp.date;
-  const record={id:uid(),branch_id:activeBranch,quote_no:document.getElementById('customInvoiceNo').value||nextQuoteNumber(activeBranch),date,expiry_date:document.getElementById('customDueDate').value||'',reference:(document.getElementById('customOrderNo').value||'').trim(),customer:name,mobile:(document.getElementById('customCustomerMobile').value||'').trim(),company:(document.getElementById('customCompanyName').value||'').trim(),address:(document.getElementById('customCustomerAddress').value||'').trim(),salesperson:(document.getElementById('customSalesperson').value||'').trim(),subject:(document.getElementById('customSubject').value||'').trim(),quote_items:items,quote_subtotal:subtotal,quote_discount:discount,quote_discount_percent:pct,quote_shipping:shipping,quote_total:total,notes:(document.getElementById('customBillNotes').value||'').trim(),status:'saved',created_at:timestamp.date+' '+timestamp.time};
+  const record={id:uid(),branch_id:activeBranch,quote_no:document.getElementById('customInvoiceNo').value||nextQuoteNumber(activeBranch),date,expiry_date:document.getElementById('customDueDate').value||'',reference:'',customer:name,mobile:(document.getElementById('customCustomerMobile').value||'').trim(),company:(document.getElementById('customCompanyName').value||'').trim(),address:(document.getElementById('customCustomerAddress').value||'').trim(),salesperson:(document.getElementById('customSalesperson').value||'').trim(),subject:'',quote_items:items,quote_subtotal:subtotal,quote_discount:discount,quote_discount_percent:pct,quote_shipping:shipping,quote_total:total,notes:(document.getElementById('customBillNotes').value||'').trim(),status:'saved',created_at:timestamp.date+' '+timestamp.time};
   if(!Array.isArray(data.quotes))data.quotes=[];data.quotes.push(record);
   if(!Array.isArray(data.customers))data.customers=[];if(!data.customers.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase()&&String(c.mobile||'')===record.mobile&&String(c.branch_id||'1')===String(activeBranch)))data.customers.push({id:uid(),name,mobile:record.mobile,company:record.company,address:record.address,branch_id:activeBranch});
   persist();renderQuoteRegister();viewSavedQuote(record.id);alert('Quote saved successfully.');
@@ -4322,6 +5241,16 @@ function bindInvoiceCustomerAutocomplete(){
 }
 document.addEventListener('DOMContentLoaded',()=>{refreshSavedInvoiceCustomerOptions();bindInvoiceCustomerAutocomplete();});
 
+function getLoggedInInvoiceSalesperson(){
+  if(currentUserKey==='admin')return 'Ikram Sohail';
+  if(currentUserKey==='head')return 'Imran Siddique';
+  if(currentUserKey==='bahria')return 'Jawad';
+  return String(activeBranch)==='2'?'Jawad':'Imran Siddique';
+}
+function applyLoggedInInvoiceSalesperson(){
+  const field=document.getElementById('customSalesperson');
+  if(field && !window.editingSavedInvoiceId)field.value=getLoggedInInvoiceSalesperson();
+}
 function openInvoiceWorkspace(mode='invoice'){
   document.body.classList.remove('invoices-register-fullscreen');
   refreshSavedInvoiceCustomerOptions();
@@ -4332,6 +5261,8 @@ function openInvoiceWorkspace(mode='invoice'){
   if(builder)builder.style.display='block';
   const panel=document.getElementById('billGeneratorPanel');
   if(panel)panel.classList.remove('bill-collapsed');
+  window.editingSavedInvoiceId='';
+  applyLoggedInInvoiceSalesperson();
   const no=document.getElementById('customInvoiceNo');
   if(no)no.value=nextBranchInvoiceNumber(activeBranch);
   const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption){dailyOption.checked=false;dailyOption.disabled=true;}
@@ -4345,10 +5276,27 @@ function openInvoiceWorkspace(mode='invoice'){
   setTimeout(()=>document.getElementById('customCustomerName')?.focus(),50);
 }
 function closeInvoiceWorkspace(){
-  document.body.classList.remove('invoice-workspace-active');
+  document.body.classList.remove('invoice-workspace-active','add-invoice-minimized','add-invoice-windowed');
+  const maxButton=document.getElementById('addInvoiceMaximize');
+  if(maxButton){maxButton.textContent='□';maxButton.title='Restore';maxButton.setAttribute('aria-label','Restore');}
+  const minButton=document.getElementById('addInvoiceMinimize');
+  if(minButton){minButton.textContent='−';minButton.title='Minimize';}
   const genBtn=document.querySelector('.custom-generate-btn');if(genBtn)genBtn.disabled=false;
   const builder=document.getElementById('customBillBuilder');
   if(builder)builder.style.display='none';
+}
+function toggleAddInvoiceMinimize(){
+  const minimized=document.body.classList.toggle('add-invoice-minimized');
+  const button=document.getElementById('addInvoiceMinimize');
+  if(button){button.textContent=minimized?'□':'−';button.title=minimized?'Restore content':'Minimize';button.setAttribute('aria-label',minimized?'Restore content':'Minimize');}
+}
+function toggleAddInvoiceMaximize(){
+  document.body.classList.remove('add-invoice-minimized');
+  const windowed=document.body.classList.toggle('add-invoice-windowed');
+  const button=document.getElementById('addInvoiceMaximize');
+  const minButton=document.getElementById('addInvoiceMinimize');
+  if(minButton){minButton.textContent='−';minButton.title='Minimize';minButton.setAttribute('aria-label','Minimize');}
+  if(button){button.textContent=windowed?'❐':'□';button.title=windowed?'Maximize':'Restore';button.setAttribute('aria-label',windowed?'Maximize':'Restore');}
 }
 function saveCustomInvoiceDraft(){
   if(activeBranch==='all'){alert('Draft banane ke liye pehle branch select karein.');return;}
@@ -4361,17 +5309,17 @@ function saveCustomInvoiceDraft(){
     address:(document.getElementById('customCustomerAddress').value||'').trim(),
     invoice_no:document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch),
     date:document.getElementById('customBillDate').value||nowLocal().date,
-    order_no:document.getElementById('customOrderNo').value||'',
+    order_no:'',
     terms:document.getElementById('customTerms').value,
     due_date:document.getElementById('customDueDate').value||'',
     salesperson:document.getElementById('customSalesperson').value||'',
-    subject:document.getElementById('customSubject').value||'',
+    subject:'',
     items:[...document.querySelectorAll('#customBillItems .custom-bill-item')].map(el=>({
       desc:el.querySelector('.custom-item-desc').value||'',
       qty:el.querySelector('.custom-item-qty').value||'1',
       rate:el.querySelector('.custom-item-rate').value||'0'
     })),
-    discount:document.getElementById('customBillDiscount').value||'0',
+    discount:document.getElementById('customBillDiscount').value||'0',discount_amount:document.getElementById('customBillDiscountRs').value||'0',
     shipping:document.getElementById('customBillShipping').value||'0',
     received:document.getElementById('customBillReceived').value||'0',
     notes:document.getElementById('customBillNotes').value||'',
@@ -4398,11 +5346,9 @@ function fozanInvoiceMarkup(v){
   const date=value=>value?new Date(value+'T00:00:00').toLocaleDateString('en-GB'):'—';
   const branch=String(v.branch_id||'1');
   const branchInfo=branch==='2'
-    ? 'Basement Sahara Arcade, Urban Boulevard, Sector A, Bahria Enclave, Islamabad'
-    : 'Plaza # 17, Backside D-Eatson Medical Store, Main PWD Society Road, Islamabad';
-  const phone=branch==='2'
-    ? '+92 335 4007700  |  +92 333 5465626'
-    : '0330-5003388  |  0333-5465626';
+    ? 'Basement Sahara Arcade, Sector-A Commercial, Bahria Enclave, Islamabad, Pakistan'
+    : 'Plaza # 17, Backside D-Watson Pharmacy, Main PWD Society Road, Islamabad, Pakistan';
+  const phone='0333-5465626  |  fozanprinters@gmail.com';
   const items=Array.isArray(v.items)?v.items:[];
   const total=Number(v.total||0);
   const advance=Number(v.advance||0);
@@ -4445,7 +5391,23 @@ function fozanInvoiceMarkup(v){
       (rows||'<tr><td colspan="5">No items</td></tr>')+
     '</tbody></table>'+
     '<div class="fozan-invoice-bottom">'+
-      (v.notes?'<div class="fozan-invoice-notes"><b>Notes:</b><br>'+e(v.notes)+'</div>':'<div></div>')+
+      '<div class="fozan-invoice-notes">'+
+        '<div class="fozan-note-section"><b>Notes</b>'+
+          '<div>Thanks for your business.</div>'+
+          '<div>This is computer generated no signature required</div>'+
+          '<div class="fozan-note-rule">------------------------------------------------------</div>'+
+          '<div><b>For Online Payments:</b></div>'+
+          '<div>Ac# 02010095015943011</div>'+
+          '<div>Ac Titles: Ikram Sohail</div>'+
+          '<div>Bank: Bank Al Habib- PWD Branch</div>'+
+        '</div>'+
+        '<div class="fozan-terms-section"><b>Terms &amp; Conditions</b>'+
+          '<div>Receive your Orders within 15 days.</div>'+
+          '<div>Confirm your order on call before receiving it.</div>'+
+          '<div>All taxes are excluded from the invoice.</div>'+
+        '</div>'+
+        (v.notes?'<div class="fozan-extra-notes"><b>Additional Notes:</b><br>'+e(v.notes)+'</div>':'')+
+      '</div>'+
       '<div class="fozan-invoice-totals">'+
         '<div><span>Subtotal</span><b>'+money(subtotal)+'</b></div>'+
         '<div><span>Discount'+(v.discountPct?' ('+e(v.discountPct)+'%)':'')+'</span><b>'+money(discount)+'</b></div>'+
@@ -4454,7 +5416,7 @@ function fozanInvoiceMarkup(v){
         '<div><span>Amount Received</span><b>'+money(advance)+'</b></div>'+
         '<div class="fozan-balance-line"><span>Balance Due</span><b>'+money(balance)+'</b></div>'+
       '</div></div>'+
-    '<div class="fozan-invoice-footer">Thank you for choosing Fozan Printing Press.</div>'+
+    '<div class="fozan-invoice-footer"><div class="fozan-footer-address">'+branchInfo+'</div><div>Phone: 0333-5465626 | Email: fozanprinters@gmail.com</div></div>'+
   '</div>';
 }
 
@@ -4479,8 +5441,8 @@ function generateCustomBill(){
   }
   if(!items.length){alert('Kam az kam aik item/service aur us ka rate add karein.');return;}
   const subtotal=items.reduce((sum,x)=>sum+x.total,0);
-  const discountPct=Math.min(100,Math.max(0,Number(document.getElementById('customBillDiscount').value||0)));
-  const discount=subtotal*discountPct/100;
+  const discount=Math.min(subtotal,Math.max(0,Number(document.getElementById('customBillDiscountRs').value||0)));
+  const discountPct=subtotal>0?discount/subtotal*100:0;
   const shipping=Math.max(0,Number(document.getElementById('customBillShipping').value||0));
   const total=Math.max(0,subtotal-discount+shipping);
   const received=Math.max(0,Number(document.getElementById('customBillReceived').value||0));
@@ -4488,14 +5450,14 @@ function generateCustomBill(){
   const balance=total-received;
   const notes=(document.getElementById('customBillNotes').value||'').trim();
   const invoiceNo=document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch);
-  const orderNo=(document.getElementById('customOrderNo').value||'').trim();
+  const orderNo='';
   const terms=document.getElementById('customTerms').value;
   const dueDate=document.getElementById('customDueDate').value||date;
   const salesperson=(document.getElementById('customSalesperson').value||'').trim();
-  const subject=(document.getElementById('customSubject').value||'').trim();
+  const subject='';
   const branchLabel=branchName(activeBranch);
   const fmtDate=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB'):'—';
-  const desc=items.map(x=>x.desc+' × '+x.qty+' @ '+money(x.rate)).join(' | ')+(subject?' — '+subject:'');
+  const desc=items.map(x=>x.desc+' × '+x.qty+' @ '+money(x.rate)).join(' | ');
   const mobile=(document.getElementById('customCustomerMobile').value||'').trim();
   const email=(document.getElementById('customCustomerEmail')?.value||'').trim();
   const company=(document.getElementById('customCompanyName').value||'').trim();
@@ -4516,7 +5478,7 @@ function generateCustomBill(){
     data.customers.push({id:uid(),name,mobile,email,company,address,branch_id:activeBranch});
   }
   const invoiceRecord={...record,status:'saved',created_at:timestamp.date+' '+timestamp.time};
-  if(window.editingSavedInvoiceId){const invoiceIndex=data.invoices.findIndex(v=>String(v.id)===String(window.editingSavedInvoiceId));if(invoiceIndex>=0)data.invoices[invoiceIndex]={...data.invoices[invoiceIndex],...invoiceRecord,id:window.editingSavedInvoiceId};else data.invoices.push(invoiceRecord);window.editingSavedInvoiceId='';}else data.invoices.push(invoiceRecord);
+  if(window.editingSavedInvoiceId){const invoiceIndex=data.invoices.findIndex(v=>String(v.id)===String(window.editingSavedInvoiceId));if(invoiceIndex>=0){const previous=data.invoices[invoiceIndex];data.invoices[invoiceIndex]={...previous,...invoiceRecord,id:window.editingSavedInvoiceId,activity_history:previous.activity_history||[]};}else data.invoices.push(invoiceRecord);window.editingSavedInvoiceId='';}else data.invoices.push(invoiceRecord);
   if(window.editingCustomDraftId&&Array.isArray(data.invoice_drafts)){data.invoice_drafts=data.invoice_drafts.filter(x=>String(x.id)!==String(window.editingCustomDraftId));window.editingCustomDraftId='';}
   persist();
   renderInvoiceRegister();
@@ -4546,22 +5508,26 @@ function generateCustomBill(){
 function renderInvoiceRegister(){
   const list=document.getElementById('invoiceRegisterList');if(!list)return;
   if(!Array.isArray(data.invoices))data.invoices=[];if(!Array.isArray(data.quotes))data.quotes=[];
-if(!Array.isArray(data.customers))data.customers=[];
-if(!Array.isArray(data.items))data.items=[];
+  if(!Array.isArray(data.customers))data.customers=[];
+  if(!Array.isArray(data.items))data.items=[];
   const count=document.getElementById('invoiceNavCount');if(count)count.textContent=String(data.invoices.length);
   const q=(document.getElementById('invoiceSearch')?.value||'').trim().toLowerCase();
   const branch=activeBranch==='all'?'all':String(activeBranch);
   const branchFilter=document.getElementById('invoiceBranchFilter');if(branchFilter)branchFilter.value=branch;
-  const rows=data.invoices.filter(x=>(branch==='all'||String(x.branch_id||'1')===branch)&&
-    (!q||[x.invoice_no,x.customer,x.mobile,x.company].some(v=>String(v||'').toLowerCase().includes(q))))
-    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
+  const rows=data.invoices.filter(x=>{
+    const itemText=(Array.isArray(x.invoice_items)?x.invoice_items:[]).map(v=>[v.desc,v.description,v.unit].join(' ')).join(' ');
+    return (branch==='all'||String(x.branch_id||'1')===branch)&&
+      (!q||[x.invoice_no,x.customer,x.mobile,x.company,itemText,x.desc].some(v=>String(v||'').toLowerCase().includes(q)));
+  }).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
   if(!rows.length){list.innerHTML='<div class="empty">No matching saved invoices.</div>';return;}
   list.innerHTML='<div style="overflow-x:auto"><table class="invoice-register-table"><thead><tr><th>Invoice Number</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Branch</th><th>Total</th><th>Advance</th><th>Balance</th><th></th></tr></thead><tbody>'+
-    rows.map(x=>'<tr><td><b>'+esc(x.invoice_no||'—')+'</b></td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.mobile||'—')+'</td><td>'+esc(branchName(x.branch_id))+'</td><td>'+money(x.invoice_total??x.amount)+'</td><td>'+money(x.advance_payment||0)+'</td><td>'+money(x.balance_payment||0)+'</td><td><button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="viewSavedInvoice(this.dataset.invoiceId)">View / Print</button> '+(currentUserRole==='admin'?'<button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="editSavedInvoice(this.dataset.invoiceId)">Edit</button> <button class="admin-row-delete" data-invoice-id="'+esc(x.id)+'" onclick="deleteSavedInvoice(this.dataset.invoiceId)">Delete</button>':'')+'</td></tr>').join('')+
+    rows.map(x=>{
+      return '<tr><td><b>'+esc(x.invoice_no||'—')+'</b></td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.mobile||'—')+'</td><td>'+esc(branchName(x.branch_id))+'</td><td>'+money(x.invoice_total??x.amount)+'</td><td>'+money(x.advance_payment||0)+'</td><td>'+money(x.balance_payment||0)+'</td><td><button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="viewSavedInvoice(this.dataset.invoiceId)">View / Print</button> '+(currentUserRole==='admin'?'<button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="editSavedInvoice(this.dataset.invoiceId)">Edit</button> <button class="admin-row-delete" data-invoice-id="'+esc(x.id)+'" onclick="deleteSavedInvoice(this.dataset.invoiceId)">Delete</button>':'')+'</td></tr>';
+    }).join('')+
     '</tbody></table></div>';
 }
 function editSavedInvoice(id){
-  if(currentUserRole!=='admin'){alert('Only Admin can edit an invoice.');return;}
+  if(currentUserRole!=='admin'){alert('Branch users cannot edit saved invoices. Only Admin can edit an invoice.');return;}
   if(previewMode){alert('Preview mode صرف دیکھنے کے لیے ہے۔');return;}
   const x=(data.invoices||[]).find(v=>String(v.id)===String(id));if(!x)return;
   if(activeBranch==='all'){alert('Invoice edit karne ke liye pehle usi branch ko select karein.');return;}
@@ -4583,7 +5549,7 @@ function editSavedInvoice(id){
   }];
   set('customCustomerName',x.customer);set('customCustomerMobile',x.mobile);set('customCustomerEmail',x.email);set('customCompanyName',x.company);set('customCustomerAddress',x.address);
   set('customInvoiceNo',x.invoice_no);set('customBillDate',x.date);set('customOrderNo',x.order_no);set('customTerms',x.invoice_terms||'Due on Receipt');set('customDueDate',x.invoice_due_date||x.date);set('customSalesperson',x.salesperson);set('customSubject',x.invoice_subject);
-  set('customBillDiscount',x.invoice_discount_percent??(Number(x.invoice_subtotal)?Number(x.invoice_discount||0)/Number(x.invoice_subtotal)*100:0));
+  set('customBillDiscount',x.invoice_discount_percent??(Number(x.invoice_subtotal)?Number(x.invoice_discount||0)/Number(x.invoice_subtotal)*100:0));set('customBillDiscountRs',x.invoice_discount??0);window.customDiscountMode='amount';
   set('customBillShipping',x.invoice_shipping??0);set('customBillReceived',advance);set('customBillNotes',x.invoice_notes||'');
   const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption){dailyOption.checked=advance>0 && (typeof x.daily_sale_added==='boolean'?x.daily_sale_added:!!linkedSale);dailyOption.disabled=advance<=0;}
   const wrap=document.getElementById('customBillItems');wrap.innerHTML='';
@@ -4639,6 +5605,11 @@ function viewSavedInvoice(id){
     discount:x.invoice_discount||0,discountPct:x.invoice_discount_percent||0,
     shipping:x.invoice_shipping||0
   });
+  const activity=Array.isArray(x.activity_history)?x.activity_history:[];
+  if(activity.length){
+    const historyRows=activity.slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))).map(a=>'<tr><td>'+esc(a.date||'—')+'</td><td>'+esc(a.kind==='payment'?'Payment Received':'Additional Sale')+'</td><td>'+esc(a.description||'')+'</td><td>'+money(a.amount||0)+'</td><td>'+esc(a.method||'—')+'</td></tr>').join('');
+    document.getElementById('billContent').insertAdjacentHTML('beforeend','<div style="margin:22px 0 0;padding-top:12px;border-top:2px solid #f58220"><h3 style="margin:0 0 8px;color:#202b3d">Payment &amp; Daily Sale History</h3><div style="overflow-x:auto"><table class="bill-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Date</th><th>Entry</th><th>Description</th><th>Amount</th><th>Method</th></tr></thead><tbody>'+historyRows+'</tbody></table></div></div>');
+  }
   document.getElementById('billModal').style.display='flex';
   document.getElementById('billModal').dataset.printCustomer=x.customer||'Customer';
   document.getElementById('billModal').dataset.printInvoice=x.invoice_no||'';
@@ -4960,6 +5931,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #generalExpenseSection .payroll-table-wrap{overflow:auto}
 #generalExpenseSection table{min-width:680px}
 #generalExpenseSection .expense-row-actions{display:flex;gap:5px}
+#generalExpenseSection .general-expense-entry-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#generalExpenseSection .general-expense-entry-head h3{margin-right:auto}
+#generalExpenseSection .general-expense-open-btn{font-weight:800;padding:9px 14px;white-space:nowrap}
+#generalExpenseEntryPanel{padding:14px;margin:10px 0 16px;border:1px solid #e7e9ed;border-top:3px solid #f58220;border-radius:12px;background:#fffaf5}
 @media(max-width:600px){.expense-tab{padding:10px 6px;font-size:12px}}
 </style>
 <script>
@@ -4990,6 +5965,15 @@ function renderGeneralExpenseCategories(){
   const chips=document.getElementById('generalExpenseCategoryChips');if(chips)chips.innerHTML=fozanExpenseCategories.map(x=>'<span class="expense-category-chip">'+esc(x)+'</span>').join('');
 }
 function generalExpenseMeta(desc){const m=String(desc||'').match(/^\[\[FOZAN_CAT:([^\]]+)\]\]\s*/);if(!m)return {category:'Uncategorized',description:String(desc||'')};let category='Uncategorized';try{category=decodeURIComponent(m[1]);}catch(e){}return {category,description:String(desc||'').slice(m[0].length)};}
+function toggleGeneralExpenseForm(forceOpen){
+  const panel=document.getElementById('generalExpenseEntryPanel');
+  const button=document.querySelector('.general-expense-open-btn');
+  if(!panel)return;
+  const open=typeof forceOpen==='boolean'?forceOpen:panel.style.display==='none';
+  panel.style.display=open?'':'none';
+  if(button)button.textContent=open?'− Close Expense Form':'＋ Add Expense';
+  if(open){const date=document.getElementById('generalExpenseDate');if(date&&!date.value)date.value=nowLocal().date;document.getElementById('generalExpenseAmount')?.focus();}
+}
 function resetGeneralExpenseForm(){editingGeneralExpenseId=null;['generalExpenseAmount','generalExpenseDesc'].forEach(id=>document.getElementById(id).value='');document.getElementById('generalExpenseDate').value=nowLocal().date;}
 function saveGeneralExpense(){
   if(currentUserRole!=='admin')return alert('Admin access required.');if(previewMode)return alert('Preview mode is read-only.');
@@ -4998,9 +5982,9 @@ function saveGeneralExpense(){
   const obj={amount,desc:'[[FOZAN_CAT:'+encodeURIComponent(category)+']] '+description,date,time:nowLocal().time};
   if(editingGeneralExpenseId){const x=data.expenses.find(v=>String(v.id)===String(editingGeneralExpenseId));if(!x)return alert('Expense not found.');Object.assign(x,obj);}
   else data.expenses.push({id:uid(),branch_id,...obj});
-  persist();resetGeneralExpenseForm();renderGeneralExpenses();renderDashboard();renderSales();
+  persist();resetGeneralExpenseForm();toggleGeneralExpenseForm(false);renderGeneralExpenses();renderDashboard();renderSales();
 }
-function editGeneralExpense(id){if(currentUserRole!=='admin')return;const x=data.expenses.find(v=>String(v.id)===String(id));if(!x)return;const meta=generalExpenseMeta(x.desc);editingGeneralExpenseId=x.id;document.getElementById('generalExpenseAmount').value=x.amount;document.getElementById('generalExpenseCategory').value=meta.category;document.getElementById('generalExpenseDesc').value=meta.description;document.getElementById('generalExpenseDate').value=x.date||nowLocal().date;document.getElementById('generalExpenseBranchEntry').value=String(x.branch_id||'1');}
+function editGeneralExpense(id){if(currentUserRole!=='admin')return;const x=data.expenses.find(v=>String(v.id)===String(id));if(!x)return;toggleGeneralExpenseForm(true);const meta=generalExpenseMeta(x.desc);editingGeneralExpenseId=x.id;document.getElementById('generalExpenseAmount').value=x.amount;document.getElementById('generalExpenseCategory').value=meta.category;document.getElementById('generalExpenseDesc').value=meta.description;document.getElementById('generalExpenseDate').value=x.date||nowLocal().date;document.getElementById('generalExpenseBranchEntry').value=String(x.branch_id||'1');}
 async function deleteGeneralExpense(id){if(currentUserRole!=='admin')return;if(previewMode)return alert('Preview mode is read-only.');const x=data.expenses.find(v=>String(v.id)===String(id));if(!x)return;if(!(await window.fozanConfirm('Delete this general expense?')))return;data.expenses=data.expenses.filter(v=>String(v.id)!==String(id));if(CLOUD_ENABLED)cloudDeleteRow('fozan_expenses',id);persist();renderGeneralExpenses();renderDashboard();renderSales();}
 function renderGeneralExpenses(){
   if(currentUserRole!=='admin')return;renderGeneralExpenseCategories();const month=document.getElementById('generalExpenseMonth')?.value||currentMonthKey(),branch=document.getElementById('generalExpenseBranch')?.value||'all';
@@ -5135,11 +6119,95 @@ document.addEventListener('DOMContentLoaded',()=>{try{previewStaffSalary();}catc
     }
     try{
       const {data,error}=await supabaseClient.auth.getSession();
-      if(error||!data.session)return;
-      const key=fozanUserKeyFromEmail(data.session.user?.email);
-      if(key)finishFozanLogin(key);else await supabaseClient.auth.signOut();
+      if(!error && data.session){
+        const key=fozanUserKeyFromEmail(data.session.user?.email);
+        if(key){finishFozanLogin(key);return;}
+        await supabaseClient.auth.signOut();
+      }
+      // Legacy-password logins do not create a Supabase session.
+      // Restore their tab session after refresh, until the user presses Logout.
+      let savedKey=null;
+      try{savedKey=sessionStorage.getItem('fozan_user_session');}catch(e){}
+      if(savedKey && FOZAN_USERS[savedKey])finishFozanLogin(savedKey);
     }catch(e){console.error('Could not restore Supabase session:',e);}
   });
+})();
+</script>
+<style>\n
+/* Add Invoice window controls styled to match the Invoice Management title bar */
+body.invoice-workspace-active #billGeneratorPanel .zoho-invoice-topbar{
+  background:linear-gradient(110deg,#172235 0%,#202b3d 100%)!important;
+  border:1px solid #344258!important;border-bottom:3px solid #f58220!important;
+  border-radius:12px!important;color:#fff!important;
+  min-height:58px;padding:10px 14px!important;margin:0 0 18px!important;
+  box-shadow:0 5px 16px #11182722!important;gap:12px!important
+}
+body.invoice-workspace-active .zoho-invoice-heading .bill-icon{
+  width:32px!important;height:32px!important;flex:0 0 32px!important;
+  display:grid!important;place-items:center!important;border-radius:8px!important;
+  background:#ffffff18!important;color:#ffad63!important;font-size:17px!important
+}
+body.invoice-workspace-active .zoho-invoice-heading h3{color:#fff!important;font-weight:800!important}
+body.invoice-workspace-active .zoho-invoice-actions{margin-left:auto;flex-wrap:nowrap}
+.add-invoice-window-controls{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.add-invoice-window-btn{
+  width:31px;height:31px;min-width:31px;padding:0;border-radius:7px;
+  display:grid;place-items:center;font-size:17px;font-weight:800;line-height:1;
+  color:#fff;background:#40516a;border:1px solid #596b84;box-shadow:none
+}
+.add-invoice-window-btn.minimize{background:#40516a}
+.add-invoice-window-btn.maximize{background:#40516a}
+.add-invoice-window-btn.close{background:#e63750;border-color:#f05a6d}
+.add-invoice-window-btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+body.invoice-workspace-active.add-invoice-minimized #billGeneratorPanel .bill-generator-content{display:none!important}
+body.invoice-workspace-active.add-invoice-windowed #billGeneratorPanel{
+  inset:4vh 4vw!important;width:92vw!important;height:92vh!important;
+  border:1px solid #cbd3de!important;border-radius:14px!important;
+  box-shadow:0 18px 60px #0005!important
+}
+body.invoice-workspace-active.add-invoice-windowed #billGeneratorPanel .zoho-invoice-topbar{
+  top:0!important;border-radius:10px!important
+}
+@media(max-width:760px){
+ body.invoice-workspace-active #billGeneratorPanel .zoho-invoice-topbar{flex-wrap:wrap;gap:8px!important}
+ body.invoice-workspace-active .zoho-invoice-actions{margin-left:0;order:3;width:100%;flex-wrap:wrap}
+ .add-invoice-window-controls{margin-left:auto}
+}
+\n</style>\n<script>
+(function(){
+  function bindDailySaleSavedItems(){
+    const customer=document.getElementById('sCustomer');
+    const desc=document.getElementById('sDesc');
+    const qty=document.getElementById('sQty');
+    const amount=document.getElementById('sAmount');
+    if(customer){
+      ['input','change'].forEach(ev=>customer.addEventListener(ev,()=>{
+        refreshCustomerDescriptionSuggestions();
+        applySavedItemToDailySale();
+      }));
+    }
+    if(desc){
+      ['input','change'].forEach(ev=>desc.addEventListener(ev,applySavedItemToDailySale));
+    }
+    if(qty)qty.addEventListener('input',updateDailySaleSavedItemPrice);
+    if(amount)amount.addEventListener('input',()=>{
+      const d=document.getElementById('sDesc');
+      if(!d?.dataset.savedItemId)return;
+      const type=document.getElementById('sType')?.value||'';
+      if(type==='cash_balance'||type==='online_balance'){
+        const total=Number(d.dataset.savedItemTotal||0);
+        const received=Math.max(0,Number(amount.value||0));
+        const balance=document.getElementById('sBalancePayment');
+        if(balance)balance.value=String(Math.max(0,total-received));
+      }
+    });
+    const type=document.getElementById('sType');
+    if(type)type.addEventListener('change',()=>{
+      if(document.getElementById('sDesc')?.dataset.savedItemId)updateDailySaleSavedItemPrice();
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindDailySaleSavedItems);
+  else bindDailySaleSavedItems();
 })();
 </script>
 </body></html>
