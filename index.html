@@ -4128,7 +4128,28 @@ function renderSales(){
   const to=document.getElementById('dailySaleToDate')?.value||'';
   const rangeActive=!!(from||to);
   const inSelectedDates=x=>(!from||String(x.date||'')>=from)&&(!to||String(x.date||'')<=to);
-  let rows=q ? visibleSales().filter(x=>searchText(x).includes(q)&&(!rangeActive||inSelectedDates(x))) : visibleSales().filter(x=>rangeActive?inSelectedDates(x):x.date===date);
+  
+let rows;
+
+if (rangeActive) {
+  rows = visibleSales().filter(x =>
+    inSelectedDates(x) &&
+    (!q || searchText(x).includes(q))
+  );
+} else if (q) {
+  rows = visibleSales().filter(x =>
+    searchText(x).includes(q)
+  );
+} else if (summaryMode === 'month') {
+  rows = visibleSales().filter(x =>
+    monthKey(x.date) === getSummaryMonth()
+  );
+} else {
+  rows = visibleSales().filter(x =>
+    x.date === date
+  );
+}
+
   rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) || String(b.time||'').localeCompare(String(a.time||'')) || String(b.id).localeCompare(String(a.id)));
   const el=document.getElementById('salesLedger');
   if(!rows.length){el.innerHTML=rangeActive ? '<div class="empty">No sales found for the selected date range'+(from?' from '+from:'')+(to?' to '+to:'')+'.</div>' : (q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+' in '+(activeBranch==='all'?'either branch':activeBranch==='2'?'Bahria Enclave Office':'Head Office')+'. Click “Add Daily Sale” to enter a sale.</div>');return;}
