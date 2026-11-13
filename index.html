@@ -4692,7 +4692,7 @@ function appendDailySaleToSavedInvoice(invoice, sale, receivedAmount){
   if(!invoice||!sale)return;
   const qty=Math.max(1,Number(sale.quantity||1));
   const catalogItem=findSavedItemByName(sale.desc||'');
-  const item={desc:sale.desc||'Additional Daily Sale',description:[sale.item_description||catalogItem?.description||'', 'Added from Daily Sale on '+sale.date].filter(Boolean).join(' • '),unit:catalogItem?.unit||'',qty,rate:Number(sale.amount||0)/qty,total:Number(sale.amount||0),date:sale.date,added_from_daily_sale:true};
+  const item={desc:sale.desc||'Additional Daily Sale',description:[sale.item_description||catalogItem?.description||'', 'Added from Daily Sale on '+sale.date].filter(Boolean).join(' • '),unit:catalogItem?.unit||'',qty,rate:Number(sale.amount||0)/qty,total:Number(sale.amount||0),date:sale.date,added_from_daily_sale:true,source_sale_id:String(sale.id)};
   if(!Array.isArray(invoice.invoice_items))invoice.invoice_items=[];
   invoice.invoice_items.push(item);
   const add=Number(sale.amount||0);
@@ -4706,6 +4706,49 @@ function appendDailySaleToSavedInvoice(invoice, sale, receivedAmount){
   addInvoiceActivity(invoice,{kind:'sale_item',date:sale.date,time:sale.time,amount:add,quantity:qty,description:sale.desc||'Additional Daily Sale',sale_id:sale.id});
   sale.invoice_no=invoice.invoice_no;
   sale.linked_invoice_id=invoice.id;
+}
+
+
+// Reverse only the Daily Sale contribution linked to the deleted sale.
+// This keeps the original invoice lines and its other payments intact.
+function removeDailySaleFromSavedInvoice(sale){
+  if(!sale)return false;
+  const invoice=(data.invoices||[]).find(x=>
+    String(x.id)===String(sale.linked_invoice_id||'') ||
+    (sale.invoice_no && String(x.invoice_no||'')===String(sale.invoice_no) &&
+     String(x.branch_id||'1')===String(sale.branch_id||'1')) ||
+    (String(x.branch_id||'1')===String(sale.branch_id||'1') &&
+     (x.activity_history||[]).some(a=>a.kind==='sale_item'&&String(a.sale_id||'')===String(sale.id))));
+  if(!invoice)return false;
+  const history=Array.isArray(invoice.activity_history)?invoice.activity_history:[];
+  const linkedActivity=history.find(a=>a.kind==='sale_item'&&String(a.sale_id||'')===String(sale.id));
+  const amount=Math.max(0,Number(sale.amount||0));
+  const qty=Math.max(1,Number(sale.quantity||1));
+  const desc=String(sale.desc||'').trim();
+  const date=String(sale.date||'');
+  let itemIndex=(invoice.invoice_items||[]).findIndex(item=>String(item.source_sale_id||'')===String(sale.id));
+  // Backward compatibility for sales linked before source_sale_id was stored.
+  if(itemIndex<0 && linkedActivity){
+    itemIndex=(invoice.invoice_items||[]).findIndex(item=>
+      item.added_from_daily_sale && String(item.date||'')===date &&
+      String(item.desc||'').trim()===desc);
+  }
+  if(itemIndex<0)return false;
+  const removed=invoice.invoice_items.splice(itemIndex,1)[0];
+  const removedTotal=Math.max(0,Number(removed.total??amount));
+  const removedQty=Math.max(0,Number(removed.qty??qty));
+  const removedAdvance=Math.max(0,Number(sale.advance_payment||0));
+  invoice.invoice_subtotal=Math.max(0,Number(invoice.invoice_subtotal||0)-removedTotal);
+  invoice.invoice_total=Math.max(0,Number(invoice.invoice_total??invoice.amount??0)-removedTotal);
+  invoice.amount=invoice.invoice_total;
+  invoice.invoice_qty=Math.max(0,Number(invoice.invoice_qty||0)-removedQty);
+  invoice.advance_payment=Math.max(0,Number(invoice.advance_payment||0)-removedAdvance);
+  invoice.balance_payment=Math.max(0,invoice.invoice_total-invoice.advance_payment);
+  invoice.activity_history=history.filter(a=>!(a.kind==='sale_item'&&String(a.sale_id||'')===String(sale.id)));
+  const fragment=date+': '+(desc||'Additional sale');
+  if(invoice.desc)invoice.desc=String(invoice.desc).split(' | ').filter(part=>part!==fragment).join(' | ');
+  invoice.updated_at=nowLocal().date+' '+nowLocal().time;
+  return true;
 }
 
 function saveSale(){
@@ -4812,7 +4855,8 @@ async function deleteSale(id){
   const record=data.sales.find(x=>x.id===id);if(!record || String(record.branch_id||'1')!==activeBranch)return alert('یہ ریکارڈ دوسرے آفس کا ہے۔');
   if(!requireActionPassword())return;
   if(!(await window.fozanConfirm('Delete this sale?')))return;
-  data.sales=data.sales.filter(x=>x.id!==id && String(x.branch_id||'1')===activeBranch || x.id!==id);
+  removeDailySaleFromSavedInvoice(record);
+  data.sales=data.sales.filter(x=>x.id!==id);
   cloudDeleteRow('fozan_sales',id);
   persist();renderDashboard();renderSales();
 }
