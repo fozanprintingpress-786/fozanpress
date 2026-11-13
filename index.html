@@ -1769,7 +1769,6 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
     <button class="side-link" data-panel="invoices" onclick="showSidePanel('invoices')"><span>▧</span><b>Invoice Management</b><em id="invoiceNavCount">0</em></button>
     <button class="side-link" data-panel="quotes" onclick="showSidePanel('quotes')"><span>▤</span><b>Quotes</b><em id="quoteNavCount">0</em></button>
     <button class="side-link" data-panel="customers" onclick="showSidePanel('customers')"><span>♙</span><b>Customers</b><em id="customerNavCount">0</em></button>
-    <button class="side-link" data-panel="routine" onclick="showSidePanel('routine')"><span>↔</span><b>Routine Customer Ledger</b><em id="routineNavCount">0</em></button>
     <button class="side-link" data-panel="items" onclick="showSidePanel('items')"><span>▤</span><b>Items</b><em id="itemNavCount">0</em></button>
     <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Overall Credit &amp; Balance</b><em id="overdueNavCount">›</em></button>
     <button class="side-link" data-panel="report" onclick="showSidePanel('report')"><span>▥</span><b>Monthly Report</b><em>›</em></button>
@@ -1791,37 +1790,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
       <div id="monthlyDues"><div class="dues-filter-tabs" role="group" aria-label="Filter credit and balance"><button type="button" class="active" onclick="setMonthlyDuesFilter('all')">All <b>0</b></button><button type="button" class="" onclick="setMonthlyDuesFilter('credit')">Credit <b>0</b></button><button type="button" class="" onclick="setMonthlyDuesFilter('balance')">Balance <b>0</b></button></div><div class="due-summary dues-three-summary"><div><small>Credit Due</small><strong style="color:#c62828">Rs. 0</strong></div><div><small>Balance Due</small><strong style="color:#b56b0a">Rs. 0</strong></div><div><small>Total Due</small><strong style="color:#1769aa">Rs. 0</strong></div></div><div class="empty">No credit or balance entries for this month.</div></div></div>
     </aside>
   </section>
-  <section class="side-view" id="side-routine">
-  <div class="card" style="border-top:4px solid #f58220">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-      <div><h2 style="margin-bottom:4px">Routine Customer Ledger</h2><div class="notice">Separate daily records for regular customers — no invoice is created.</div></div>
-      <strong id="routineCurrentBalance" style="color:#c62828;font-size:20px">Current Balance: Rs. 0</strong>
-    </div>
-    <label for="routineSearch" style="display:block;font-weight:700;margin-top:15px">Search Customer Name / Mobile</label>
-    <input id="routineSearch" placeholder="Type customer name or mobile number..." oninput="renderRoutineLedger()">
-    <div id="routineCustomerMatches" class="notice" style="margin:0 0 12px"></div>
-    <div style="background:#f7f8fa;border:1px solid #e8ebef;border-radius:12px;padding:14px;margin:12px 0">
-      <h3 style="margin:0 0 10px;color:#202b3d">Add New Item / Payment Record</h3>
-      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
-        <div><label>Customer Name</label><input id="routineCustomer" placeholder="Customer name"></div>
-        <div><label>Mobile / WhatsApp</label><input id="routineMobile" placeholder="Mobile number"></div>
-        <div><label>Item / Work Description</label><input id="routineDesc" placeholder="Item or work details"></div>
-        <div><label>Item Amount (Rs.)</label><input id="routineAmount" type="number" min="0" step="0.01" placeholder="0"></div>
-        <div><label>Payment Received Now (Rs.)</label><input id="routineReceived" type="number" min="0" step="0.01" placeholder="0"></div>
-        <div><label>Notes (Optional)</label><input id="routineNotes" placeholder="Additional details"></div>
-      </div>
-      <div class="notice" style="margin:0 0 10px">Item amount adds to the customer's running balance. Payment received reduces it. Each item and payment is saved as a separate dated record.</div>
-      <button class="primary" type="button" onclick="saveRoutineEntry()">Save Separate Record</button>
-      <button class="muted" type="button" onclick="clearRoutineForm()">Clear</button>
-    </div>
-    <div id="routineLedgerSummary" class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-      <div class="stat"><small>Total Items</small><strong id="routineTotalItems">Rs. 0</strong></div>
-      <div class="stat"><small>Total Received</small><strong id="routineTotalReceived">Rs. 0</strong></div>
-      <div class="stat"><small>Outstanding Balance</small><strong id="routineOutstanding">Rs. 0</strong></div>
-    </div>
-    <div id="routineHistory"><div class="empty">Search a customer name to view their complete routine ledger.</div></div>
-  </div>
-</section>
+
 <section class="side-view" id="side-invoices">
     <aside class="monthly-dues-panel invoice-register-panel">
       <div class="monthly-dues-head invoice-register-heading invoice-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><h2>Invoice Management</h2></div><div class="invoice-window-controls" role="group" aria-label="Window controls"><button type="button" class="invoice-window-btn minimize" onclick="minimizeInvoiceRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="invoice-window-btn maximize" id="invoiceWindowMaximize" onclick="toggleInvoiceRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="invoice-window-btn close" onclick="closeInvoiceRegister()" aria-label="Close" title="Close">×</button></div></div>
@@ -4134,36 +4103,54 @@ function creditPaymentInfo(credit){
   const customer=(credit.customer||'').trim().toLowerCase();
   if(!customer)return null;
 
-  // Rebuild the receipt-to-credit allocation in the same oldest-unpaid-first
-  // order used when a balance payment is received.
+  // Reconstruct each receipt exactly as rebuildBalanceAllocations does:
+  // first pay older Cash/Online balances, then apply only the remainder to Credit.
   const branchSales=salesInBranch(credit.branch_id||'1');
+  const sortOldest=(a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
+    String(a.time||'').localeCompare(String(b.time||'')) ||
+    String(a.id||'').localeCompare(String(b.id||''));
   const credits=branchSales
     .filter(x=>x.type==='credit' && (x.customer||'').trim().toLowerCase()===customer)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
-                 String(a.time||'').localeCompare(String(b.time||'')) ||
-                 String(a.id||'').localeCompare(String(b.id||'')));
+    .sort(sortOldest);
+  const balanceEntries=branchSales
+    .filter(x=>['cash','online'].includes(x.type) &&
+      (x.customer||'').trim().toLowerCase()===customer &&
+      Number(x.balance_payment||0)>0)
+    .sort(sortOldest);
   const receipts=branchSales
     .filter(x=>isBalancePayment(x) && (x.customer||'').trim().toLowerCase()===customer)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
-                 String(a.time||'').localeCompare(String(b.time||'')) ||
-                 String(a.id||'').localeCompare(String(b.id||'')));
+    .sort(sortOldest);
 
-  const remainingAllocation=new Map(
-    credits.map(x=>[String(x.id),Math.max(0,Number(x.balance_payment||0))])
-  );
+  const remainingBalance=new Map(balanceEntries.map(x=>[
+    String(x.id),Math.max(0,Number(x.balance_payment||0))
+  ]));
+  const remainingCredit=new Map(credits.map(x=>[
+    String(x.id),Math.max(0,Number(x.balance_payment||0))
+  ]));
   const info=new Map();
 
   for(const receipt of receipts){
     let remaining=Math.max(0,Number(receipt.amount||0));
+
+    // Settle older Cash/Online balance dues before touching Credit.
+    for(const entry of balanceEntries){
+      if(remaining<=0.0001)break;
+      const id=String(entry.id), due=remainingBalance.get(id)||0;
+      if(due<=0.0001)continue;
+      const applied=Math.min(due,remaining);
+      remainingBalance.set(id,due-applied);
+      remaining-=applied;
+    }
+
+    // Only the leftover receipt amount is allocated to old Credit bills.
     for(const item of credits){
       if(remaining<=0.0001)break;
-      const key=String(item.id);
-      const stillAllocated=remainingAllocation.get(key)||0;
-      if(stillAllocated<=0.0001)continue;
-      const applied=Math.min(stillAllocated,remaining);
-      remainingAllocation.set(key,stillAllocated-applied);
+      const id=String(item.id), due=remainingCredit.get(id)||0;
+      if(due<=0.0001)continue;
+      const applied=Math.min(due,remaining);
+      remainingCredit.set(id,due-applied);
       remaining-=applied;
-      info.set(key,{date:receipt.date||'',amount:applied});
+      info.set(id,{date:receipt.date||'',amount:(info.get(id)?.amount||0)+applied});
     }
   }
   return info.get(String(credit.id))||null;
@@ -4247,6 +4234,90 @@ function clearDailySaleDateRange(){
   renderDashboard();
   renderSales();
 }
+
+function renderCompleteCustomerHistory(customerName){
+  const key=String(customerName||'').trim().toLocaleLowerCase();
+  const rows=data.sales.filter(x=>
+    (activeBranch==='all'||String(x.branch_id||'1')===String(activeBranch)) &&
+    String(x.customer||'').trim().toLocaleLowerCase()===key
+  ).slice().sort((a,b)=>
+    String(a.date||'').localeCompare(String(b.date||''))||
+    String(a.time||'').localeCompare(String(b.time||''))||
+    String(a.id||'').localeCompare(String(b.id||''))
+  );
+  const invoices=(data.invoices||[]).filter(x=>
+    (activeBranch==='all'||String(x.branch_id||'1')===String(activeBranch)) &&
+    String(x.customer||'').trim().toLocaleLowerCase()===key
+  ).slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+  const routine=rows.filter(x=>['routine_item','routine_payment'].includes(x.type));
+  const billed=rows.reduce((n,x)=>n+
+    (['credit','cash','online','routine_item'].includes(x.type)?Number(x.amount||0):0),0);
+  const dueCredit=rows.filter(x=>x.type==='credit').reduce((n,x)=>n+customerBalance(x),0);
+  const dueSales=rows.filter(x=>['cash','online'].includes(x.type)).reduce((n,x)=>
+    n+Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0)),0);
+  const routineCharges=routine.filter(x=>x.type==='routine_item').reduce((n,x)=>n+Number(x.amount||0),0);
+  const routinePaid=routine.filter(x=>x.type==='routine_payment').reduce((n,x)=>n+Number(x.amount||0),0);
+  const outstanding=dueCredit+dueSales+Math.max(0,routineCharges-routinePaid);
+  const received=Math.max(0,billed-outstanding);
+  const host=document.getElementById('salesLedger');if(!host)return;
+  if(!rows.length&&!invoices.length){
+    host.innerHTML='<div class="empty">No saved history found for '+esc(customerName)+'.</div>';return;
+  }
+  const typeLabel=x=>{
+    if(x.type==='credit')return 'Credit / Bill';
+    if(x.type==='cash'||x.type==='online')return x.type.toUpperCase()+' Sale';
+    if(isBalancePayment(x))return 'Balance Payment Received';
+    if(x.type==='advance_payment')return 'Advance Payment Received';
+    if(x.type==='routine_item')return 'Routine Work / Charge';
+    if(x.type==='routine_payment')return 'Routine Payment Received';
+    if(x.type==='cash_received'||x.type==='online_received'||x.type==='total_payment')return 'Payment Received';
+    return String(x.type||'Record').replace(/_/g,' ');
+  };
+  const transactionRows=rows.map(x=>{
+    const charge=['credit','cash','online','routine_item'].includes(x.type)?Number(x.amount||0):0;
+    const payment=(isBalancePayment(x)||x.type==='advance_payment'||x.type==='routine_payment'||x.type==='cash_received'||x.type==='online_received'||x.type==='total_payment')?Number(x.amount||0):
+      (['credit','cash','online'].includes(x.type)?Number(x.advance_payment||0):0);
+    const balance=x.type==='credit'?customerBalance(x):
+      (['cash','online'].includes(x.type)?Math.max(0,Number(x.balance_payment||0)-Number(saleBalancePaymentInfo(x)?.amount||0)):0);
+    const method=isBalancePayment(x)?(balanceMethod(x)==='online'?'Online':'Cash'):
+      (x.type==='routine_payment'?'Received':(x.advance_method||x.payment_method||''));
+    return '<tr>'+(activeBranch==='all'?'<td>'+esc(branchName(x.branch_id))+'</td>':'')+
+      '<td>'+esc(x.date||'—')+'<br>'+esc(x.time||'')+'</td>'+
+      '<td><b>'+esc(typeLabel(x))+'</b></td><td>'+esc(x.desc||x.item_description||'—')+'</td>'+
+      '<td class="debit">'+(charge?money(charge):'—')+'</td>'+
+      '<td class="cash">'+(payment?money(payment):'—')+(method?'<div style="font-size:10px;color:#778394">'+esc(method)+'</div>':'')+'</td>'+
+      '<td class="debit">'+(balance?money(balance):'—')+'</td></tr>';
+  }).join('');
+  const invoiceRows=invoices.map(x=>{
+    const total=Number(x.invoice_total??x.amount??0);
+    const paid=Number(x.advance_payment||0);
+    const due=Number(x.balance_payment??Math.max(0,total-paid));
+    const branchCell=activeBranch==='all'?'<td>'+esc(branchName(x.branch_id))+'</td>':'';
+    const invoiceRow='<tr>'+branchCell+
+      '<td>'+esc(x.date||'—')+'</td><td><b>Saved Invoice '+esc(x.invoice_no||'')+'</b></td>'+
+      '<td>'+esc(x.invoice_subject||x.subject||'Invoice')+'</td>'+
+      '<td class="debit">'+money(total)+'</td><td class="cash">'+money(paid)+'</td><td class="debit">'+money(due)+'</td></tr>';
+    const activity=Array.isArray(x.activity_history)?x.activity_history:[];
+    const activityRows=activity.map(a=>'<tr>'+branchCell+
+      '<td>'+esc(a.date||'—')+' '+esc(a.time||'')+'</td>'+
+      '<td><b>'+(a.kind==='payment'?'Invoice Payment Received':'Invoice Additional Sale')+'</b></td>'+
+      '<td>'+esc(a.description||'')+'</td><td class="debit">'+(a.kind==='payment'?'—':money(a.amount||0))+'</td>'+
+      '<td class="cash">'+(a.kind==='payment'?money(a.amount||0):'—')+(a.method?'<div style="font-size:10px;color:#778394">'+esc(a.method)+'</div>':'')+'</td><td>—</td></tr>').join('');
+    return invoiceRow+activityRows;
+  }).join('');
+  host.innerHTML='<div style="padding:14px;margin:8px 0 14px;border:1px solid #f2c69f;border-top:4px solid #f58220;border-radius:12px;background:#fffaf5">'+
+    '<h3 style="margin:0 0 10px;color:#202b3d">Complete Customer History — '+esc(customerName)+'</h3>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">'+
+    '<div class="stat"><small>Total Work / Bills</small><strong>'+money(billed)+'</strong></div>'+
+    '<div class="stat"><small>Received / Paid</small><strong style="color:#198754">'+money(received)+'</strong></div>'+
+    '<div class="stat"><small>Outstanding Balance</small><strong style="color:#c62828">'+money(outstanding)+'</strong></div>'+
+    '<div class="stat"><small>Saved Entries / Invoices</small><strong>'+(rows.length+invoices.length)+'</strong></div></div>'+
+    '<div class="notice" style="margin-top:8px">Showing all saved dates; the date and month filters do not limit this customer statement. Payment receipts and routine entries are included.</div></div>'+
+    '<div style="overflow-x:auto"><table><thead><tr>'+(activeBranch==='all'?'<th>Branch</th>':'')+
+    '<th>Date &amp; Time</th><th>Entry Type</th><th>Details / Item</th><th>Bill / Charge</th><th>Payment Received</th><th>Remaining Balance</th></tr></thead><tbody>'+
+    transactionRows+invoiceRows+'</tbody></table></div>';
+}
+
 function renderSales(){
   // Keep the Customer Bill Generator list synchronized with every saved sale,
   // branch change, and cloud refresh (including newly entered customer names).
@@ -4256,6 +4327,24 @@ function renderSales(){
   const from=document.getElementById('dailySaleFromDate')?.value||'';
   const to=document.getElementById('dailySaleToDate')?.value||'';
   const rangeActive=!!(from||to);
+
+  // Customer statement mode: a customer-name search always shows the complete
+  // saved history across dates, including receipts and older routine entries.
+  if(q){
+    const branchRows=data.sales.filter(x=>activeBranch==='all'||String(x.branch_id||'1')===String(activeBranch));
+    const invoiceRows=(data.invoices||[]).filter(x=>activeBranch==='all'||String(x.branch_id||'1')===String(activeBranch));
+    const customerNames=[...new Set([
+      ...branchRows.map(x=>String(x.customer||'').trim()),
+      ...invoiceRows.map(x=>String(x.customer||'').trim())
+    ].filter(Boolean))];
+    const matchedNames=customerNames.filter(name=>name.toLocaleLowerCase().includes(q));
+    const chosenName=matchedNames.find(name=>name.toLocaleLowerCase()===q) ||
+      (matchedNames.length===1?matchedNames[0]:'');
+    if(chosenName){
+      renderCompleteCustomerHistory(chosenName);
+      return;
+    }
+  }
   const inSelectedDates=x=>(!from||String(x.date||'')>=from)&&(!to||String(x.date||'')<=to);
   
 let rows;
