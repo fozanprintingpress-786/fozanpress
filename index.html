@@ -1836,7 +1836,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
               <div><label id="customDueLabel" for="customDueDate">Due Date</label><input id="customDueDate" type="date"></div>
               <div><label for="customSalesperson">Salesperson</label><input id="customSalesperson" list="fozanSalespersonList" placeholder="Select or type salesperson"><datalist id="fozanSalespersonList"><option value="Ikram Sohail"></option><option value="Imran Siddique"></option><option value="Jawad"></option></datalist></div>
             </div>
-            <datalist id="quoteInvoiceItemList"></datalist><div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
+            <datalist id="quoteInvoiceItemList"></datalist><div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label class="custom-item-qty-label">Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
             <button type="button" class="custom-add-item" onclick="addCustomBillItem()">＋ Add Another Item</button>
             <div class="invoice-fields-grid invoice-bottom-fields">
               <div><label for="customBillDiscountRs">Discount (Rs.)</label><input id="customBillDiscountRs" type="number" min="0" step="0.01" value="0"></div><div><label for="customBillDiscount">Discount (%)</label><input id="customBillDiscount" type="number" min="0" max="100" step="0.01" value="0"></div>
@@ -2306,6 +2306,31 @@ create policy "fozan sales public access" on public.fozan_sales
 create policy "fozan expenses public access" on public.fozan_expenses
   for all to anon using (true) with check (true);
 
+-- Shared cross-branch business records (invoices, quotes, customers and drafts).
+-- Run this once in Supabase SQL Editor to enable cross-branch visibility:
+create table if not exists public.fozan_shared_records (
+  id text primary key,
+  record_type text not null,
+  branch_id text not null default '1',
+  payload jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.fozan_shared_records enable row level security;
+drop policy if exists "fozan shared records public access" on public.fozan_shared_records;
+create policy "fozan shared records public access" on public.fozan_shared_records
+  for all to anon using (true) with check (true);
+
+-- Optional: enable instant cross-branch refresh if this table is not already in Realtime.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname='supabase_realtime' and schemaname='public' and tablename='fozan_shared_records'
+  ) then
+    alter publication supabase_realtime add table public.fozan_shared_records;
+  end if;
+end $$;
+
 NOTE: These policies make the database publicly writable. For a private
 business system, enable Supabase Auth and restrict access to your users.
 */
@@ -2354,10 +2379,10 @@ function refreshManagementMenuCounts(){
   if(!Array.isArray(data.customers))data.customers=[];
   if(!Array.isArray(data.items))data.items=[];
   const branch=activeBranch==='all'?'all':String(activeBranch);
-  const customers=data.customers.filter(c=>
-    branch==='all'||String(c.branch_id||'1')===branch
-  );
-  setCount('invoiceNavCount',data.invoices.length);
+  const customerBranch=currentUserRole==='admin'?'all':(currentUserRole==='branch'?String(FOZAN_USERS[currentUserKey]?.branch||branch):branch);
+  const customers=data.customers.filter(c=>customerBranch==='all'||String(c.branch_id||'1')===customerBranch);
+  const invoiceBranch=currentUserRole==='branch'?String(FOZAN_USERS[currentUserKey]?.branch||branch):'all';
+  setCount('invoiceNavCount',data.invoices.filter(x=>invoiceBranch==='all'||String(x.branch_id||'1')===invoiceBranch).length);
   setCount('quoteNavCount',data.quotes.length);
   setCount('customerNavCount',customers.length);
   setCount('routineNavCount',data.sales.filter(x=>['routine_item','routine_payment'].includes(x.type)&&(branch==='all'||String(x.branch_id||'1')===branch)).length);
@@ -2562,6 +2587,27 @@ async function cloudSyncData(){
       const {error:itemError}=await supabaseClient.from('fozan_items').upsert(itemRows,{onConflict:'id'});
       if(itemError) console.warn('Shared item sync unavailable. Run the fo zan_items SQL setup in the source comments.',itemError);
     }
+    // Cross-branch shared registers: invoices, quotes, customers and invoice drafts.
+    // Each record keeps its original branch_id for labels and invoice numbering,
+    // but every signed-in role loads the complete shared register.
+    const sharedTypes=['invoices','quotes','customers','invoice_drafts'];
+    const sharedRows=[];
+    sharedTypes.forEach(type=>{
+      (Array.isArray(data[type])?data[type]:[]).forEach(record=>{
+        if(!record || !record.id)return;
+        sharedRows.push({
+          id:type+':'+String(record.id),
+          record_type:type,
+          branch_id:String(record.branch_id||'1'),
+          payload:record,
+          updated_at:new Date().toISOString()
+        });
+      });
+    });
+    if(sharedRows.length){
+      const {error:sharedError}=await supabaseClient.from('fozan_shared_records').upsert(sharedRows,{onConflict:'id'});
+      if(sharedError) console.warn('Shared invoices/customers cloud sync unavailable. Run the fo zan_shared_records SQL setup in the source comments.',sharedError);
+    }
     cloudStatus('Cloud saved • shared on all PCs', true);
   }catch(e){
     console.error('Cloud save error:',e);
@@ -2602,6 +2648,15 @@ async function cloudLoad(){
       if(staffResult.error) console.warn('Staff cloud table unavailable; run the fo zan_staff SQL migration in the source comments.',staffResult.error);
       else cloudStaff=staffResult.data||[];
     }
+    // Load shared registers for ALL branches and roles.
+    let cloudSharedRecords=[];
+    const sharedResult=await supabaseClient.from('fozan_shared_records').select('*');
+    if(sharedResult.error){
+      console.warn('Shared invoices/customers table is not ready. Run the fo zan_shared_records SQL setup in the source comments.',sharedResult.error);
+    }else{
+      cloudSharedRecords=sharedResult.data||[];
+    }
+
     // Shared item list is intentionally not filtered by branch.
     let cloudItems=[];
     const itemResult=await supabaseClient.from('fozan_items').select('*');
@@ -2635,6 +2690,17 @@ async function cloudLoad(){
     addedDuringLoadExpenses.forEach(x=>{if(!expensesById.has(String(x.id)))expensesById.set(String(x.id),x);});
     data.sales=[...salesById.values()];
     data.expenses=[...expensesById.values()];
+    // Merge shared document records by stable ID. Keep any local records that
+    // have not reached the cloud yet, then let the cloud copy win on conflicts.
+    const sharedTypes=['invoices','quotes','customers','invoice_drafts'];
+    sharedTypes.forEach(type=>{
+      if(!Array.isArray(data[type]))data[type]=[];
+      const byId=new Map(data[type].filter(x=>x&&x.id).map(x=>[String(x.id),x]));
+      cloudSharedRecords.filter(row=>row.record_type===type && row.payload && row.payload.id)
+        .forEach(row=>byId.set(String(row.payload.id),row.payload));
+      data[type]=[...byId.values()];
+    });
+
     if(currentUserRole==='admin' && cloudStaff.length){
       data.staff=cloudStaff.map(x=>({id:x.id,branch_id:String(x.branch_id||'1'),name:x.name||'',designation:x.designation||'',monthly_salary:Number(x.monthly_salary||0),leave_by_month:x.leave_by_month||{},paid_by_month:x.paid_by_month||{},advance_by_month:x.advance_by_month||{},custom_fields:x.custom_fields||{}}));
     }
@@ -2652,13 +2718,14 @@ async function cloudLoad(){
     data.items=[...sharedItemsByName.values()];
     localStorage.setItem(KEY,JSON.stringify(data));
     cloudReady=true;
-    if(addedDuringLoadSales.length || addedDuringLoadExpenses.length || data.items.length) await cloudSyncData();
+    if(addedDuringLoadSales.length || addedDuringLoadExpenses.length || data.items.length || ['invoices','quotes','customers','invoice_drafts'].some(k=>Array.isArray(data[k])&&data[k].length)) await cloudSyncData();
 
     const todayNow=nowLocal();
     document.getElementById('summaryDate').value=todayNow.date;
     document.getElementById('summaryMonth').value=monthKey(todayNow.date);
     summaryMode='date';
     renderDateHistory(); renderDashboard(); renderSales();
+    renderManagedCustomers();renderInvoiceRegister();
     refreshManagementMenuCounts();
     startFozanRealtime();
     cloudStatus('Cloud connected • live sync starting', true);
@@ -2687,12 +2754,14 @@ function startFozanRealtime(){
   const salesConfig={event:'*',schema:'public',table:'fozan_sales'};
   const expensesConfig={event:'*',schema:'public',table:'fozan_expenses'};
   const itemsConfig={event:'*',schema:'public',table:'fozan_items'};
+  const sharedConfig={event:'*',schema:'public',table:'fozan_shared_records'};
   if(branchFilter){salesConfig.filter=branchFilter;expensesConfig.filter=branchFilter;}
   const onRemoteChange=()=>scheduleFozanRealtimeRefresh();
   channel=channel
     .on('postgres_changes',salesConfig,onRemoteChange)
     .on('postgres_changes',expensesConfig,onRemoteChange)
     .on('postgres_changes',itemsConfig,onRemoteChange)
+    .on('postgres_changes',sharedConfig,onRemoteChange)
     .subscribe((status)=>{
       if(status==='SUBSCRIBED') cloudStatus('Live sync connected • changes appear automatically',true);
       else if(status==='CHANNEL_ERROR' || status==='TIMED_OUT') cloudStatus('Live sync reconnecting — use Refresh Cloud if needed');
@@ -3065,7 +3134,7 @@ function saveManagedCustomer(){
     contact_persons:[...document.querySelectorAll('.zoho-contact-card')].map(card=>({first:card.querySelector('.cp-first')?.value||'',last:card.querySelector('.cp-last')?.value||'',email:card.querySelector('.cp-email')?.value||'',mobile:card.querySelector('.cp-mobile')?.value||''})),
     custom1:getCustomerFormValue('manageCustomerCustom1'),custom2:getCustomerFormValue('manageCustomerCustom2'),
     remarks:getCustomerFormValue('manageCustomerRemarks'),
-    branch_id:activeBranch==='all'?'1':activeBranch
+    branch_id:existingId?(data.customers.find(c=>String(c.id)===String(existingId))?.branch_id||'1'):(activeBranch==='all'?'1':activeBranch)
   };
   if(existingId){const i=data.customers.findIndex(c=>c.id===existingId);if(i>=0)data.customers[i]={...data.customers[i],...obj};}
   else data.customers.push(obj);
@@ -3171,7 +3240,9 @@ function renderManagedCustomers(){
   const el=document.getElementById('managedCustomerList');if(!el)return;
   if(!Array.isArray(data.customers))data.customers=[];
   const q=(document.getElementById('manageCustomerSearch')?.value||'').toLowerCase();
-  const rows=data.customers.filter(c=>(activeBranch==='all'||String(c.branch_id||'1')===String(activeBranch))&&[c.name,c.mobile,c.company,c.address].some(v=>String(v||'').toLowerCase().includes(q)));
+  // Admin sees the complete shared customer register; each branch sees only its own records.
+  const customerBranch=currentUserRole==='admin'?'all':String(FOZAN_USERS[currentUserKey]?.branch||activeBranch||'1');
+  const rows=data.customers.filter(c=>(customerBranch==='all'||String(c.branch_id||'1')===customerBranch)&&[c.name,c.mobile,c.company,c.address].some(v=>String(v||'').toLowerCase().includes(q)));
   const count=document.getElementById('customerNavCount');if(count)count.textContent=String(rows.length);
   el.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="admin-data-table"><thead><tr><th>Customer</th><th>Mobile</th><th>Company</th><th>Address</th><th></th></tr></thead><tbody>'+
     rows.map(c=>'<tr><td>'+esc(c.name)+'</td><td>'+esc(c.mobile||'—')+'</td><td>'+esc(c.company||'—')+'</td><td>'+esc(c.address||c.billing?.address||'—')+'</td><td>'+(currentUserRole==='admin'?'<button class="invoice-view-btn" data-id="'+esc(c.id)+'" onclick="editManagedCustomer(this.dataset.id)">Edit</button> <button class="admin-row-delete" data-id="'+esc(c.id)+'" onclick="deleteManagedCustomer(this.dataset.id)">Delete</button>':'View only')+'</td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No customers saved yet.</div>';
@@ -5355,7 +5426,7 @@ document.addEventListener('change',function(e){
 function addCustomBillItem(){
   const wrap=document.getElementById('customBillItems');if(!wrap)return;
   const row=document.createElement('div');row.className='custom-bill-item';
-  row.innerHTML='<input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label>Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div>';
+  row.innerHTML='<input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label class="custom-item-qty-label">Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div>';
   wrap.appendChild(row);
   updateCustomBillTotals();
 }
@@ -5402,9 +5473,26 @@ function itemNameCell(item){
   const sub=[details,unit?'Unit: '+unit:''].filter(Boolean).join(' • ');
   return '<b>'+esc(item.desc||'')+'</b>'+(sub?'<small class="bill-item-description">'+esc(sub)+'</small>':'');
 }
+function customQtyUnitLabel(unit){
+  const raw=String(unit||'').trim();
+  if(!raw)return 'Qty';
+  const key=raw.toLowerCase().replace(/[._]/g,' ').replace(/\s+/g,' ').trim();
+  if(['pcs','pc','piece','pieces'].includes(key))return 'Qty (PCS)';
+  if(['sqf','sq ft','sq ft.','sqft','square feet','square foot'].includes(key))return 'Qty (SQF)';
+  return 'Qty ('+raw.toUpperCase()+')';
+}
+function updateCustomQtyUnitLabel(row,unit){
+  if(!row)return;
+  const label=row.querySelector('.custom-item-qty-label');
+  const qty=row.querySelector('.custom-item-qty');
+  const text=customQtyUnitLabel(unit);
+  if(label)label.textContent=text;
+  if(qty)qty.setAttribute('aria-label',text);
+}
 function applySavedItemToRow(input){
   const item=findSavedItemByName(input.value);
   const row=input.closest('.custom-bill-item');if(!row)return;
+  updateCustomQtyUnitLabel(row,item?.unit||'');
   let detail=row.querySelector('.saved-item-detail');
   if(!detail){detail=document.createElement('small');detail.className='saved-item-detail';detail.style.cssText='display:block;color:#667085;font-size:11px;line-height:1.4;padding:2px 4px 4px';input.insertAdjacentElement('afterend',detail);}
   if(!item){
@@ -5428,7 +5516,7 @@ function renderQuoteRegister(){
   if(!Array.isArray(data.quotes))data.quotes=[];
   const list=document.getElementById('quoteRegisterList');if(!list)return;
   const count=document.getElementById('quoteNavCount');if(count)count.textContent=String(data.quotes.length);
-  const q=(document.getElementById('quoteSearch')?.value||'').trim().toLowerCase();const branch=activeBranch==='all'?'all':String(activeBranch);const branchFilter=document.getElementById('quoteBranchFilter');if(branchFilter)branchFilter.value=branch;
+  const q=(document.getElementById('quoteSearch')?.value||'').trim().toLowerCase();const branch='all';const branchFilter=document.getElementById('quoteBranchFilter');if(branchFilter)branchFilter.value=branch;
   const rows=data.quotes.filter(x=>(branch==='all'||String(x.branch_id||'1')===branch)&&(!q||[x.quote_no,x.customer,x.mobile,x.company].some(v=>String(v||'').toLowerCase().includes(q)))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   list.innerHTML=rows.length?'<div style="overflow-x:auto"><table class="invoice-register-table"><thead><tr><th>Quote #</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Branch</th><th>Total</th><th>Expiry</th><th></th></tr></thead><tbody>'+rows.map(x=>'<tr><td><b>'+esc(x.quote_no||'')+'</b></td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.mobile||'—')+'</td><td>'+esc(branchName(x.branch_id))+'</td><td>'+money(x.quote_total||0)+'</td><td>'+esc(x.expiry_date||'—')+'</td><td><button class="invoice-view-btn" data-id="'+esc(x.id)+'" onclick="viewSavedQuote(this.dataset.id)">View / Print</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty">No matching saved quotes.</div>';
 }
@@ -5482,7 +5570,7 @@ function getInvoiceCustomerRecords(){
     const name=String(c.name||c.display_name||c.customer||'').trim();
     if(!name)return;
     const branch=String(c.branch_id||'1');
-    if(activeBranch!=='all' && branch!==String(activeBranch))return;
+    // Customer records are shared across Head Office and Bahria Branch.
     const key=branch+'|'+name.toLocaleLowerCase();
     let existing=records.find(x=>String(x.branch_id)===branch&&x.name.toLocaleLowerCase()===name.toLocaleLowerCase());
     const normalized={...c,name,branch_id:branch,
@@ -5699,7 +5787,7 @@ function fozanInvoiceMarkup(v){
       '</div>'+
       '<div class="fozan-invoice-totals">'+
         '<div><span>Subtotal</span><b>'+money(subtotal)+'</b></div>'+
-        '<div><span>Discount'+(v.discountPct?' ('+e(v.discountPct)+'%)':'')+'</span><b>'+money(discount)+'</b></div>'+
+        '<div><span>Discount</span><b>'+money(discount)+'</b></div>'+
         '<div><span>Shipping Charges</span><b>'+money(shipping)+'</b></div>'+
         '<div class="fozan-total-strong"><span>Invoice Total</span><b>'+money(total)+'</b></div>'+
         '<div><span>Amount Received</span><b>'+money(advance)+'</b></div>'+
@@ -5820,14 +5908,20 @@ function renderInvoiceRegister(){
   if(!Array.isArray(data.invoices))data.invoices=[];if(!Array.isArray(data.quotes))data.quotes=[];
   if(!Array.isArray(data.customers))data.customers=[];
   if(!Array.isArray(data.items))data.items=[];
-  const count=document.getElementById('invoiceNavCount');if(count)count.textContent=String(data.invoices.length);
+  const branchFilter=document.getElementById('invoiceBranchFilter');
+  let branch='all';
+  if(currentUserRole==='branch'){
+    branch=String(FOZAN_USERS[currentUserKey]?.branch||activeBranch||'1');
+    if(branchFilter){branchFilter.value=branch;branchFilter.disabled=true;}
+  }else if(currentUserRole==='admin'){
+    if(branchFilter){branchFilter.disabled=false;if(!['all','1','2'].includes(branchFilter.value))branchFilter.value='all';branch=branchFilter.value||'all';}
+  }else if(branchFilter){branchFilter.value='all';branchFilter.disabled=true;}
+  const visibleInvoices=data.invoices.filter(x=>branch==='all'||String(x.branch_id||'1')===branch);
+  const count=document.getElementById('invoiceNavCount');if(count)count.textContent=String(visibleInvoices.length);
   const q=(document.getElementById('invoiceSearch')?.value||'').trim().toLowerCase();
-  const branch=activeBranch==='all'?'all':String(activeBranch);
-  const branchFilter=document.getElementById('invoiceBranchFilter');if(branchFilter)branchFilter.value=branch;
-  const rows=data.invoices.filter(x=>{
+  const rows=visibleInvoices.filter(x=>{
     const itemText=(Array.isArray(x.invoice_items)?x.invoice_items:[]).map(v=>[v.desc,v.description,v.unit].join(' ')).join(' ');
-    return (branch==='all'||String(x.branch_id||'1')===branch)&&
-      (!q||[x.invoice_no,x.customer,x.mobile,x.company,itemText,x.desc].some(v=>String(v||'').toLowerCase().includes(q)));
+    return (!q||[x.invoice_no,x.customer,x.mobile,x.company,itemText,x.desc].some(v=>String(v||'').toLowerCase().includes(q)));
   }).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
   if(!rows.length){list.innerHTML='<div class="empty">No matching saved invoices.</div>';return;}
   list.innerHTML='<div style="overflow-x:auto"><table class="invoice-register-table"><thead><tr><th>Invoice Number</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Branch</th><th>Total</th><th>Advance</th><th>Balance</th><th></th></tr></thead><tbody>'+
