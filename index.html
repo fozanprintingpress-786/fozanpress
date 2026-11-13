@@ -5667,9 +5667,19 @@ function fozanInvoiceMarkup(v){
 
 function generateCustomBill(){
   if(window.customDocumentMode==='quote'){generateCustomQuote();return;}
-  if(window.editingSavedInvoiceId && currentUserRole!=='admin'){alert('Only Admin can edit an invoice.');return;}
+  if(window.editingSavedInvoiceId && currentUserRole!=='admin' && currentUserRole!=='branch'){alert('Please login first.');return;}
   if(activeBranch==='all'){alert('Combined Report view-only hai. Invoice ke liye branch select karein.');return;}
   if(previewMode){alert('Preview mode mein invoice save nahi ho sakta.');return;}
+  const editingInvoiceId=window.editingSavedInvoiceId?String(window.editingSavedInvoiceId):'';
+  if(editingInvoiceId && !(data.invoices||[]).some(v=>String(v.id)===editingInvoiceId)){
+    alert('The original invoice could not be found. No new invoice was created. Please reopen the invoice and try again.');
+    window.editingSavedInvoiceId='';
+    return;
+  }
+  if(editingInvoiceId){
+    const invoiceToUpdate=(data.invoices||[]).find(v=>String(v.id)===editingInvoiceId);
+    if(!canMutateRecord(invoiceToUpdate,'invoice'))return;
+  }
   const name=(document.getElementById('customCustomerName').value||'').trim();
   if(!name){alert('Customer Name likhein.');document.getElementById('customCustomerName').focus();return;}
   const date=document.getElementById('customBillDate').value||nowLocal().date;
@@ -5723,7 +5733,16 @@ function generateCustomBill(){
     data.customers.push({id:uid(),name,mobile,email,company,address,branch_id:activeBranch});
   }
   const invoiceRecord={...record,status:'saved',created_at:timestamp.date+' '+timestamp.time};
-  if(window.editingSavedInvoiceId){const invoiceIndex=data.invoices.findIndex(v=>String(v.id)===String(window.editingSavedInvoiceId));if(invoiceIndex>=0){const previous=data.invoices[invoiceIndex];data.invoices[invoiceIndex]={...previous,...invoiceRecord,id:window.editingSavedInvoiceId,activity_history:previous.activity_history||[]};}else data.invoices.push(invoiceRecord);window.editingSavedInvoiceId='';}else data.invoices.push(invoiceRecord);
+  if(editingInvoiceId){
+    const invoiceIndex=data.invoices.findIndex(v=>String(v.id)===editingInvoiceId);
+    // Update the existing record only; never fall back to inserting a new invoice.
+    if(invoiceIndex<0){alert('The original invoice could not be found. No new invoice was created.');return;}
+    const previous=data.invoices[invoiceIndex];
+    data.invoices[invoiceIndex]={...previous,...invoiceRecord,id:editingInvoiceId,created_at:previous.created_at||invoiceRecord.created_at,activity_history:previous.activity_history||[]};
+    window.editingSavedInvoiceId='';
+  }else{
+    data.invoices.push(invoiceRecord);
+  }
   if(window.editingCustomDraftId&&Array.isArray(data.invoice_drafts)){data.invoice_drafts=data.invoice_drafts.filter(x=>String(x.id)!==String(window.editingCustomDraftId));window.editingCustomDraftId='';}
   persist();
   renderInvoiceRegister();refreshSavedInvoiceCustomerOptions();
@@ -5769,18 +5788,19 @@ function renderInvoiceRegister(){
   if(!rows.length){list.innerHTML='<div class="empty">No matching saved invoices.</div>';return;}
   list.innerHTML='<div style="overflow-x:auto"><table class="invoice-register-table"><thead><tr><th>Invoice Number</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Branch</th><th>Total</th><th>Advance</th><th>Balance</th><th></th></tr></thead><tbody>'+
     rows.map(x=>{
-      return '<tr><td><b>'+esc(x.invoice_no||'—')+'</b></td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.mobile||'—')+'</td><td>'+esc(branchName(x.branch_id))+'</td><td>'+money(x.invoice_total??x.amount)+'</td><td>'+money(x.advance_payment||0)+'</td><td>'+money(x.balance_payment||0)+'</td><td><button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="viewSavedInvoice(this.dataset.invoiceId)">View / Print</button> '+(currentUserRole==='admin'?'<button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="editSavedInvoice(this.dataset.invoiceId)">Edit</button> <button class="admin-row-delete" data-invoice-id="'+esc(x.id)+'" onclick="deleteSavedInvoice(this.dataset.invoiceId)">Delete</button>':'')+'</td></tr>';
+      return '<tr><td><b>'+esc(x.invoice_no||'—')+'</b></td><td>'+esc(x.date||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.mobile||'—')+'</td><td>'+esc(branchName(x.branch_id))+'</td><td>'+money(x.invoice_total??x.amount)+'</td><td>'+money(x.advance_payment||0)+'</td><td>'+money(x.balance_payment||0)+'</td><td><button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="viewSavedInvoice(this.dataset.invoiceId)">View / Print</button> '+((currentUserRole==='admin'||(currentUserRole==='branch'&&String(x.branch_id||'1')===String(FOZAN_USERS[currentUserKey]?.branch)))?'<button class="invoice-view-btn" data-invoice-id="'+esc(x.id)+'" onclick="editSavedInvoice(this.dataset.invoiceId)">Edit</button> ':'')+(currentUserRole==='admin'?'<button class="admin-row-delete" data-invoice-id="'+esc(x.id)+'" onclick="deleteSavedInvoice(this.dataset.invoiceId)">Delete</button>':'')+'</td></tr>';
     }).join('')+
     '</tbody></table></div>';
 }
 function editSavedInvoice(id){
-  if(currentUserRole!=='admin'){alert('Branch users cannot edit saved invoices. Only Admin can edit an invoice.');return;}
+  if(currentUserRole!=='admin'&&currentUserRole!=='branch'){alert('Please login first.');return;}
   if(previewMode){alert('Preview mode صرف دیکھنے کے لیے ہے۔');return;}
   const x=(data.invoices||[]).find(v=>String(v.id)===String(id));if(!x)return;
-  if(activeBranch==='all'){alert('Invoice edit karne ke liye pehle usi branch ko select karein.');return;}
-  if(String(activeBranch)!==String(x.branch_id)){alert('Is invoice ki branch select karein: '+branchName(x.branch_id));return;}
-  window.editingSavedInvoiceId=x.id;
+  if(!canMutateRecord(x,'invoice'))return;
   openInvoiceWorkspace('invoice');
+  // Keep the selected invoice ID after opening the workspace; opening it resets
+  // the editor state for new invoices.
+  window.editingSavedInvoiceId=x.id;
   const set=(field,value)=>{const el=document.getElementById(field);if(el)el.value=value??'';};
   const linkedSale=(data.sales||[]).find(v=>String(v.invoice_no||'')===String(x.invoice_no||'')&&String(v.branch_id||'1')===String(x.branch_id||'1'));
   const invoiceTotal=Number(x.invoice_total??x.amount??linkedSale?.amount??0);
