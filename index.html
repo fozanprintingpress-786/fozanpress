@@ -1745,6 +1745,8 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
     <div><h2 style="margin-bottom:0">Daily Sales</h2></div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:12px;font-weight:700;color:#52616d">Month <input id="dailySaleMonthFilter" type="month" style="width:auto;max-width:145px;margin:0;padding:8px"></label>
+      <button class="primary" type="button" style="padding:9px 11px" onclick="applyDailySaleMonth()">Check Month</button>
       <label style="font-size:12px;font-weight:700;color:#52616d">From <input id="dailySaleFromDate" type="date" style="width:auto;max-width:145px;margin:0;padding:8px"></label>
       <label style="font-size:12px;font-weight:700;color:#52616d">To <input id="dailySaleToDate" type="date" style="width:auto;max-width:145px;margin:0;padding:8px"></label>
       <button class="primary" type="button" style="padding:9px 11px" onclick="applyDailySaleDateRange()">Check Dates</button>
@@ -1767,6 +1769,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
     <button class="side-link" data-panel="invoices" onclick="showSidePanel('invoices')"><span>▧</span><b>Invoice Management</b><em id="invoiceNavCount">0</em></button>
     <button class="side-link" data-panel="quotes" onclick="showSidePanel('quotes')"><span>▤</span><b>Quotes</b><em id="quoteNavCount">0</em></button>
     <button class="side-link" data-panel="customers" onclick="showSidePanel('customers')"><span>♙</span><b>Customers</b><em id="customerNavCount">0</em></button>
+    <button class="side-link" data-panel="routine" onclick="showSidePanel('routine')"><span>↔</span><b>Routine Customer Ledger</b><em id="routineNavCount">0</em></button>
     <button class="side-link" data-panel="items" onclick="showSidePanel('items')"><span>▤</span><b>Items</b><em id="itemNavCount">0</em></button>
     <button class="side-link" data-panel="overdue" onclick="showSidePanel('overdue')"><span>◷</span><b>Overall Credit &amp; Balance</b><em id="overdueNavCount">›</em></button>
     <button class="side-link" data-panel="report" onclick="showSidePanel('report')"><span>▥</span><b>Monthly Report</b><em>›</em></button>
@@ -1788,7 +1791,38 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
       <div id="monthlyDues"><div class="dues-filter-tabs" role="group" aria-label="Filter credit and balance"><button type="button" class="active" onclick="setMonthlyDuesFilter('all')">All <b>0</b></button><button type="button" class="" onclick="setMonthlyDuesFilter('credit')">Credit <b>0</b></button><button type="button" class="" onclick="setMonthlyDuesFilter('balance')">Balance <b>0</b></button></div><div class="due-summary dues-three-summary"><div><small>Credit Due</small><strong style="color:#c62828">Rs. 0</strong></div><div><small>Balance Due</small><strong style="color:#b56b0a">Rs. 0</strong></div><div><small>Total Due</small><strong style="color:#1769aa">Rs. 0</strong></div></div><div class="empty">No credit or balance entries for this month.</div></div></div>
     </aside>
   </section>
-  <section class="side-view" id="side-invoices">
+  <section class="side-view" id="side-routine">
+  <div class="card" style="border-top:4px solid #f58220">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><h2 style="margin-bottom:4px">Routine Customer Ledger</h2><div class="notice">Separate daily records for regular customers — no invoice is created.</div></div>
+      <strong id="routineCurrentBalance" style="color:#c62828;font-size:20px">Current Balance: Rs. 0</strong>
+    </div>
+    <label for="routineSearch" style="display:block;font-weight:700;margin-top:15px">Search Customer Name / Mobile</label>
+    <input id="routineSearch" placeholder="Type customer name or mobile number..." oninput="renderRoutineLedger()">
+    <div id="routineCustomerMatches" class="notice" style="margin:0 0 12px"></div>
+    <div style="background:#f7f8fa;border:1px solid #e8ebef;border-radius:12px;padding:14px;margin:12px 0">
+      <h3 style="margin:0 0 10px;color:#202b3d">Add New Item / Payment Record</h3>
+      <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+        <div><label>Customer Name</label><input id="routineCustomer" placeholder="Customer name"></div>
+        <div><label>Mobile / WhatsApp</label><input id="routineMobile" placeholder="Mobile number"></div>
+        <div><label>Item / Work Description</label><input id="routineDesc" placeholder="Item or work details"></div>
+        <div><label>Item Amount (Rs.)</label><input id="routineAmount" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div><label>Payment Received Now (Rs.)</label><input id="routineReceived" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div><label>Notes (Optional)</label><input id="routineNotes" placeholder="Additional details"></div>
+      </div>
+      <div class="notice" style="margin:0 0 10px">Item amount adds to the customer's running balance. Payment received reduces it. Each item and payment is saved as a separate dated record.</div>
+      <button class="primary" type="button" onclick="saveRoutineEntry()">Save Separate Record</button>
+      <button class="muted" type="button" onclick="clearRoutineForm()">Clear</button>
+    </div>
+    <div id="routineLedgerSummary" class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="stat"><small>Total Items</small><strong id="routineTotalItems">Rs. 0</strong></div>
+      <div class="stat"><small>Total Received</small><strong id="routineTotalReceived">Rs. 0</strong></div>
+      <div class="stat"><small>Outstanding Balance</small><strong id="routineOutstanding">Rs. 0</strong></div>
+    </div>
+    <div id="routineHistory"><div class="empty">Search a customer name to view their complete routine ledger.</div></div>
+  </div>
+</section>
+<section class="side-view" id="side-invoices">
     <aside class="monthly-dues-panel invoice-register-panel">
       <div class="monthly-dues-head invoice-register-heading invoice-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><h2>Invoice Management</h2></div><div class="invoice-window-controls" role="group" aria-label="Window controls"><button type="button" class="invoice-window-btn minimize" onclick="minimizeInvoiceRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="invoice-window-btn maximize" id="invoiceWindowMaximize" onclick="toggleInvoiceRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="invoice-window-btn close" onclick="closeInvoiceRegister()" aria-label="Close" title="Close">×</button></div></div>
       <div class="monthly-dues-content">
@@ -2195,7 +2229,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
   <label>Description</label><input id="eDesc" placeholder="e.g. Paper purchase / Ali advance salary" dir="ltr" oninput="autoMatchExpenseStaff()">
   <label>Staff (optional — auto detected from description)</label><select id="eStaff"><option value="">Not a staff payment</option></select>
   <label>Staff Payment Type</label><select id="eStaffPayType"><option value="advance">Advance Salary</option><option value="salary">Regular Salary Payment</option></select>
-  <label>Taken By</label><select id="eTakenBy"><option value="Bykia &amp; Indrive">Bykia &amp; Indrive</option><option value="Rahij">Rahij</option><option value="Fozan">Fozan</option><option value="Other">Other</option></select>
+  <label>Taken By</label><select id="eTakenBy"><option value="Bykia &amp; Indrive">Bykia &amp; Indrive</option><option value="Other">Other</option></select>
   <label>Date</label><input id="eDate" type="date">
   <label>Time</label><input id="eTime" type="time" step="1">
   <div style="display:flex;gap:8px">
@@ -2357,6 +2391,7 @@ function refreshManagementMenuCounts(){
   setCount('invoiceNavCount',data.invoices.length);
   setCount('quoteNavCount',data.quotes.length);
   setCount('customerNavCount',customers.length);
+  setCount('routineNavCount',data.sales.filter(x=>['routine_item','routine_payment'].includes(x.type)&&(branch==='all'||String(x.branch_id||'1')===branch)).length);
   setCount('itemNavCount',data.items.filter(x=>x.status!=='Deleted').length);
   setCount('overdueNavCount',getOverdueCustomerEntries().length);
 }
@@ -2474,9 +2509,9 @@ let previewMode=false;
 let activeBranch=localStorage.getItem('fozan_active_branch')||'1';
 if(!['1','2','all'].includes(activeBranch)) activeBranch='1';
 let authorizedBranches=new Set();
-function salesInBranch(branchId){return data.sales.filter(x=>String(x.branch_id||'1')===String(branchId||'1'));}
+function salesInBranch(branchId){return data.sales.filter(x=>String(x.branch_id||'1')===String(branchId||'1') && !['routine_item','routine_payment'].includes(x.type));}
 function expensesInBranch(branchId){return data.expenses.filter(x=>String(x.branch_id||'1')===String(branchId||'1'));}
-function visibleSales(){return activeBranch==='all'?data.sales:salesInBranch(activeBranch);}
+function visibleSales(){return activeBranch==='all'?data.sales.filter(x=>!['routine_item','routine_payment'].includes(x.type)):salesInBranch(activeBranch);}
 function visibleExpenses(){return activeBranch==='all'?data.expenses:expensesInBranch(activeBranch);}
 function branchName(id){return String(id)==='2'?'Bahria Enclave Office':'Head Office';}
 function updateBranchContact(){
@@ -3854,6 +3889,72 @@ function closeManagementSection(){
   if(report){report.classList.remove('open');report.setAttribute('aria-hidden','true');}
 }
 
+
+function routineRows(){
+  const rows=(data.sales||[]).filter(x=>['routine_item','routine_payment'].includes(x.type));
+  return activeBranch==='all'?rows:rows.filter(x=>String(x.branch_id||'1')===String(activeBranch));
+}
+function routineMoney(value){return 'Rs. '+Number(value||0).toLocaleString('en-PK',{maximumFractionDigits:2});}
+function renderRoutineLedger(){
+  const search=(document.getElementById('routineSearch')?.value||'').trim().toLocaleLowerCase();
+  const rows=routineRows();
+  const matches=search?rows.filter(x=>String(x.customer||'').toLocaleLowerCase().includes(search)||String(x.mobile||'').toLowerCase().includes(search)):[];
+  const names=[...new Set(matches.map(x=>String(x.customer||'').trim()).filter(Boolean))];
+  const exactName=names.find(name=>name.toLocaleLowerCase()===search);
+  const matchEl=document.getElementById('routineCustomerMatches');
+  if(matchEl)matchEl.textContent=search?(names.length?('Matching customers: '+names.join(' • ')):'No matching routine customer found.'):'Enter a customer name to view their saved records.';
+  const selectedName=exactName||(names.length===1?names[0]:'');
+  const customerRows=selectedName?matches.filter(x=>String(x.customer||'').trim().toLocaleLowerCase()===String(selectedName).trim().toLocaleLowerCase()):[];
+  const charges=customerRows.filter(x=>x.type==='routine_item').reduce((n,x)=>n+Number(x.amount||0),0);
+  const received=customerRows.filter(x=>x.type==='routine_payment').reduce((n,x)=>n+Number(x.amount||0),0);
+  const balance=charges-received;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('routineCurrentBalance','Current Balance: '+routineMoney(balance));
+  set('routineTotalItems',routineMoney(charges));set('routineTotalReceived',routineMoney(received));set('routineOutstanding',routineMoney(balance));
+  const host=document.getElementById('routineHistory');if(!host)return;
+  if(!search){host.innerHTML='<div class="empty">Search a customer name or mobile number to view their complete routine ledger.</div>';return;}
+  if(!customerRows.length){
+    host.innerHTML=names.length>1?'<div class="empty">More than one customer matched. Please type the full customer name to view the correct ledger.</div>':'<div class="empty">No routine records found for this customer.</div>';
+    return;
+  }
+  customerRows.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||'')));
+  host.innerHTML='<h3 style="margin:15px 0 5px">Complete History — '+esc(selectedName)+'</h3><div style="overflow-x:auto"><table><thead><tr>'+(activeBranch==='all'?'<th>Branch</th>':'')+'<th>Date &amp; Time</th><th>Record</th><th>Item / Details</th><th>Amount</th><th>Running Balance</th></tr></thead><tbody>'+(()=>{
+    let running=0;
+    return customerRows.map(x=>{
+      const charge=x.type==='routine_item'?Number(x.amount||0):0;
+      const payment=x.type==='routine_payment'?Number(x.amount||0):0;
+      running+=charge-payment;
+      return '<tr>'+(activeBranch==='all'?'<td>'+esc(branchName(x.branch_id))+'</td>':'')+'<td>'+esc(x.date||'')+'<br>'+esc(x.time||'')+'</td><td><b style="color:'+(charge?'#c62828':'#198754')+'">'+(charge?'Item / Work':'Payment Received')+'</b></td><td>'+esc(x.desc||'')+'</td><td>'+routineMoney(x.amount)+'</td><td><b style="color:'+(running>0?'#c62828':'#198754')+'">'+routineMoney(running)+'</b></td></tr>';
+    }).join('');
+  })()+'</tbody></table></div>';
+}
+function clearRoutineForm(){
+  ['routineCustomer','routineMobile','routineDesc','routineAmount','routineReceived','routineNotes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+function saveRoutineEntry(){
+  if(previewMode)return alert('Preview mode صرف دیکھنے کے لیے ہے۔');
+  if(activeBranch==='all')return alert('Combined Report is view-only. Select an office before adding a routine record.');
+  if(!requireActionPassword())return;
+  const customer=document.getElementById('routineCustomer').value.trim();
+  const mobile=document.getElementById('routineMobile').value.trim();
+  const desc=document.getElementById('routineDesc').value.trim();
+  const amount=Number(document.getElementById('routineAmount').value||0);
+  const received=Number(document.getElementById('routineReceived').value||0);
+  const notes=document.getElementById('routineNotes').value.trim();
+  if(!customer)return alert('Please enter customer name.');
+  if(!desc && amount>0)return alert('Please enter item / work description.');
+  if(!Number.isFinite(amount)||amount<0||!Number.isFinite(received)||received<0)return alert('Please enter valid amounts.');
+  if(amount===0&&received===0)return alert('Enter an item amount or payment received.');
+  const stamp=nowLocal();
+  const details=[desc,notes].filter(Boolean).join(' • ');
+  if(amount>0)data.sales.push({id:uid(),branch_id:activeBranch,type:'routine_item',amount,customer,mobile,desc:details||'Routine customer item',date:stamp.date,time:stamp.time,advance_payment:0,balance_payment:0});
+  if(received>0)data.sales.push({id:uid(),branch_id:activeBranch,type:'routine_payment',amount:received,customer,mobile,desc:'Payment received'+(notes?' • '+notes:''),date:stamp.date,time:stamp.time,advance_payment:received,balance_payment:0});
+  persist();
+  const search=document.getElementById('routineSearch');if(search)search.value=customer;
+  renderRoutineLedger();refreshManagementMenuCounts();clearRoutineForm();
+  alert('Routine customer record saved separately. No invoice was created.');
+}
+
 function showSidePanel(name){
   ensureManagementBackButtons();
   if(name==='expenses' && currentUserRole!=='admin'){alert('Staff Salary & Expenses is available to Admin only.');return;}
@@ -3880,6 +3981,7 @@ function showSidePanel(name){
     renderStaffPayroll();
   }
   if(target==='invoices')renderInvoiceRegister();
+  if(target==='routine')renderRoutineLedger();
   if(target==='quotes'){resetQuoteRegisterWindow();renderQuoteRegister();}
   if(target==='customers'){resetCustomerWindow();document.body.classList.add('customer-form-open');renderManagedCustomers();toggleCustomerBusinessFields();}
   if(target==='items'){resetItemWindow();document.body.classList.add('item-form-open');renderManagedItems();resetManagedItemForm();}
@@ -4109,17 +4211,32 @@ function whatsappCustomer(event, mobile){
   window.location.href=waUrl;
 }
 
+function applyDailySaleMonth(){
+  const month=document.getElementById('dailySaleMonthFilter')?.value||'';
+  if(!month)return alert('Please select a month first.');
+  const [year,monthNumber]=month.split('-').map(Number);
+  const lastDay=new Date(year,monthNumber,0).getDate();
+  const from=document.getElementById('dailySaleFromDate');
+  const to=document.getElementById('dailySaleToDate');
+  if(from)from.value=month+'-01';
+  if(to)to.value=month+'-'+String(lastDay).padStart(2,'0');
+  renderSales();
+}
 function applyDailySaleDateRange(){
   const from=document.getElementById('dailySaleFromDate')?.value||'';
   const to=document.getElementById('dailySaleToDate')?.value||'';
   if(from&&to&&from>to){alert('To date, From date se pehle nahi ho sakti.');return;}
+  const month=document.getElementById('dailySaleMonthFilter');
+  if(month)month.value=(from&&to&&from.slice(0,7)===to.slice(0,7))?from.slice(0,7):'';
   renderSales();
 }
 function clearDailySaleDateRange(){
   const from=document.getElementById('dailySaleFromDate');
   const to=document.getElementById('dailySaleToDate');
+  const month=document.getElementById('dailySaleMonthFilter');
   if(from)from.value='';
   if(to)to.value='';
+  if(month)month.value='';
   renderSales();
 }
 function renderSales(){
