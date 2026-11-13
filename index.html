@@ -4082,7 +4082,12 @@ function renderDashboard(){
   renderMonthlyDues();
   const date=getSummaryDate(), t=totals(date);
   const month=getSummaryMonth(), mt=monthlyTotals(month);
-  const summary=summaryMode==='month' ? mt : t;
+  const rangeFrom=document.getElementById('dailySaleFromDate')?.value||'';
+  const rangeTo=document.getElementById('dailySaleToDate')?.value||'';
+  const dailyRangeActive=!!(rangeFrom||rangeTo);
+  const inDailySelectedRange=d=>(!rangeFrom||String(d||'')>=rangeFrom)&&(!rangeTo||String(d||'')<=rangeTo);
+  const rangeSummary=dailyRangeActive?calculateTotals(inDailySelectedRange):null;
+  const summary=dailyRangeActive?rangeSummary:(summaryMode==='month' ? mt : t);
   document.getElementById('summaryMonth').value=month;
   document.getElementById('monthTitle').textContent=(activeBranch==='all'?'Combined Monthly Summary':activeBranch==='2'?'Bahria Enclave Office Monthly Summary':'Head Office Monthly Summary')+' — '+monthLabel(month);
   document.getElementById('dailyTitle').textContent=(activeBranch==='all'?'Combined Daily Summary':activeBranch==='2'?'Bahria Enclave Office Daily Summary':'Head Office Daily Summary')+' — '+date;
@@ -4092,7 +4097,7 @@ function renderDashboard(){
   set('totalOnline',summary.online);
   const creditAndBalanceDue=visibleSales()
     .filter(x=>['credit','cash','online'].includes(x.type) &&
-      (summaryMode==='month' ? monthKey(x.date)===month : x.date===date))
+      (dailyRangeActive ? inDailySelectedRange(x.date) : (summaryMode==='month' ? monthKey(x.date)===month : x.date===date)))
     .reduce((sum,x)=>{
       const due=x.type==='credit'
         ? customerBalance(x)
@@ -4110,7 +4115,7 @@ function renderDashboard(){
   if(document.getElementById('fullMonthlyReport')?.classList.contains('open'))renderFullMonthlyReport();
 
   const el=document.getElementById('expenseLedger');
-  const dayExpenses=visibleExpenses().filter(x=>x.date===date);
+  const dayExpenses=visibleExpenses().filter(x=>dailyRangeActive?inDailySelectedRange(x.date):x.date===date);
   if(!dayExpenses.length){
     el.innerHTML='';
     return;
@@ -4220,6 +4225,7 @@ function applyDailySaleMonth(){
   const to=document.getElementById('dailySaleToDate');
   if(from)from.value=month+'-01';
   if(to)to.value=month+'-'+String(lastDay).padStart(2,'0');
+  renderDashboard();
   renderSales();
 }
 function applyDailySaleDateRange(){
@@ -4228,6 +4234,7 @@ function applyDailySaleDateRange(){
   if(from&&to&&from>to){alert('To date, From date se pehle nahi ho sakti.');return;}
   const month=document.getElementById('dailySaleMonthFilter');
   if(month)month.value=(from&&to&&from.slice(0,7)===to.slice(0,7))?from.slice(0,7):'';
+  renderDashboard();
   renderSales();
 }
 function clearDailySaleDateRange(){
@@ -4237,6 +4244,7 @@ function clearDailySaleDateRange(){
   if(from)from.value='';
   if(to)to.value='';
   if(month)month.value='';
+  renderDashboard();
   renderSales();
 }
 function renderSales(){
