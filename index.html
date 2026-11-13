@@ -2138,7 +2138,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
  </div>
 </div>
 
-<div class="modal" id="saleModal" style="display:none;" aria-modal="true" role="dialog" onclick="if(event.target===this)closeSaleModal()">
+<div class="modal" id="saleModal" style="display:none;" aria-modal="true" role="dialog" onclick="event.stopPropagation()">
   <div class="box sale-modal-box">
     <div class="sale-modal-titlebar">
       <h2 id="saleModalTitle">New Daily Sale</h2>
@@ -3067,7 +3067,8 @@ function saveManagedCustomer(){
   else data.customers.push(obj);
   persist();window.editingManagedCustomerId='';
   refreshSavedInvoiceCustomerOptions();
-  resetManagedCustomerForm();renderManagedCustomers();
+  refreshSaleSuggestions();refreshBillCustomerList();
+  resetManagedCustomerForm();renderManagedCustomers();refreshManagementMenuCounts();
   alert('Customer saved successfully.');
 }
 function resetManagedCustomerForm(){
@@ -3200,7 +3201,10 @@ function saveManagedItem(){
   const obj={id:existingId||uid(),name,rate,unit,qty,type:document.querySelector('input[name="managedItemType"]:checked')?.value||'Goods',description:(document.getElementById('manageItemDescription')?.value||'').trim(),tax:document.getElementById('manageItemTax')?.value||'',status:document.getElementById('manageItemStatus')?.value||'Active'};
   if(existingId){const i=data.items.findIndex(x=>String(x.id)===String(existingId));if(i>=0)data.items[i]={...data.items[i],...obj};}
   else data.items.push(obj);
-  persist();resetManagedItemForm();renderManagedItems();alert('Item saved successfully.');
+  persist();resetManagedItemForm();renderManagedItems();
+  refreshSavedItemDatalist();refreshCustomerDescriptionSuggestions();
+  refreshSaleSuggestions();refreshManagementMenuCounts();
+  alert('Item saved successfully.');
 }
 function resetManagedItemForm(){
   window.editingManagedItemId='';
@@ -4439,11 +4443,13 @@ function savedInvoiceOutstanding(invoice){
 function findOpenSavedInvoiceForCustomer(customer, branchId){
   const key=String(customer||'').trim().toLowerCase();
   if(!key)return null;
-  return (data.invoices||[]).filter(x=>
+  const matches=(data.invoices||[]).filter(x=>
     String(x.branch_id||'1')===String(branchId||'1') &&
-    String(x.customer||'').trim().toLowerCase()===key &&
-    savedInvoiceOutstanding(x)>0.0001
-  ).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||'')))[0]||null;
+    String(x.customer||'').trim().toLowerCase()===key
+  ).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
+  // Prefer an unpaid invoice; if all invoices are paid, attach the new Daily Sale
+  // to the customer's most recent saved invoice as requested.
+  return matches.find(x=>savedInvoiceOutstanding(x)>0.0001)||matches[0]||null;
 }
 function addInvoiceActivity(invoice, activity){
   if(!invoice)return;
@@ -4472,7 +4478,7 @@ function appendDailySaleToSavedInvoice(invoice, sale, receivedAmount){
   if(!invoice||!sale)return;
   const qty=Math.max(1,Number(sale.quantity||1));
   const catalogItem=findSavedItemByName(sale.desc||'');
-  const item={desc:sale.desc||'Additional Daily Sale',description:catalogItem?.description||'Added from Daily Sale on '+sale.date,unit:catalogItem?.unit||'',qty,rate:Number(sale.amount||0)/qty,total:Number(sale.amount||0),date:sale.date,added_from_daily_sale:true};
+  const item={desc:sale.desc||'Additional Daily Sale',description:[sale.item_description||catalogItem?.description||'', 'Added from Daily Sale on '+sale.date].filter(Boolean).join(' • '),unit:catalogItem?.unit||'',qty,rate:Number(sale.amount||0)/qty,total:Number(sale.amount||0),date:sale.date,added_from_daily_sale:true};
   if(!Array.isArray(invoice.invoice_items))invoice.invoice_items=[];
   invoice.invoice_items.push(item);
   const add=Number(sale.amount||0);
@@ -4499,6 +4505,8 @@ function saveSale(){
   if(mobile && (mobileDigits.length<10 || mobileDigits.length>15))
     return alert('Please enter a valid mobile / WhatsApp number (10 to 15 digits).');
   const desc=cleanDescription(document.getElementById('sDesc').value);
+  const savedCatalogItem=findSavedItemByName(desc);
+  const itemDescription=savedCatalogItem?String(savedCatalogItem.description||'').trim():'';
   const quantity=Number(document.getElementById('sQty').value||1);
   if(!Number.isFinite(quantity)||quantity<1||!Number.isInteger(quantity))return alert('Please enter a valid quantity (1 or more).');
   const type=document.getElementById('sType').value;
@@ -4547,7 +4555,7 @@ function saveSale(){
     const oldType=old.type;
     const oldCustomer=(old.customer||'').trim();
     const oldCustomerKey=oldCustomer.toLowerCase();
-    const obj={type:storedType,amount,customer,mobile,desc,quantity,date,time,
+    const obj={type:storedType,amount,customer,mobile,desc,item_description:itemDescription,quantity,date,time,
       advance_payment:advance,advance_method:advanceMethod,
       payment_method:advanceMethod,balance_payment:initialBalance,
       balance_entry_mode:isPaidPlusDue?'paid_plus_due':''};
@@ -4561,7 +4569,7 @@ function saveSale(){
     // Any amount already received on this sale is recorded as its advance.
     const itemAdvance=isCredit?advance:
       (isCash||isOnline?Math.max(0,amount-initialBalance):advance);
-    const credit={id:uid(),branch_id:activeBranch,type:'credit',amount,customer,mobile,desc,quantity,date,time,
+    const credit={id:uid(),branch_id:activeBranch,type:'credit',amount,customer,mobile,desc,item_description:itemDescription,quantity,date,time,
       advance_payment:itemAdvance,advance_method:advanceMethod,balance_payment:0};
     data.sales.push(credit);
     if(openSavedInvoice)appendDailySaleToSavedInvoice(openSavedInvoice,credit,itemAdvance);
@@ -4569,7 +4577,7 @@ function saveSale(){
     if(monthlyCreditMonth)monthlyCreditMonth.value=monthKey(date);
     applyUnallocatedAdvancesToCredit(customer);
   }else{
-    const obj={id:uid(),branch_id:activeBranch,type:storedType,amount,customer,mobile,desc,quantity,date,time,
+    const obj={id:uid(),branch_id:activeBranch,type:storedType,amount,customer,mobile,desc,item_description:itemDescription,quantity,date,time,
       advance_payment:advance,advance_method:advanceMethod,
       payment_method:advanceMethod,balance_payment:initialBalance,
       balance_entry_mode:isPaidPlusDue?'paid_plus_due':''};
@@ -4579,7 +4587,8 @@ function saveSale(){
       applyDailySalePaymentToSavedInvoices(customer,amount,date,time,receivedBy,obj.id);
     }
   }
-  persist();closeSaleModal();renderDateHistory();renderDashboard();renderSales();
+  persist();closeSaleModal();refreshSaleSuggestions();refreshBillCustomerList();
+  renderDateHistory();renderDashboard();renderSales();refreshManagementMenuCounts();
 }
 
 async function deleteSale(id){
@@ -4710,14 +4719,21 @@ function closeExpenseModal(){const modal=document.getElementById('expenseModal')
 
 
 function savedSaleCustomers(){
-  const rows=(activeBranch==='all'?data.sales:salesInBranch(activeBranch));
+  const branch=activeBranch==='all'?'all':String(activeBranch);
+  const sources=[
+    ...(Array.isArray(data.customers)?data.customers:[]),
+    ...(Array.isArray(data.invoices)?data.invoices:[]),
+    ...(Array.isArray(data.quotes)?data.quotes:[]),
+    ...(Array.isArray(data.sales)?data.sales:[])
+  ];
   const map=new Map();
-  rows.forEach(x=>{
-    const name=(x.customer||'').trim();
+  sources.forEach(x=>{
+    if(!x || (branch!=='all' && String(x.branch_id||'1')!==branch))return;
+    const name=String(x.name||x.display_name||x.customer||'').trim();
     if(!name)return;
     const key=name.toLocaleLowerCase();
-    const existing=map.get(key)||{name,mobile:x.mobile||''};
-    if(!existing.mobile&&x.mobile)existing.mobile=x.mobile;
+    const existing=map.get(key)||{name,mobile:x.mobile||x.work_phone||''};
+    if(!existing.mobile)existing.mobile=x.mobile||x.work_phone||'';
     map.set(key,existing);
   });
   return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name));
@@ -4758,25 +4774,19 @@ function customerHasSavedInvoiceForDailySale(customer){
 function refreshCustomerDescriptionSuggestions(){
   const list=document.getElementById('saleDescriptionSuggestions');
   if(!list)return;
-  const customer=(document.getElementById('sCustomer')?.value||'').trim();
   const values=savedCustomerDescriptions();
-  // Saved Item catalog suggestions are enabled only for customers who already
-  // have a saved invoice in the currently selected branch.
-  if(customerHasSavedInvoiceForDailySale(customer)){
-    (data.items||[]).filter(x=>x.status!=='Deleted'&&x.status!=='Inactive'&&String(x.name||'').trim())
-      .forEach(x=>values.push(String(x.name).trim()));
-  }
+  // The shared Item Register is available to every Daily Sale/customer.
+  (data.items||[]).filter(x=>x.status!=='Deleted'&&x.status!=='Inactive'&&String(x.name||'').trim())
+    .forEach(x=>values.push(String(x.name).trim()));
   list.replaceChildren(...[...new Set(values)].map(value=>{
     const option=document.createElement('option');option.value=value;return option;
   }));
 }
 function applySavedItemToDailySale(){
-  const customer=(document.getElementById('sCustomer')?.value||'').trim();
   const desc=document.getElementById('sDesc');
   const detail=document.getElementById('sSavedItemDetail');
   if(!desc)return;
-  const eligible=customerHasSavedInvoiceForDailySale(customer);
-  const item=eligible?findSavedItemByName(desc.value):null;
+  const item=findSavedItemByName(desc.value);
   if(!item){
     if(detail){detail.textContent='';detail.style.display='none';}
     delete desc.dataset.savedItemId;
@@ -4788,7 +4798,7 @@ function applySavedItemToDailySale(){
   desc.dataset.savedItemId=String(item.id);
   desc.dataset.savedItemTotal=String(total);
   if(detail){
-    detail.textContent=[item.description||'',item.unit?'Unit: '+item.unit:'','Rate: '+money(item.rate||0)+' × '+qty+' = '+money(total)].filter(Boolean).join(' • ');
+    detail.textContent=[item.description?'Description: '+item.description:'',item.unit?'Unit: '+item.unit:'','Rate: '+money(item.rate||0)+' × '+qty+' = '+money(total)].filter(Boolean).join(' • ');
     detail.style.display='block';
   }
   const type=document.getElementById('sType')?.value||'cash_balance';
@@ -4806,12 +4816,12 @@ function updateDailySaleSavedItemPrice(){
   const desc=document.getElementById('sDesc');
   if(!desc?.dataset.savedItemId)return;
   const item=(data.items||[]).find(x=>String(x.id)===String(desc.dataset.savedItemId));
-  if(!item||!customerHasSavedInvoiceForDailySale(document.getElementById('sCustomer')?.value||''))return;
+  if(!item)return;
   const qty=Math.max(1,Number(document.getElementById('sQty')?.value||1));
   const total=Math.max(0,Number(item.rate||0))*qty;
   desc.dataset.savedItemTotal=String(total);
   const detail=document.getElementById('sSavedItemDetail');
-  if(detail)detail.textContent=[item.description||'',item.unit?'Unit: '+item.unit:'','Rate: '+money(item.rate||0)+' × '+qty+' = '+money(total)].filter(Boolean).join(' • ');
+  if(detail)detail.textContent=[item.description?'Description: '+item.description:'',item.unit?'Unit: '+item.unit:'','Rate: '+money(item.rate||0)+' × '+qty+' = '+money(total)].filter(Boolean).join(' • ');
   const type=document.getElementById('sType')?.value||'cash_balance';
   const amount=document.getElementById('sAmount'),balance=document.getElementById('sBalancePayment');
   if(type==='cash_balance'||type==='online_balance'){
@@ -5502,7 +5512,9 @@ function generateCustomBill(){
   if(window.editingSavedInvoiceId){const invoiceIndex=data.invoices.findIndex(v=>String(v.id)===String(window.editingSavedInvoiceId));if(invoiceIndex>=0){const previous=data.invoices[invoiceIndex];data.invoices[invoiceIndex]={...previous,...invoiceRecord,id:window.editingSavedInvoiceId,activity_history:previous.activity_history||[]};}else data.invoices.push(invoiceRecord);window.editingSavedInvoiceId='';}else data.invoices.push(invoiceRecord);
   if(window.editingCustomDraftId&&Array.isArray(data.invoice_drafts)){data.invoice_drafts=data.invoice_drafts.filter(x=>String(x.id)!==String(window.editingCustomDraftId));window.editingCustomDraftId='';}
   persist();
-  renderInvoiceRegister();
+  renderInvoiceRegister();refreshSavedInvoiceCustomerOptions();
+  refreshSaleSuggestions();refreshBillCustomerList();refreshSavedItemDatalist();
+  refreshManagementMenuCounts();
   const summaryDateEl=document.getElementById('summaryDate');
   if(summaryDateEl)summaryDateEl.value=date;
   const summaryMonthEl=document.getElementById('summaryMonth');
