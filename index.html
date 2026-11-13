@@ -99,6 +99,7 @@ table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;bor
 .custom-bill-item{padding:9px;background:#fff;border:1px solid #e0e9ef;border-radius:9px;margin:8px 0}
 .custom-item-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 30px;gap:6px;align-items:end}
 .custom-item-fields label{display:block;font-size:10px;color:#687785;font-weight:700}
+.custom-item-description{display:block;width:100%;min-height:48px;margin:5px 0 7px;padding:8px;border:1px solid #cbd9e6;border-radius:8px;background:#fff;font:12px Arial,Tahoma,sans-serif;resize:vertical}
 .custom-remove-item{height:32px;border:0;border-radius:8px;background:#fff0f0;color:#c62828;font-size:20px;cursor:pointer}
 .custom-generate-btn{margin-top:10px;background:linear-gradient(115deg,#16804a,#20a4a8)}
 #billModal{z-index:9999}
@@ -1836,7 +1837,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
               <div><label id="customDueLabel" for="customDueDate">Due Date</label><input id="customDueDate" type="date"></div>
               <div><label for="customSalesperson">Salesperson</label><input id="customSalesperson" list="fozanSalespersonList" placeholder="Select or type salesperson"><datalist id="fozanSalespersonList"><option value="Ikram Sohail"></option><option value="Imran Siddique"></option><option value="Jawad"></option></datalist></div>
             </div>
-            <datalist id="quoteInvoiceItemList"></datalist><div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label class="custom-item-qty-label">Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
+            <datalist id="quoteInvoiceItemList"></datalist><div id="customBillItems"><div class="custom-bill-item"><input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Item Name (saved or custom)" aria-label="Item name" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><textarea class="custom-item-description" rows="2" placeholder="Custom item description (optional)" aria-label="Custom item description"></textarea><div class="custom-item-fields"><div><label class="custom-item-qty-label">Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)">×</button></div></div></div>
             <button type="button" class="custom-add-item" onclick="addCustomBillItem()">＋ Add Another Item</button>
             <div class="invoice-fields-grid invoice-bottom-fields">
               <div><label for="customBillDiscountRs">Discount (Rs.)</label><input id="customBillDiscountRs" type="number" min="0" step="0.01" value="0"></div><div><label for="customBillDiscount">Discount (%)</label><input id="customBillDiscount" type="number" min="0" max="100" step="0.01" value="0"></div>
@@ -2352,6 +2353,7 @@ let fozanRealtimeChannel=null;
 let fozanRealtimeTimer=null;
 let fozanRealtimeRefreshBusy=false;
 let fozanRealtimeRefreshPending=false;
+let fozanRealtimePollTimer=null;
 let editingSale=null;
 let summaryMode='date';
 const FOZAN_USERS={
@@ -2615,13 +2617,28 @@ async function cloudSyncData(){
   }
 }
 async function cloudDeleteRow(table,id){
-  if(!CLOUD_ENABLED || !id) return;
+  if(!CLOUD_ENABLED || !id) return !CLOUD_ENABLED;
   try{
     const {error}=await supabaseClient.from(table).delete().eq('id',String(id));
     if(error) throw error;
+    return true;
   }catch(e){
     console.error('Cloud delete error:',e);
-    cloudStatus('Cloud delete error — refresh cloud to verify');
+    cloudStatus('Cloud delete failed — record was not removed locally');
+    return false;
+  }
+}
+async function cloudDeleteSharedRecord(recordType,id){
+  if(!CLOUD_ENABLED || !id) return !CLOUD_ENABLED;
+  try{
+    const {error}=await supabaseClient.from('fozan_shared_records')
+      .delete().eq('id',String(recordType)+':'+String(id));
+    if(error) throw error;
+    return true;
+  }catch(e){
+    console.error('Shared record cloud delete error:',e);
+    cloudStatus('Cloud delete failed — record was not removed locally');
+    return false;
   }
 }
 
@@ -2633,6 +2650,11 @@ async function cloudLoad(){
   // Retain only entries created while this cloud request is in progress.
   const salesIdsAtRequestStart=new Set(data.sales.map(x=>String(x.id)));
   const expenseIdsAtRequestStart=new Set(data.expenses.map(x=>String(x.id)));
+  const sharedTypesAtRequestStart=['invoices','quotes','customers','invoice_drafts'];
+  const sharedIdsAtRequestStart={};
+  sharedTypesAtRequestStart.forEach(type=>{
+    sharedIdsAtRequestStart[type]=new Set((Array.isArray(data[type])?data[type]:[]).map(x=>String(x.id)));
+  });
   cloudReady=false;
   cloudStatus('Loading cloud data...');
   try{
@@ -2650,10 +2672,12 @@ async function cloudLoad(){
     }
     // Load shared registers for ALL branches and roles.
     let cloudSharedRecords=[];
+    let sharedCloudAvailable=false;
     const sharedResult=await supabaseClient.from('fozan_shared_records').select('*');
     if(sharedResult.error){
       console.warn('Shared invoices/customers table is not ready. Run the fo zan_shared_records SQL setup in the source comments.',sharedResult.error);
     }else{
+      sharedCloudAvailable=true;
       cloudSharedRecords=sharedResult.data||[];
     }
 
@@ -2695,10 +2719,16 @@ async function cloudLoad(){
     const sharedTypes=['invoices','quotes','customers','invoice_drafts'];
     sharedTypes.forEach(type=>{
       if(!Array.isArray(data[type]))data[type]=[];
-      const byId=new Map(data[type].filter(x=>x&&x.id).map(x=>[String(x.id),x]));
-      cloudSharedRecords.filter(row=>row.record_type===type && row.payload && row.payload.id)
-        .forEach(row=>byId.set(String(row.payload.id),row.payload));
-      data[type]=[...byId.values()];
+      // Supabase is authoritative: do not retain old local-cache rows that
+      // were permanently deleted in the cloud. Preserve only records created
+      // while this cloud request was in progress.
+      if(sharedCloudAvailable){
+        const addedDuringLoad=data[type].filter(x=>x&&x.id&&!sharedIdsAtRequestStart[type].has(String(x.id)));
+        const byId=new Map(addedDuringLoad.map(x=>[String(x.id),x]));
+        cloudSharedRecords.filter(row=>row.record_type===type && row.payload && row.payload.id)
+          .forEach(row=>byId.set(String(row.payload.id),row.payload));
+        data[type]=[...byId.values()];
+      }
     });
 
     if(currentUserRole==='admin' && cloudStaff.length){
@@ -2718,7 +2748,10 @@ async function cloudLoad(){
     data.items=[...sharedItemsByName.values()];
     localStorage.setItem(KEY,JSON.stringify(data));
     cloudReady=true;
-    if(addedDuringLoadSales.length || addedDuringLoadExpenses.length || data.items.length || ['invoices','quotes','customers','invoice_drafts'].some(k=>Array.isArray(data[k])&&data[k].length)) await cloudSyncData();
+    // Only push records created locally while this cloud read was in progress.
+    // Re-uploading every already-synced record after every Realtime refresh
+    // creates an endless database-event/refresh loop across office PCs.
+    if(addedDuringLoadSales.length || addedDuringLoadExpenses.length) await cloudSyncData();
 
     const todayNow=nowLocal();
     document.getElementById('summaryDate').value=todayNow.date;
@@ -2740,6 +2773,7 @@ async function cloudLoad(){
 }
 function stopFozanRealtime(){
   if(fozanRealtimeTimer){clearTimeout(fozanRealtimeTimer);fozanRealtimeTimer=null;}
+  if(fozanRealtimePollTimer){clearInterval(fozanRealtimePollTimer);fozanRealtimePollTimer=null;}
   if(fozanRealtimeChannel && supabaseClient){
     try{supabaseClient.removeChannel(fozanRealtimeChannel);}catch(e){console.warn('Realtime channel close:',e);}
   }
@@ -2747,7 +2781,15 @@ function stopFozanRealtime(){
   fozanRealtimeRefreshPending=false;
 }
 function startFozanRealtime(){
-  if(!CLOUD_ENABLED || !supabaseClient || !currentUserRole || fozanRealtimeChannel)return;
+  if(!CLOUD_ENABLED || !supabaseClient || !currentUserRole)return;
+  // Realtime is the primary instant-update path. This lightweight polling
+  // fallback keeps both PCs current if a browser/network misses a Realtime event.
+  if(!fozanRealtimePollTimer){
+    fozanRealtimePollTimer=setInterval(()=>{
+      if(document.visibilityState==='visible')scheduleFozanRealtimeRefresh();
+    },12000);
+  }
+  if(fozanRealtimeChannel)return;
   const branchFilter=currentUserRole==='branch' && currentUserKey && FOZAN_USERS[currentUserKey]
     ? 'branch_id=eq.'+FOZAN_USERS[currentUserKey].branch : null;
   let channel=supabaseClient.channel('fozan-live-sync-'+(currentUserKey||'user'));
@@ -3249,8 +3291,11 @@ function renderManagedCustomers(){
 }
 async function deleteManagedCustomer(id){
   if(currentUserRole!=='admin'){alert('Only Admin can delete a customer.');return;}
-  if(!(await window.fozanConfirm('Delete this customer record?')))return;
-  data.customers=data.customers.filter(c=>String(c.id)!==String(id));persist();renderManagedCustomers();
+  if(previewMode){alert('Preview mode is read-only.');return;}
+  if(!(await window.fozanConfirm('Permanently delete this customer from all devices and cloud?')))return;
+  if(CLOUD_ENABLED && !(await cloudDeleteSharedRecord('customers',id)))return;
+  data.customers=data.customers.filter(c=>String(c.id)!==String(id));
+  persist();renderManagedCustomers();refreshManagementMenuCounts();
 }
 function handleManagedItemUnitChange(){
   const unit=document.getElementById('manageItemUnit');
@@ -5426,7 +5471,7 @@ document.addEventListener('change',function(e){
 function addCustomBillItem(){
   const wrap=document.getElementById('customBillItems');if(!wrap)return;
   const row=document.createElement('div');row.className='custom-bill-item';
-  row.innerHTML='<input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Type or click to select an item" aria-label="Item description" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><div class="custom-item-fields"><div><label class="custom-item-qty-label">Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div>';
+  row.innerHTML='<input class="custom-item-desc" list="quoteInvoiceItemList" placeholder="Item Name (saved or custom)" aria-label="Item name" autocomplete="off" oninput="applySavedItemToRow(this)" onfocus="showSavedItemOptions(this)"><textarea class="custom-item-description" rows="2" placeholder="Custom item description (optional)" aria-label="Custom item description"></textarea><div class="custom-item-fields"><div><label class="custom-item-qty-label">Qty</label><input class="custom-item-qty" type="number" min="0.01" step="any" value="1" aria-label="Quantity"></div><div><label>Rate (Rs.)</label><input class="custom-item-rate" type="number" min="0" step="0.01" placeholder="0" aria-label="Rate"></div><button type="button" class="custom-remove-item" onclick="removeCustomBillItem(this)" title="Remove item" aria-label="Remove item">×</button></div>';
   wrap.appendChild(row);
   updateCustomBillTotals();
 }
@@ -5500,6 +5545,7 @@ function applySavedItemToRow(input){
     updateCustomBillTotals();return;
   }
   const rate=row.querySelector('.custom-item-rate');if(rate)rate.value=Number(item.rate||0);
+  const descriptionField=row.querySelector('.custom-item-description');if(descriptionField)descriptionField.value=item.description||'';
   input.title=item.description||'';input.dataset.itemDescription=item.description||'';
   detail.textContent=savedItemDescription(item);detail.style.display=detail.textContent?'block':'none';
   updateCustomBillTotals();
@@ -5641,7 +5687,7 @@ function openInvoiceWorkspace(mode='invoice'){
   window.editingSavedInvoiceId='';
   applyLoggedInInvoiceSalesperson();
   const no=document.getElementById('customInvoiceNo');
-  if(no)no.value=nextBranchInvoiceNumber(activeBranch);
+  if(no)no.value='';
   const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption){dailyOption.checked=false;dailyOption.disabled=true;}
   const today=nowLocal().date;
   const date=document.getElementById('customBillDate');
@@ -5693,6 +5739,7 @@ function saveCustomInvoiceDraft(){
     subject:'',
     items:[...document.querySelectorAll('#customBillItems .custom-bill-item')].map(el=>({
       desc:el.querySelector('.custom-item-desc').value||'',
+      description:el.querySelector('.custom-item-description')?.value||'',
       qty:el.querySelector('.custom-item-qty').value||'1',
       rate:el.querySelector('.custom-item-rate').value||'0'
     })),
@@ -5705,6 +5752,7 @@ function saveCustomInvoiceDraft(){
   if(!Array.isArray(data.invoice_drafts))data.invoice_drafts=[];
   const index=data.invoice_drafts.findIndex(x=>String(x.id)===String(draft.id));
   if(index>=0)data.invoice_drafts[index]=draft;else data.invoice_drafts.push(draft);
+  const draftNo=document.getElementById('customInvoiceNo');if(draftNo)draftNo.value=draft.invoice_no;
   window.editingCustomDraftId=draft.id;persist();
   alert('Invoice draft saved. It is not included in daily sales until you save the invoice.');
 }
@@ -5824,7 +5872,7 @@ function generateCustomBill(){
     if(!desc&&!rate)continue;
     if(!desc){alert('Har item ki description likhein.');el.querySelector('.custom-item-desc').focus();return;}
     if(!(qty>0)||rate<0||!Number.isFinite(rate)){alert('Quantity aur rate check karein.');return;}
-    const saved=findSavedItemByName(desc);items.push({desc,description:saved?.description||'',unit:saved?.unit||'',qty,rate,total:qty*rate});
+    const saved=findSavedItemByName(desc);const customDescription=(el.querySelector('.custom-item-description')?.value||'').trim();items.push({desc,description:customDescription||saved?.description||'',unit:saved?.unit||'',qty,rate,total:qty*rate});
   }
   if(!items.length){alert('Kam az kam aik item/service aur us ka rate add karein.');return;}
   const subtotal=items.reduce((sum,x)=>sum+x.total,0);
@@ -5837,6 +5885,7 @@ function generateCustomBill(){
   const balance=total-received;
   const notes=(document.getElementById('customBillNotes').value||'').trim();
   const invoiceNo=document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch);
+  const invoiceNoField=document.getElementById('customInvoiceNo');if(invoiceNoField)invoiceNoField.value=invoiceNo;
   const orderNo='';
   const terms=document.getElementById('customTerms').value;
   const dueDate=document.getElementById('customDueDate').value||date;
@@ -5899,7 +5948,7 @@ function generateCustomBill(){
   window.editingSavedInvoiceId='';
   const heading=document.getElementById('customInvoiceHeading');if(heading)heading.textContent='Add Invoice';
   const save=document.getElementById('customSaveButton');if(save)save.textContent='✓ Save Invoice';
-  const next=document.getElementById('customInvoiceNo');if(next)next.value=nextBranchInvoiceNumber(activeBranch);
+  const next=document.getElementById('customInvoiceNo');if(next)next.value='';
   const genBtn=document.querySelector('.custom-generate-btn');if(genBtn)genBtn.disabled=true;
 }
 
@@ -5970,6 +6019,7 @@ function editSavedInvoice(id){
       // Apply catalog metadata first, then restore the invoice's own saved
       // quantity and rate so later catalog price changes do not alter old invoices.
       applySavedItemToRow(descInput);
+      const descriptionField=row.querySelector('.custom-item-description');if(descriptionField)descriptionField.value=item.description||'';
       row.querySelector('.custom-item-qty').value=item.qty||1;
       row.querySelector('.custom-item-rate').value=item.rate??(Number(item.total||0)/Math.max(Number(item.qty||1),0.000001));
     }
@@ -5981,14 +6031,25 @@ function editSavedInvoice(id){
 }
 async function deleteSavedInvoice(id){
   if(currentUserRole!=='admin'){alert('Only Admin can delete an invoice.');return;}
-  if(previewMode){alert('Preview mode صرف دیکھنے کے لیے ہے۔');return;}
+  if(previewMode){alert('Preview mode is read-only.');return;}
   const x=(data.invoices||[]).find(v=>String(v.id)===String(id));if(!x)return;
-  if(activeBranch==='all'){alert('Invoice delete karne ke liye pehle usi branch ko select karein.');return;}
-  if(String(activeBranch)!==String(x.branch_id)){alert('Is invoice ki branch select karein: '+branchName(x.branch_id));return;}
-  if(!(await window.fozanConfirm('Delete invoice '+(x.invoice_no||'')+'? Its linked Bill Generate sale entry will also be deleted.')))return;
+  if(!(await window.fozanConfirm('Permanently delete invoice '+(x.invoice_no||'')+' from the entire system and all devices? Its linked Bill Generate sale entry will also be deleted.')))return;
+  const linkedSales=(data.sales||[]).filter(v=>String(v.invoice_no||'')===String(x.invoice_no||'')&&String(v.branch_id||'1')===String(x.branch_id||'1'));
+  if(CLOUD_ENABLED){
+    if(!(await cloudDeleteSharedRecord('invoices',id)))return;
+    const saleDeletes=await Promise.all(linkedSales.map(v=>cloudDeleteRow('fozan_sales',v.id)));
+    if(saleDeletes.some(ok=>!ok)){
+      // Restore the invoice cloud row if a linked sale could not be removed.
+      await supabaseClient.from('fozan_shared_records').upsert([{
+        id:'invoices:'+String(x.id),record_type:'invoices',
+        branch_id:String(x.branch_id||'1'),payload:x,updated_at:new Date().toISOString()
+      }],{onConflict:'id'});
+      return;
+    }
+  }
   data.invoices=data.invoices.filter(v=>String(v.id)!==String(id));
-  data.sales=(data.sales||[]).filter(v=>!(String(v.invoice_no||'')===String(x.invoice_no||'')&&String(v.branch_id||'1')===String(x.branch_id||'1')));
-  persist();renderInvoiceRegister();renderSales();renderDashboard();
+  data.sales=(data.sales||[]).filter(v=>!linkedSales.some(sale=>String(sale.id)===String(v.id)));
+  persist();renderInvoiceRegister();renderSales();renderDashboard();refreshManagementMenuCounts();
 }
 function viewSavedInvoice(id){
   const x=(data.invoices||[]).find(v=>String(v.id)===String(id));if(!x)return;
