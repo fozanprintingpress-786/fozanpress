@@ -2344,6 +2344,7 @@ let data=JSON.parse(localStorage.getItem(KEY)||'{"sales":[],"expenses":[],"invoi
 if(!Array.isArray(data.sales)) data.sales=[];
 if(!Array.isArray(data.expenses)) data.expenses=[];
 if(!Array.isArray(data.invoices)) data.invoices=[];
+if(!Array.isArray(data.customers)) data.customers=[];
 if(!Array.isArray(data.staff)) data.staff=[];
 if(!Array.isArray(data.items)) data.items=[];
 // In cloud mode, Supabase is the source of truth; stale local-only rows are not re-added.
@@ -3145,7 +3146,8 @@ function renderMonthlyDues(){
 
 function getCustomerFormValue(id){return (document.getElementById(id)?.value||'').trim();}
 function getCustomerFormChecked(id){return !!document.getElementById(id)?.checked;}
-function saveManagedCustomer(){
+async function saveManagedCustomer(){
+  if(!Array.isArray(data.customers))data.customers=[];
   const name=getCustomerFormValue('manageCustomerName');
   if(!name){alert('Customer Display Name is required.');document.getElementById('manageCustomerName')?.focus();return;}
   const type=document.querySelector('input[name="managedCustomerType"]:checked')?.value||'Business';
@@ -3184,7 +3186,30 @@ function saveManagedCustomer(){
   refreshSavedInvoiceCustomerOptions();
   refreshSaleSuggestions();refreshBillCustomerList();
   resetManagedCustomerForm();renderManagedCustomers();refreshManagementMenuCounts();
-  alert('Customer saved successfully.');
+
+  // Confirm this customer reached the shared cloud register before reporting success.
+  if(CLOUD_ENABLED){
+    try{
+      const {error}=await supabaseClient.from('fozan_shared_records').upsert({
+        id:'customers:'+String(obj.id),
+        record_type:'customers',
+        branch_id:String(obj.branch_id||'1'),
+        payload:obj,
+        updated_at:new Date().toISOString()
+      },{onConflict:'id'});
+      if(error)throw error;
+      cloudStatus('Customer saved • shared on all PCs',true);
+      alert('Customer saved successfully.');
+    }catch(error){
+      console.error('Customer cloud save error:',error);
+      cloudStatus('Customer saved on this PC, but cloud sync failed: '+(error.message||'Unknown error'));
+      alert('Customer is saved on this PC, but could not sync to other PCs. Cloud error: '+(error.message||'Unknown error'));
+    }
+  }else if(CLOUD_ENABLED){
+    alert('Customer saved on this PC. Cloud is not ready yet, so it has not been shared with other PCs.');
+  }else{
+    alert('Customer saved successfully on this PC.');
+  }
 }
 function resetManagedCustomerForm(){
   window.editingManagedCustomerId='';
@@ -5674,12 +5699,32 @@ function applyLoggedInInvoiceSalesperson(){
   const field=document.getElementById('customSalesperson');
   if(field && !window.editingSavedInvoiceId)field.value=getLoggedInInvoiceSalesperson();
 }
+function ensureInvoiceBranchSelected(actionLabel='Invoice'){
+  if(activeBranch!=='all')return true;
+  if(currentUserRole!=='admin'){
+    alert(actionLabel+' banane ke liye pehle Head Office ya Bahria Enclave select karein.');
+    return false;
+  }
+  const selected=window.prompt(
+    'Invoice kis branch mein add karni hai?\\n1 = Head Office\\n2 = Bahria Enclave',
+    '1'
+  );
+  if(selected===null)return false;
+  const branch=String(selected).trim();
+  if(branch!=='1'&&branch!=='2'){
+    alert('Please select 1 for Head Office or 2 for Bahria Enclave.');
+    return false;
+  }
+  changeBranch(branch);
+  return true;
+}
+
 function openInvoiceWorkspace(mode='invoice'){
   document.body.classList.remove('invoices-register-fullscreen');
   refreshSavedInvoiceCustomerOptions();
   bindInvoiceCustomerAutocomplete();
   setDocumentMode(mode);
-  if(activeBranch==='all'){alert('Invoice banane ke liye pehle Head Office ya Bahria Enclave select karein.');return;}
+  if(!ensureInvoiceBranchSelected('Invoice'))return;
   const builder=document.getElementById('customBillBuilder');
   if(builder)builder.style.display='block';
   const panel=document.getElementById('billGeneratorPanel');
@@ -5722,7 +5767,7 @@ function toggleAddInvoiceMaximize(){
   if(button){button.textContent=windowed?'❐':'□';button.title=windowed?'Maximize':'Restore';button.setAttribute('aria-label',windowed?'Maximize':'Restore');}
 }
 function saveCustomInvoiceDraft(){
-  if(activeBranch==='all'){alert('Draft banane ke liye pehle branch select karein.');return;}
+  if(!ensureInvoiceBranchSelected('Draft'))return;
   const name=(document.getElementById('customCustomerName').value||'').trim();
   const draft={
     id:window.editingCustomDraftId||uid(),branch_id:activeBranch,customer:name,
@@ -5845,10 +5890,10 @@ function fozanInvoiceMarkup(v){
   '</div>';
 }
 
-function generateCustomBill(){
+async function generateCustomBill(){
   if(window.customDocumentMode==='quote'){generateCustomQuote();return;}
   if(window.editingSavedInvoiceId && currentUserRole!=='admin' && currentUserRole!=='branch'){alert('Please login first.');return;}
-  if(activeBranch==='all'){alert('Combined Report view-only hai. Invoice ke liye branch select karein.');return;}
+  if(!ensureInvoiceBranchSelected('Invoice'))return;
   if(previewMode){alert('Preview mode mein invoice save nahi ho sakta.');return;}
   const editingInvoiceId=window.editingSavedInvoiceId?String(window.editingSavedInvoiceId):'';
   if(editingInvoiceId && !(data.invoices||[]).some(v=>String(v.id)===editingInvoiceId)){
@@ -5926,6 +5971,32 @@ function generateCustomBill(){
   }
   if(window.editingCustomDraftId&&Array.isArray(data.invoice_drafts)){data.invoice_drafts=data.invoice_drafts.filter(x=>String(x.id)!==String(window.editingCustomDraftId));window.editingCustomDraftId='';}
   persist();
+  // Save this invoice directly to the shared register as well. This avoids
+  // losing the write when the first cloud-load is still completing.
+  if(CLOUD_ENABLED){
+    try{
+      // When editing, use the already-updated saved record and its ORIGINAL ID.
+      // Using invoiceRecord.id here would create a second cloud row for the same
+      // invoice number because invoiceRecord is initially assigned a fresh ID.
+      const cloudInvoiceRecord=editingInvoiceId
+        ? (data.invoices||[]).find(v=>String(v.id)===editingInvoiceId)
+        : invoiceRecord;
+      if(!cloudInvoiceRecord)throw new Error('Updated invoice record was not found for cloud sync.');
+      const {error}=await supabaseClient.from('fozan_shared_records').upsert({
+        id:'invoices:'+String(cloudInvoiceRecord.id),
+        record_type:'invoices',
+        branch_id:String(cloudInvoiceRecord.branch_id||'1'),
+        payload:cloudInvoiceRecord,
+        updated_at:new Date().toISOString()
+      },{onConflict:'id'});
+      if(error)throw error;
+      cloudStatus('Invoice saved • shared on all PCs',true);
+    }catch(error){
+      console.error('Invoice cloud save error:',error);
+      cloudStatus('Invoice saved on this PC, but cloud sync failed: '+(error.message||'Unknown error'));
+      alert('Invoice is saved on this PC, but could not sync to other PCs. Cloud error: '+(error.message||'Unknown error'));
+    }
+  }
   renderInvoiceRegister();refreshSavedInvoiceCustomerOptions();
   refreshSaleSuggestions();refreshBillCustomerList();refreshSavedItemDatalist();
   refreshManagementMenuCounts();
