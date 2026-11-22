@@ -8494,6 +8494,11 @@ async function generateCustomBill(){
   // window flag). The edit flow can recover editingInvoiceId from invoice number,
   // while window.editingSavedInvoiceId may already be empty.
   const oldInvoice=editingInvoiceId?(data.invoices||[]).find(v=>String(v.id)===String(editingInvoiceId)):null;
+  // Only a genuine increase in the amount received is a payment event.
+  // Editing invoice items, descriptions, quantities or rates alone must not
+  // create or refresh a Daily Sale entry.
+  const previousReceived=Math.max(0,Number(oldInvoice?.advance_payment||0));
+  const paymentIncrease=Math.max(0,Number((received-previousReceived).toFixed(2)));
   const oldInvoiceNo=String(oldInvoice?.invoice_no||invoiceNo||'').trim();
   const saleBranch=String(oldInvoice?.branch_id||activeBranch||'1');
   const saleMatches=(data.sales||[]).map((sale,index)=>({sale,index})).filter(({sale})=>{
@@ -8513,7 +8518,7 @@ async function generateCustomBill(){
     const linkedByLegacyDescription=saleDesc.startsWith(invoicePrefix)||saleDesc.startsWith(alternatePrefix);
     return sameBranch && (exactLinkedSale || (sameCustomer && (linkedByNumber || linkedByLegacyDescription)));
   });
-  if(addToDailySale){
+  if(addToDailySale && (!wasUpdatingInvoice || paymentIncrease>0.0001)){
     if(saleMatches.length){
       // Update exactly one existing linked sale, preserve its ID, and remove
       // any older duplicate rows for the same invoice/branch.
@@ -8524,10 +8529,27 @@ async function generateCustomBill(){
     }else{
       data.sales.push(record);
     }
-  }else if(saleMatches.length){
+  }else if(!addToDailySale && saleMatches.length){
     // If the user unticks "Add to Daily Sale", remove all linked rows, not just
     // the first one, so previous duplicates do not remain behind.
     saleMatches.map(x=>x.index).sort((a,b)=>b-a).forEach(index=>data.sales.splice(index,1));
+  }
+  // When invoice payments are not represented by an invoice Daily Sale row,
+  // add only the newly received amount as a separate cash/online receipt.
+  // This keeps item-only invoice edits out of Daily Sale and prevents duplicate
+  // payment totals when the invoice itself is already listed there.
+  if(paymentIncrease>0.0001 && (!addToDailySale || (wasUpdatingInvoice && !saleMatches.length))){
+    const paymentReceipt={
+      id:uid(),branch_id:String(activeBranch),type:(currentUserRole==='admin'?'balance_payment_admin_':'balance_payment_')+paymentMethod,
+      amount:paymentIncrease,customer:name,mobile,
+      desc:'Invoice '+invoiceNo+' — Payment Received',
+      quantity:1,date,time:timestamp.time,balance_payment:0,advance_payment:0,
+      balance_method:paymentMethod,payment_method:paymentMethod,
+      receipt_kind:'invoice_payment_receipt',invoice_no:invoiceNo,
+      received_by_role:currentUserRole==='admin'?'admin':'branch',
+      received_by_user:currentUserKey||''
+    };
+    data.sales.push(paymentReceipt);
   }
   if(!data.customers.some(c=>String(c.name||c.display_name||'').trim().toLocaleLowerCase()===name.toLocaleLowerCase()&&String(c.branch_id||'1')===String(activeBranch))){
     data.customers.push({id:uid(),name,mobile,email,company,address,branch_id:activeBranch});
