@@ -2793,6 +2793,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
     <div class="stat cashOnlineBox"><small>Cash + Online Total</small><strong id="cashOnlineTotal">Rs. 0</strong></div>
      <div class="stat" id="adminCashReceivedStat" style="border:1px solid #f3c7a8;background:#fff7ef"><small>Admin Cash Received</small><strong id="adminCashReceivedTotal" style="color:#d7650c">Rs. 0</strong></div>
      <div class="stat" id="adminOnlineReceivedStat" style="border:1px solid #b9d9ef;background:#f0f8ff"><small>Admin Online Received</small><strong id="adminOnlineReceivedTotal" style="color:#1769aa">Rs. 0</strong></div>
+     <div class="stat" id="cashOnlineAdminTotalStat" style="border:1px solid #d8c7f4;background:#f7f2ff"><small>Cash + Online + Admin Total</small><strong id="cashOnlineAdminTotal" style="color:#7136b5">Rs. 0</strong></div>
   </div>
 
   <div id="expenseLedger"></div>
@@ -4304,6 +4305,10 @@ function calculateTotals(filterFn){
   visibleSales().forEach(x=>{
     if(!filterFn(x.date))return;
     const amount=Number(x.amount||0);
+    // Admin-entered sales/payments remain visible in the Daily Sales ledger,
+    // but are excluded from branch cash, online, expenses and cash-in-hand totals.
+    // Their received amount is shown separately in the Admin Total summary.
+    if(isAdminReceivedRecord(x))return;
     if(x.type==='cash_received')cash+=amount;
     // Total Payment entries appear only in the Daily Sales ledger.
     // They must not change Cash Payment, Online Payment, Cash In Hand,
@@ -6176,6 +6181,9 @@ function renderDashboard(){
    const adminOnlineReceivedTotal=adminReceivedRows.filter(x=>adminDailySaleReceivedMethod(x)==='online').reduce((sum,x)=>sum+adminDailySaleReceivedAmount(x),0);
    set('adminCashReceivedTotal',adminCashReceivedTotal);
    set('adminOnlineReceivedTotal',adminOnlineReceivedTotal);
+   // Combined collection total is shown separately; Admin receipts never
+   // increase Cash In Hand After Expense or the regular Cash + Online Total.
+   set('cashOnlineAdminTotal',summary.cashInHand+summary.online+adminCashReceivedTotal+adminOnlineReceivedTotal);
   updateSidebarReport();
   if(typeof fpUpdateDashboardPanels==='function')fpUpdateDashboardPanels();
   if(document.getElementById('fullMonthlyReport')?.classList.contains('open'))renderFullMonthlyReport();
