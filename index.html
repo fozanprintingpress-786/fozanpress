@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+<!-- V2.8.39: Invoice payment ledger and edit-balance correction hides Total Amount column; all other payment columns and actions retained. -->
 <!-- saved from url=(0075)https://fozanprintingpress-786.github.io/fozanpress/?utm_source=chatgpt.com -->
 <html lang="en" dir="ltr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fozan Press — Business Management System V2.8.28</title>
+<title>Fozan Press — Business Management System V2.8.39</title>
 <style id="fozan-admin-settings-style">
 .admin-settings-nav{display:none!important}body.admin-role .admin-settings-nav{display:flex!important}
 .fp-settings-panel{max-width:1100px!important;margin:0 auto!important;padding:22px!important}
@@ -2927,10 +2928,10 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
               <div class="custom-previous-balance-wrap"><label for="customPreviousBalance">Previous Balance (Rs.)</label><div style="display:flex;gap:8px;align-items:center"><input id="customPreviousBalance" type="number" min="0" step="0.01" value="0" readonly style="flex:1"><button type="button" id="removePreviousBalanceBtn" onclick="removeInvoicePreviousBalance()" style="white-space:nowrap;padding:9px 12px;border:1px solid #e3a1a1;border-radius:7px;background:#fff1f1;color:#b42318;font-weight:700;cursor:pointer">Remove</button></div></div>
             </div>
             <label style="display:flex;align-items:center;gap:9px;margin:8px 0 12px;padding:11px 12px;border:1px solid #f3c99f;border-radius:10px;background:#fff7ed;font-weight:700;color:#7c3d0b;cursor:pointer">
-              <input id="customAddToDailySale" type="checkbox" style="width:18px;height:18px;margin:0;accent-color:#f58220">
-              Add this invoice to Daily Sale
+              <input id="customAddToDailySale" type="checkbox" checked disabled style="width:18px;height:18px;margin:0;accent-color:#f58220">
+              Automatically add every invoice to Daily Sale
             </label>
-            <div style="font-size:11px;color:#778294;margin:-5px 0 10px">Invoice by default Daily Sale mein add hoga. Sirf checkbox uncheck karne par Daily Sale entry nahi banegi.</div>
+            <div style="font-size:11px;color:#778294;margin:-5px 0 10px">Har saved invoice Daily Sale mein lazmi add hoga — advance ho ya zero, baqi amount Balance Due mein show hoga.</div>
             <div class="custom-live-totals" aria-live="polite">
               <div><span>Subtotal</span><strong id="customLiveSubtotal">Rs. 0.00</strong></div>
               <div><span>Discount</span><strong id="customLiveDiscount">Rs. 0.00</strong></div>
@@ -6292,42 +6293,40 @@ function creditPaymentInfo(credit){
   }
   return info.get(String(credit.id))||null;
 }
-function saleBalancePaymentInfo(entry){
-  const customer=(entry.customer||'').trim().toLowerCase();
-  if(!customer || !['cash','online'].includes(entry.type))return null;
-  // Cash/online sales store the original unpaid balance in balance_payment.
-  // Later receipts are allocated oldest-due-first without changing the original bill.
+function saleBalancePaymentAllocations(entry){
+  const customer=(entry?.customer||'').trim().toLowerCase();
+  if(!customer||!['cash','online'].includes(entry.type))return [];
   const branchSales=salesInBranch(entry.branch_id||'1');
   const dueEntries=branchSales
-    .filter(x=>['cash','online'].includes(x.type) &&
-      (x.customer||'').trim().toLowerCase()===customer &&
-      Number(x.balance_payment||0)>0)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
-                 String(a.time||'').localeCompare(String(b.time||'')) ||
-                 String(a.id||'').localeCompare(String(b.id||'')));
+    .filter(x=>['cash','online'].includes(x.type)&&(x.customer||'').trim().toLowerCase()===customer&&Number(x.balance_payment||0)>0)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.id||'').localeCompare(String(b.id||'')));
   const receipts=branchSales
-    .filter(x=>isBalancePayment(x) &&
-      (x.customer||'').trim().toLowerCase()===customer)
-    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')) ||
-                 String(a.time||'').localeCompare(String(b.time||'')) ||
-                 String(a.id||'').localeCompare(String(b.id||'')));
-  const remainingByEntry=new Map(dueEntries.map(x=>[String(x.id),Number(x.balance_payment||0)]));
-  const infoByEntry=new Map();
+    .filter(x=>isBalancePayment(x)&&(x.customer||'').trim().toLowerCase()===customer)
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))||String(a.id||'').localeCompare(String(b.id||'')));
+  const remainingByEntry=new Map(dueEntries.map(x=>[String(x.id),Math.max(0,Number(x.balance_payment||0))]));
+  const allocations=[];
   for(const receipt of receipts){
     let remaining=Math.max(0,Number(receipt.amount||0)-Number(receipt.credit_applied||0));
     for(const item of dueEntries){
       if(remaining<=0.0001)break;
-      const key=String(item.id), due=remainingByEntry.get(key)||0;
+      if(!paymentEntryIsDueByReceipt(item,receipt))continue;
+      const id=String(item.id),due=remainingByEntry.get(id)||0;
       if(due<=0.0001)continue;
       const applied=Math.min(due,remaining);
-      remainingByEntry.set(key,due-applied);
+      remainingByEntry.set(id,due-applied);
       remaining-=applied;
-      infoByEntry.set(key,{date:receipt.date||'',amount:(infoByEntry.get(key)?.amount||0)+applied});
+      if(id===String(entry.id))allocations.push({receipt,amount:applied});
     }
   }
-  return infoByEntry.get(String(entry.id))||null;
+  return allocations;
 }
-
+function saleBalancePaymentInfo(entry){
+  const allocations=saleBalancePaymentAllocations(entry);
+  if(!allocations.length)return null;
+  const total=allocations.reduce((sum,x)=>sum+Number(x.amount||0),0);
+  const latest=allocations[allocations.length-1].receipt;
+  return {date:latest.date||'',amount:total,allocations};
+}
 function saleBalancePaymentBreakdown(entry){
   const customer=(entry.customer||'').trim().toLowerCase();
   if(!customer || !['cash','online'].includes(entry.type))return {cash:0,online:0};
@@ -6343,6 +6342,7 @@ function saleBalancePaymentBreakdown(entry){
     let remaining=Math.max(0,Number(receipt.amount||0)-Number(receipt.credit_applied||0));
     for(const item of dueEntries){
       if(remaining<=0.0001)break;
+      if(!paymentEntryIsDueByReceipt(item,receipt))continue;
       const id=String(item.id), due=remainingByEntry.get(id)||0;
       if(due<=0.0001)continue;
       const applied=Math.min(due,remaining);
@@ -6464,8 +6464,10 @@ function renderCompleteCustomerHistory(customerName){
   }).join('');
   const invoiceRows=invoices.map(x=>{
     const total=Number(x.invoice_total??x.amount??0);
-    const paid=Number(x.advance_payment||0);
-    const due=Number(x.balance_payment??Math.max(0,total-paid));
+    // Always show the live remaining amount; stored invoice totals can be stale
+    // after a partial payment is received against a linked Daily Sale.
+    const due=savedInvoiceOutstanding(x);
+    const paid=Math.max(0,total-due);
     const branchCell=activeBranch==='all'?'<td>'+esc(branchName(x.branch_id))+'</td>':'';
     const canEdit=currentUserRole==='admin'||(currentUserRole==='branch'&&String(x.branch_id||'1')===String(FOZAN_USERS[currentUserKey]?.branch));
     const actionButtons='<div style="display:flex;gap:5px;flex-wrap:wrap;min-width:190px">'+
@@ -6560,7 +6562,7 @@ if (rangeActive) {
   rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')) || String(b.time||'').localeCompare(String(a.time||'')) || String(b.id).localeCompare(String(a.id)));
   const el=document.getElementById('salesLedger');
   if(!rows.length){el.innerHTML=rangeActive ? '<div class="empty">No sales found for the selected date range'+(from?' from '+from:'')+(to?' to '+to:'')+'.</div>' : (q ? '<div class="empty">No Customer / Credit / Sale found in any saved month.</div>' : '<div class="empty">No sales saved for '+date+' in '+(activeBranch==='all'?'either branch':activeBranch==='2'?'Bahria Enclave Office':'Head Office')+'. Click “Add Daily Sale” to enter a sale.</div>');return;}
-  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr>'+(activeBranch==='all'?'<th>Branch</th>':'')+'<th>Date &amp; Time</th><th>Customer</th><th>Description / Item</th><th>Total Amount</th><th>Received Amount</th><th>Balance Due</th><th>Cash</th><th>Online</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
+  el.innerHTML='<div style="overflow-x:auto"><table><thead><tr>'+(activeBranch==='all'?'<th>Branch</th>':'')+'<th>Date &amp; Time</th><th>Customer</th><th>Customer</th><th>Received Amount</th><th>Balance Due</th><th>Cash</th><th>Online</th><th>Actions</th></tr></thead><tbody>'+rows.map(x=>{
     const amount=Number(x.amount||0);
     const cashSplit=x.type==='cash' && ! (x.balance_entry_mode==='paid_plus_due') &&
       (Number(x.advance_payment||0)>0 || Number(x.balance_payment||0)>0);
@@ -6628,7 +6630,7 @@ if (rangeActive) {
     const receivedAmount = displayCash + displayOnline;
     const totalAmount = ['cash','online','credit'].includes(x.type) ? amount : 0;
     const balanceDue = credit + shownBalance;
-    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${balanceDue>0.0001 && x.customer && x.customer!=='-' ? `<div class="daily-sale-due-wrap"><span class="daily-sale-due-blink">UNPAID · DUE ${money(balanceDue)}</span></div>` : ''}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${String(x.mobile).replace(/\D/g,'')}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td>${dailySaleDescriptionHtml(x)}${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td>${paymentCell('Total',totalAmount,'#687785')}</td><td>${paymentCell('Received',receivedAmount,'#198754')}</td><td class="debit">${paymentCell('Due',balanceDue,'#c62828')}</td><td class="cash">${paymentCell('Cash',displayCash,'#198754')}</td><td class="online">${paymentCell('Online',displayOnline,'#1769aa')}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':(currentUserRole==='admin'?`${x.receipt_kind==='customer_balance_receipt'?`<button class="success" title="Print Receipt" onclick="printStoredReceivePaymentReceipt('${x.id}')">▧</button>`:''}<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`:'View only')}</td></tr>`;
+    return `<tr>${activeBranch==='all'?`<td>${(x.branch_id||'1')==='2'?'Bahria Enclave Office':'Head Office'}</td>`:''}<td>${esc(x.date||'')} ${esc(x.time||'')}</td><td>${esc(x.customer||'-')}${balanceDue>0.0001 && x.customer && x.customer!=='-' ? `<div class="daily-sale-due-wrap"><span class="daily-sale-due-blink">UNPAID · DUE ${money(balanceDue)}</span></div>` : ''}${x.mobile?`<div style="margin-top:5px"><a href="#" onclick="whatsappCustomer(event,'${String(x.mobile).replace(/\D/g,'')}')" style="color:#16834a;font-weight:700;text-decoration:none;white-space:nowrap">☎ ${esc(x.mobile)} · WhatsApp</a></div>`:''}</td><td>${dailySaleDescriptionHtml(x)}${creditStatus}${isBalancePayment(x)?'<span class="balance-received-badge" style="font-size:11px;padding:3px 7px;border-radius:8px;background:#fff7e6;color:#a85e00;font-weight:700">BALANCE RECEIVED • '+(balanceMethod(x)==='online'?'ONLINE':'CASH')+' • '+money(amount)+'</span>':''}</td><td>${paymentCell('Received',receivedAmount,'#198754')}</td><td class="debit">${paymentCell('Due',balanceDue,'#c62828')}</td><td class="cash">${paymentCell('Cash',displayCash,'#198754')}</td><td class="online">${paymentCell('Online',displayOnline,'#1769aa')}</td><td class="actions">${(activeBranch==='all'||previewMode)?'View only':(currentUserRole==='admin'?`${x.receipt_kind==='customer_balance_receipt'?`<button class="success" title="Print Receipt" onclick="printStoredReceivePaymentReceipt('${x.id}')">▧</button>`:''}<button class="muted" onclick="editSale('${x.id}')">✎</button><button class="danger" onclick="deleteSale('${x.id}')">×</button>`:'View only')}</td></tr>`;
   }).join('')+'</tbody></table></div>';
 }
 
@@ -6662,6 +6664,12 @@ function updateBalanceDue(){
   const received=(type==='credit')?0:Math.max(0,Number(document.getElementById('sAdvance').value||0));
   document.getElementById('sBalancePayment').value=Math.max(0,amount-received).toFixed(2).replace(/\.00$/,'');
 }
+function paymentEntryIsDueByReceipt(entry,receipt){
+  const entryStamp=String(entry?.date||'')+' '+String(entry?.time||'');
+  const receiptStamp=String(receipt?.date||'')+' '+String(receipt?.time||'');
+  // A receipt must never pay a sale/invoice created after that receipt.
+  return !entryStamp.trim()||!receiptStamp.trim()||entryStamp<=receiptStamp;
+}
 function rebuildBalanceAllocations(customer){
   const key=(customer||'').trim().toLowerCase();
   if(!key)return;
@@ -6681,18 +6689,17 @@ function rebuildBalanceAllocations(customer){
     .filter(x=>isBalancePayment(x) && (x.customer||'').trim().toLowerCase()===key)
     .sort(sortOldest);
 
-  // Reset credit allocations and replay receipts oldest-first.
-  // Priority: previous unpaid invoice/cash-online balances first, then Credit.
+  // Rebuild from the beginning, but only let a receipt settle bills that
+  // already existed at the exact date/time of that receipt.
   credits.forEach(x=>x.balance_payment=0);
   const remainingBalance=new Map(balanceEntries.map(x=>[
     String(x.id),Math.max(0,Number(x.balance_payment||0))
   ]));
   for(const receipt of receipts){
     let remaining=Math.max(0,Number(receipt.amount||0));
-
-    // First settle the customer's oldest unpaid invoice balance.
     for(const entry of balanceEntries){
       if(remaining<=0.0001)break;
+      if(!paymentEntryIsDueByReceipt(entry,receipt))continue;
       const id=String(entry.id);
       const due=remainingBalance.get(id)||0;
       if(due<=0.0001)continue;
@@ -6700,11 +6707,10 @@ function rebuildBalanceAllocations(customer){
       remainingBalance.set(id,due-paid);
       remaining-=paid;
     }
-
-    // Only the amount left after previous invoice balances is applied to Credit.
     let creditApplied=0;
     for(const credit of credits){
       if(remaining<=0.0001)break;
+      if(!paymentEntryIsDueByReceipt(credit,receipt))continue;
       const due=customerBalance(credit);
       if(due<=0.0001)continue;
       const paid=Math.min(due,remaining);
@@ -6773,6 +6779,10 @@ function requireActionPassword(){
 
 function saleIsLinkedToSavedInvoice(sale,invoice){
   if(!sale||!invoice)return false;
+  // Payment receipts can mention an invoice number, but they are not bill rows.
+  // Excluding them prevents a receipt from being mistaken for the invoice's
+  // source sale and stops an invoice from being omitted from balance allocation.
+  if(isBalancePayment(sale)||sale.receipt_kind||['advance_payment','routine_payment','cash_received','online_received','total_payment'].includes(sale.type))return false;
   if(String(sale.branch_id||'1')!==String(invoice.branch_id||'1'))return false;
   if(String(sale.linked_invoice_id||'')===String(invoice.id))return true;
   const invoiceNo=String(invoice.invoice_no||'').trim();
@@ -6877,6 +6887,108 @@ function validateReceiveAmount(){
   if(save)save.disabled=!document.getElementById('receiveCustomer')?.value||amount<=0||amount>due+0.0001;
   return !message&&amount>0&&amount<=due+0.0001;
 }
+function syncLinkedInvoicePaymentHistory(invoice,source){
+  if(!invoice||!source)return false;
+  let changed=false;
+  if(!Array.isArray(invoice.activity_history))invoice.activity_history=[];
+  const hasEntry=id=>invoice.activity_history.some(a=>String(a.sale_id||'')===String(id));
+  // Keep the invoice's original advance separate from later receipts. This
+  // prevents editing an invoice from treating later receipts as a new advance.
+  const initialAdvance=Math.max(0,Number(source.advance_payment||0));
+  const initialId='initial-advance:'+String(source.id||invoice.id);
+  if(initialAdvance>0.0001&&!hasEntry(initialId)){
+    invoice.activity_history.push({
+      kind:'payment',date:source.date||invoice.date||'',time:source.time||invoice.time||'',
+      amount:initialAdvance,method:source.advance_method||source.payment_method||'cash',
+      sale_id:initialId,description:'Initial advance received with invoice'
+    });
+    changed=true;
+  }
+  // Add each later receipt once, using its actual receipt ID and timestamp.
+  saleBalancePaymentAllocations(source).forEach(({receipt,amount})=>{
+    const receiptId=String(receipt.id||receipt.receipt_no||'');
+    if(!receiptId||hasEntry(receiptId))return;
+    invoice.activity_history.push({
+      kind:'payment',date:receipt.date||'',time:receipt.time||'',amount:Number(amount||0),
+      method:balanceMethod(receipt),sale_id:receiptId,
+      description:'Payment received from Payment Received section'+(receipt.receipt_no?' — '+receipt.receipt_no:'')
+    });
+    changed=true;
+  });
+  // advance_payment remains the original invoice advance; later receipts are
+  // recorded in activity_history and are not folded into that field.
+  const total=Math.max(0,Number(invoice.invoice_total??invoice.amount??source.amount??0));
+  const received=invoice.activity_history.filter(a=>a.kind==='payment')
+    .reduce((sum,a)=>sum+Math.max(0,Number(a.amount||0)),0);
+  const due=Math.max(0,Number((total-received).toFixed(2)));
+  const totalDue=Math.max(0,Number((due+Number(invoice.previous_balance||0)).toFixed(2)));
+  if(Number(invoice.advance_payment||0)!==initialAdvance)changed=true;
+  if(Number(invoice.balance_payment||0)!==due)changed=true;
+  if(Number(invoice.invoice_balance_due||0)!==totalDue)changed=true;
+  invoice.advance_payment=initialAdvance;
+  invoice.balance_payment=due;
+  invoice.invoice_balance_due=totalDue;
+  if(changed)invoice.updated_at=nowLocal().date+' '+nowLocal().time;
+  return changed;
+}
+
+// V2.8.39 — keep original advance separate from later receipts and prevent duplicate carry-forward balances.
+function syncCreditInvoicePaymentHistory(invoice,source){
+  if(!invoice||!source||source.type!=='credit')return false;
+  let changed=false;
+  if(!Array.isArray(invoice.activity_history))invoice.activity_history=[];
+  const hasEntry=id=>invoice.activity_history.some(a=>String(a.sale_id||'')===String(id));
+  const initialAdvance=Math.max(0,Number(source.advance_payment||0));
+  const initialId='initial-advance:'+String(source.id||invoice.id);
+  if(initialAdvance>0.0001&&!hasEntry(initialId)){
+    invoice.activity_history.push({
+      kind:'payment',date:source.date||invoice.date||'',time:source.time||invoice.time||'',
+      amount:initialAdvance,method:source.advance_method||source.payment_method||'cash',
+      sale_id:initialId,description:'Initial advance received with invoice'
+    });
+    changed=true;
+  }
+  const customer=String(source.customer||'').trim().toLocaleLowerCase();
+  const branch=String(source.branch_id||invoice.branch_id||'1');
+  const branchSales=salesInBranch(branch);
+  const sortOldest=(a,b)=>String(a.date||'').localeCompare(String(b.date||''))||
+    String(a.time||'').localeCompare(String(b.time||''))||
+    String(a.id||'').localeCompare(String(b.id||''));
+  const credits=branchSales.filter(x=>x.type==='credit'&&
+    String(x.customer||'').trim().toLocaleLowerCase()===customer).sort(sortOldest);
+  const receipts=branchSales.filter(x=>isBalancePayment(x)&&
+    String(x.customer||'').trim().toLocaleLowerCase()===customer).sort(sortOldest);
+  const remainingCredit=new Map(credits.map(x=>[
+    String(x.id),Math.max(0,Number(x.balance_payment||0))
+  ]));
+  for(const receipt of receipts){
+    let remaining=Math.max(0,Number(receipt.credit_applied||0));
+    for(const credit of credits){
+      if(remaining<=0.0001)break;
+      if(!paymentEntryIsDueByReceipt(credit,receipt))continue;
+      const creditId=String(credit.id);
+      const due=remainingCredit.get(creditId)||0;
+      if(due<=0.0001)continue;
+      const applied=Math.min(due,remaining);
+      remainingCredit.set(creditId,due-applied);
+      remaining-=applied;
+      if(creditId!==String(source.id))continue;
+      const receiptId=String(receipt.id||receipt.receipt_no||'');
+      if(!receiptId||hasEntry(receiptId))continue;
+      invoice.activity_history.push({
+        kind:'payment',date:receipt.date||'',time:receipt.time||'',
+        amount:Number(applied.toFixed(2)),method:balanceMethod(receipt),
+        sale_id:receiptId,
+        description:'Payment received from Payment Received section'+
+          (receipt.receipt_no?' — '+receipt.receipt_no:'')
+      });
+      changed=true;
+    }
+  }
+  if(changed)invoice.updated_at=nowLocal().date+' '+nowLocal().time;
+  return changed;
+}
+
 function applyReceivePaymentToInvoices(customer,amount,date,time,method,receiptId){
   let remaining=Math.max(0,Number(amount||0));
   const key=String(customer||'').trim().toLocaleLowerCase();
@@ -6900,24 +7012,15 @@ function applyReceivePaymentToInvoices(customer,amount,date,time,method,receiptI
     addInvoiceActivity(invoice,{kind:'payment',date,time,amount:applied,method,sale_id:receiptId,description:'Payment received from Payment Received section'});
     remaining-=applied;
   }
-  // Keep invoice balances synchronized with linked Daily Sale records.
+  // Linked invoices are updated from the dated receipt ledger. A payment made
+  // before an invoice exists is never allocated to that future invoice.
   (data.invoices||[]).filter(x=>
     String(x.branch_id||'1')===branch&&
     String(x.customer||'').trim().toLocaleLowerCase()===key
   ).forEach(invoice=>{
     const source=customerSales.find(s=>saleIsLinkedToSavedInvoice(s,invoice));
     if(!source)return;
-    const due=source.type==='credit'?customerBalance(source):
-      ['cash','online'].includes(source.type)?Math.max(0,Number(source.balance_payment||0)-Number(saleBalancePaymentInfo(source)?.amount||0)):null;
-    if(due===null)return;
-    const previousDue=savedInvoiceOutstanding(invoice);
-    invoice.balance_payment=due;
-    invoice.invoice_balance_due=due;
-    const total=Number(invoice.invoice_total??invoice.amount??0);
-    invoice.advance_payment=Math.max(0,total-due);
-    if(due<previousDue-0.0001){
-      addInvoiceActivity(invoice,{kind:'payment',date,time,amount:previousDue-due,method,sale_id:receiptId,description:'Payment received from Payment Received section'});
-    }
+    syncLinkedInvoicePaymentHistory(invoice,source);
   });
 }
 function saveReceivePayment(){
@@ -7059,23 +7162,22 @@ function editSale(id){
 }
 function savedInvoiceOutstanding(invoice){
   if(!invoice)return 0;
-  // Previous Balance is a carry-forward snapshot from older invoices.
-  // It must NOT be counted again as part of this invoice's own outstanding.
-  // Older invoices remain independently included in the customer's balance.
-  const invoiceTotal=Number(invoice.invoice_total??invoice.amount);
-  if(Number.isFinite(invoiceTotal)){
-    const alreadyReceived=Math.max(0,Number(invoice.advance_payment||0));
-    return Math.max(0,Number((invoiceTotal-alreadyReceived).toFixed(2)));
-  }
-  const linked=(data.sales||[]).find(v=>
-    String(v.invoice_no||'')===String(invoice.invoice_no||'')&&
-    String(v.branch_id||'1')===String(invoice.branch_id||'1')
-  );
-  if(linked?.type==='credit')return Math.max(0,customerBalance(linked));
+  const total=Math.max(0,Number(invoice.invoice_total??invoice.amount??0));
+  // A linked Daily Sale is the source for the original advance and dated
+  // receipts. Calculate this invoice's own due only; previous_balance is a
+  // separate carry-forward and is added only in customer-facing totals.
+  const linked=(data.sales||[]).find(v=>saleIsLinkedToSavedInvoice(v,invoice));
+  if(linked?.type==='credit')return Math.max(0,Number(customerBalance(linked).toFixed(2)));
   if(linked&&['cash','online'].includes(linked.type)){
-    return Math.max(0,Number(linked.balance_payment||0)-Number(saleBalancePaymentInfo(linked)?.amount||0));
+    const initial=Math.max(0,Number(linked.advance_payment||0));
+    const later=saleBalancePaymentAllocations(linked).reduce((sum,x)=>sum+Math.max(0,Number(x.amount||0)),0);
+    return Math.max(0,Number((total-initial-later).toFixed(2)));
   }
-  return Math.max(0,Number(invoice.balance_payment||0));
+  const history=Array.isArray(invoice.activity_history)?invoice.activity_history:[];
+  const historyPayments=history.filter(a=>a.kind==='payment')
+    .reduce((sum,a)=>sum+Math.max(0,Number(a.amount||0)),0);
+  if(history.some(a=>a.kind==='payment'))return Math.max(0,Number((total-historyPayments).toFixed(2)));
+  return Math.max(0,Number((total-Math.max(0,Number(invoice.advance_payment||0))).toFixed(2)));
 }
 function findOpenSavedInvoiceForCustomer(customer, branchId){
   const key=String(customer||'').trim().toLowerCase();
@@ -8141,6 +8243,18 @@ function getInvoicePreviousBalance(customerName,branchId,excludeInvoiceId=''){
   // If the customer is fully paid, the next invoice must carry Rs. 0.
   return receivePaymentCustomerDue(key,branchId||'1',excludeInvoiceId);
 }
+// V2.8.39: Repair legacy double-counted carry-forward values.
+// If Previous Balance exactly duplicates this invoice's own unpaid amount,
+// it is not a separate old balance and must not be added again.
+function savedInvoicePreviousBalanceForEdit(invoice){
+  if(!invoice)return 0;
+  const previous=Math.max(0,Number(invoice.previous_balance||0));
+  const total=Math.max(0,Number(invoice.invoice_total??invoice.amount??0));
+  const received=Math.max(0,Number(invoice.advance_payment||0));
+  const thisInvoiceDue=Math.max(0,total-received);
+  if(previous>0 && Math.abs(previous-thisInvoiceDue)<0.01)return 0;
+  return previous;
+}
 function setInvoicePreviousBalance(value){
   const field=document.getElementById('customPreviousBalance');
   if(field)field.value=Math.max(0,Number(value||0)).toFixed(2);
@@ -8150,6 +8264,10 @@ function removeInvoicePreviousBalance(){
   setInvoicePreviousBalance(0);
 }
 function refreshInvoicePreviousBalance(){
+  if(window.editingSavedInvoiceId){
+    const current=(data.invoices||[]).find(v=>String(v.id)===String(window.editingSavedInvoiceId));
+    if(current){setInvoicePreviousBalance(savedInvoicePreviousBalanceForEdit(current));return;}
+  }
   const input=document.getElementById('customCustomerName');
   const name=String(input?.value||'').trim();
   if(!name){setInvoicePreviousBalance(0);return;}
@@ -8174,8 +8292,12 @@ function autofillInvoiceCustomerDetails(){
   put('customCustomerAddress',customer.address);
   const terms=document.getElementById('customTerms');
   if(terms&&customer.payment_terms){const opt=[...terms.options].find(o=>o.text===customer.payment_terms||o.value===customer.payment_terms);if(opt)terms.value=opt.value;}
-  const exclude=window.editingSavedInvoiceId?String(window.editingSavedInvoiceId):'';
-  setInvoicePreviousBalance(getInvoicePreviousBalance(typed,branch,exclude));
+  if(window.editingSavedInvoiceId){
+    const current=(data.invoices||[]).find(v=>String(v.id)===String(window.editingSavedInvoiceId));
+    setInvoicePreviousBalance(current?savedInvoicePreviousBalanceForEdit(current):0);
+    return;
+  }
+  setInvoicePreviousBalance(getInvoicePreviousBalance(typed,branch,''));
 }
 function bindInvoiceCustomerAutocomplete(){
   const customerInput=document.getElementById('customCustomerName');
@@ -8244,7 +8366,7 @@ function resetInvoiceBuilderForNew(){
   set('customBillShipping','0');set('customBillReceived','0');set('customInvoicePaymentMode','cash');
   set('customSalesperson',getLoggedInInvoiceSalesperson());
   set('customPreviousBalance','0');setInvoicePreviousBalance(0);
-  const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption){dailyOption.checked=true;dailyOption.disabled=false;}
+  const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption){dailyOption.checked=true;dailyOption.disabled=true;}
   const wrap=document.getElementById('customBillItems');
   if(wrap){wrap.innerHTML='';addCustomBillItem();}
   window.editingSavedInvoiceId='';window.editingInvoiceLinkedSaleId='';window.editingCustomDraftId='';window.customDiscountMode='amount';
@@ -8328,9 +8450,9 @@ function saveCustomInvoiceDraft(){
   alert('Invoice draft saved. It is not included in daily sales until you save the invoice.');
 }
 function syncInvoiceDailySaleOption(){
-  // Daily Sale inclusion is controlled only by the checkbox, not by advance payment.
+  // Mandatory behavior: every saved invoice is included in Daily Sales.
   const option=document.getElementById('customAddToDailySale');
-  if(option) option.disabled=false;
+  if(option){option.checked=true;option.disabled=true;}
 }
 
 function fozanInvoiceMarkup(v){
@@ -8452,19 +8574,27 @@ async function generateCustomBill(){
   const received=Math.max(0,Number(document.getElementById('customBillReceived').value||0));
   const paymentMethod=document.getElementById('customInvoicePaymentMode')?.value==='online'?'online':'cash';
   if(received>total){alert('Amount received invoice total se zyada nahi ho sakta.');return;}
-  const previousBalance=Math.max(0,Number(getInvoicePreviousBalance(name,activeBranch,editingInvoiceId)||0));
-  setInvoicePreviousBalance(previousBalance);
-  const balance=total-received;
-  const totalBalanceDue=Math.max(0,previousBalance+balance);
-  const notes=(document.getElementById('customBillNotes').value||'').trim();
   const invoiceNo=document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch);
   const invoiceNoField=document.getElementById('customInvoiceNo');if(invoiceNoField)invoiceNoField.value=invoiceNo;
-  // Safety net: if the edit flag was lost by a window/state transition, use the
-  // existing invoice number + branch as the identity instead of inserting a duplicate.
+  // Resolve the existing invoice identity before calculating Previous Balance.
+  // This also protects edit sessions where the modal/window lost its edit flag.
   if(!editingInvoiceId){
     const sameNumber=(data.invoices||[]).find(v=>String(v.invoice_no||'').trim()===String(invoiceNo).trim() && String(v.branch_id||'1')===String(activeBranch||'1'));
     if(sameNumber){editingInvoiceId=String(sameNumber.id);window.editingSavedInvoiceId=editingInvoiceId;}
   }
+  const originalInvoice=editingInvoiceId
+    ? (data.invoices||[]).find(v=>String(v.id)===String(editingInvoiceId))
+    : null;
+  // Previous Balance is a snapshot carried onto a NEW invoice only.
+  // Editing an existing invoice must retain that invoice's saved snapshot,
+  // never attach the customer's current outstanding balance to itself.
+  const previousBalance=originalInvoice
+    ? savedInvoicePreviousBalanceForEdit(originalInvoice)
+    : Math.max(0,Number(getInvoicePreviousBalance(name,activeBranch,'')||0));
+  setInvoicePreviousBalance(previousBalance);
+  const balance=total-received;
+  const totalBalanceDue=Math.max(0,previousBalance+balance);
+  const notes=(document.getElementById('customBillNotes').value||'').trim();
   const wasUpdatingInvoice=!!editingInvoiceId;
   const orderNo='';
   const terms=document.getElementById('customTerms').value;
@@ -8480,7 +8610,7 @@ async function generateCustomBill(){
   const address=(document.getElementById('customCustomerAddress').value||'').trim();
   const totalQty=items.reduce((sum,x)=>sum+Number(x.qty||0),0);
   const timestamp=nowLocal();
-  const addToDailySale=!!document.getElementById('customAddToDailySale')?.checked;
+  const addToDailySale=true; // Every saved customer invoice must appear in Daily Sales, even with zero advance.
   const record={id:uid(),branch_id:activeBranch,type:paymentMethod,amount:total,customer:name,mobile,email,company,address,desc:'Invoice '+invoiceNo+': '+desc,date,time:timestamp.time,advance_payment:received,advance_method:paymentMethod,balance_payment:balance,invoice_no:invoiceNo,order_no:orderNo,invoice_due_date:dueDate,invoice_terms:terms,salesperson,invoice_subject:subject,invoice_items:items,invoice_qty:totalQty,invoice_subtotal:subtotal,invoice_discount:discount,invoice_discount_percent:discountPct,invoice_shipping:0,invoice_total:total,previous_balance:previousBalance,invoice_balance_due:totalBalanceDue,invoice_notes:notes,daily_sale_added:addToDailySale};
   // Prevent duplicate submissions (double-click / repeated click events).
   if(window.fozanInvoiceSaveInProgress){
@@ -8518,7 +8648,7 @@ async function generateCustomBill(){
     const linkedByLegacyDescription=saleDesc.startsWith(invoicePrefix)||saleDesc.startsWith(alternatePrefix);
     return sameBranch && (exactLinkedSale || (sameCustomer && (linkedByNumber || linkedByLegacyDescription)));
   });
-  if(addToDailySale && (!wasUpdatingInvoice || paymentIncrease>0.0001)){
+  if(addToDailySale){ // Always create or refresh the invoice-linked Daily Sale row, including zero-advance invoices and existing invoices being repaired.
     if(saleMatches.length){
       // Update exactly one existing linked sale, preserve its ID, and remove
       // any older duplicate rows for the same invoice/branch.
@@ -8538,7 +8668,7 @@ async function generateCustomBill(){
   // add only the newly received amount as a separate cash/online receipt.
   // This keeps item-only invoice edits out of Daily Sale and prevents duplicate
   // payment totals when the invoice itself is already listed there.
-  if(paymentIncrease>0.0001 && (!addToDailySale || (wasUpdatingInvoice && !saleMatches.length))){
+  if(paymentIncrease>0.0001 && !addToDailySale){
     const paymentReceipt={
       id:uid(),branch_id:String(activeBranch),type:(currentUserRole==='admin'?'balance_payment_admin_':'balance_payment_')+paymentMethod,
       amount:paymentIncrease,customer:name,mobile,
@@ -8554,7 +8684,7 @@ async function generateCustomBill(){
   if(!data.customers.some(c=>String(c.name||c.display_name||'').trim().toLocaleLowerCase()===name.toLocaleLowerCase()&&String(c.branch_id||'1')===String(activeBranch))){
     data.customers.push({id:uid(),name,mobile,email,company,address,branch_id:activeBranch});
   }
-  const invoiceRecord={...record,balance_payment:totalBalanceDue,id:editingInvoiceId||record.id,status:'saved',created_at:timestamp.date+' '+timestamp.time};
+  const invoiceRecord={...record,balance_payment:balance,id:editingInvoiceId||record.id,status:'saved',created_at:timestamp.date+' '+timestamp.time};
   let duplicateInvoiceIds=[];
   if(editingInvoiceId){
     const invoiceIndex=data.invoices.findIndex(v=>String(v.id)===editingInvoiceId);
@@ -8728,7 +8858,27 @@ function dailySaleDescriptionHtml(record){
   const items=invoiceItemsForDisplay(record);
   const desc=String(record?.desc||record?.description||'').trim();
   const isInvoice=!!(record?.invoice_no||/^Invoice\s+/i.test(desc)||items.length);
-  if(isInvoice && items.length)return invoiceItemsDisplayHtml(record);
+  if(isInvoice){
+    const invoiceNo=String(record?.invoice_no||((desc.match(/^Invoice\s+([^:]+):/i)||[])[1]||'')).trim();
+    // Daily Sale shows the invoice reference and item names only.
+    // Quantity, rate and the "(Double)" variant marker remain on the invoice itself.
+    const cleanItemName=value=>String(value||'Item').trim()
+      .replace(/\s*\(Double\)\s*/ig,' ')
+      .replace(/\s+/g,' ').trim();
+    const itemLines=items.map(item=>{
+      const name=cleanItemName(item.desc||item.description||'Item');
+      return '<div class="item-description">'+esc(name)+'</div>';
+    }).join('');
+    if(itemLines){
+      return (invoiceNo?'<div style="font-size:10px;color:#ffbd76;font-weight:800;margin-bottom:3px">'+esc(invoiceNo)+'</div>':'')+itemLines;
+    }
+    const cleanDesc=desc.replace(/^Invoice\s+[^:]+:\s*/i,'')
+      .replace(/\s*\(Double\)\s*/ig,' ')
+      .replace(/\s*[×x]\s*[\d,]+(?:\.\d+)?\s*@\s*(?:Rs\.?\s*)?[\d,]+(?:\.\d{1,2})?/ig,'')
+      .replace(/\s*\|\s*/g,' • ').replace(/\s+/g,' ').trim();
+    return (invoiceNo?'<div style="font-size:10px;color:#ffbd76;font-weight:800;margin-bottom:3px">'+esc(invoiceNo)+'</div>':'')+
+      '<div class="item-description">'+esc(cleanDesc||'Invoice item')+'</div>';
+  }
   return esc(desc||'-');
 }
 
@@ -8782,8 +8932,9 @@ function editSavedInvoice(id){
   set('customDiscountType','amount');set('customDiscountValue',Number(legacyReconciliation).toFixed(2));
   set('customInvoicePaymentMode',x.advance_method||linkedSale?.advance_method||(linkedSale?.type==='online'?'online':'cash'));
   set('customBillShipping',x.invoice_shipping??0);set('customBillReceived',advance);set('customBillNotes',x.invoice_notes||'');
-  setInvoicePreviousBalance(x.previous_balance??getInvoicePreviousBalance(x.customer,x.branch_id,x.id));
-  const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption){dailyOption.checked=(typeof x.daily_sale_added==='boolean'?x.daily_sale_added:true);dailyOption.disabled=false;}
+  // Existing invoice keeps its original Previous Balance snapshot.
+  setInvoicePreviousBalance(savedInvoicePreviousBalanceForEdit(x));
+  const dailyOption=document.getElementById('customAddToDailySale');if(dailyOption){dailyOption.checked=true;dailyOption.disabled=true;}
   const wrap=document.getElementById('customBillItems');wrap.innerHTML='';
   // Create the first row before restoring data; otherwise the first saved item
   // has no row to populate and the editor displays a blank item.
@@ -8897,10 +9048,22 @@ function viewCustomerHistoryInvoice(saleId){
 }
 function viewSavedInvoice(id){
   const x=(data.invoices||[]).find(v=>String(v.id)===String(id));if(!x)return;
+  const linkedSale=(data.sales||[]).find(v=>saleIsLinkedToSavedInvoice(v,x));
+  if(linkedSale){
+    const historyChanged=linkedSale.type==='credit'
+      ? syncCreditInvoicePaymentHistory(x,linkedSale)
+      : syncLinkedInvoicePaymentHistory(x,linkedSale);
+    if(historyChanged)persist();
+  }
   const items=Array.isArray(x.invoice_items)?x.invoice_items:[];
   const total=Number(x.invoice_total??x.amount??0);
-  const advance=Number(x.advance_payment||0);
-  const balance=Number(x.balance_payment??(total-advance));
+  const previousBalance=savedInvoicePreviousBalanceForEdit(x);
+  const invoiceDue=savedInvoiceOutstanding(x);
+  const balance=Math.max(0,Number((previousBalance+invoiceDue).toFixed(2)));
+  const paymentHistory=Array.isArray(x.activity_history)?x.activity_history:[];
+  const advance=paymentHistory.some(a=>a.kind==='payment')
+    ? paymentHistory.filter(a=>a.kind==='payment').reduce((sum,a)=>sum+Math.max(0,Number(a.amount||0)),0)
+    : Math.max(0,Number(x.advance_payment||0));
   const rows=items.map(v=>({
     rowHtml:itemNameCell(v),desc:v.desc||v.name||'',description:v.description||'',
     qty:v.qty,unit:v.unit,rate:v.rate,total:v.total
@@ -8913,12 +9076,12 @@ function viewSavedInvoice(id){
     notes:x.invoice_notes,total,advance,balance,
     subtotal:x.invoice_subtotal??items.reduce((sum,v)=>sum+Number(v.total??(Number(v.qty||0)*Number(v.rate||0))),0),
     discount:x.invoice_discount||0,discountPct:x.invoice_discount_percent||0,
-    shipping:x.invoice_shipping||0
+    shipping:x.invoice_shipping||0,previousBalance
   });
   const activity=Array.isArray(x.activity_history)?x.activity_history:[];
   if(activity.length){
-    const historyRows=activity.slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))).map(a=>'<tr><td>'+esc(a.date||'—')+'</td><td>'+esc(a.kind==='payment'?'Payment Received':'Additional Sale')+'</td><td>'+esc(a.description||'')+'</td><td>'+money(a.amount||0)+'</td><td>'+esc(a.method||'—')+'</td></tr>').join('');
-    document.getElementById('billContent').insertAdjacentHTML('beforeend','<div style="margin:22px 0 0;padding-top:12px;border-top:2px solid #f58220"><h3 style="margin:0 0 8px;color:#202b3d">Payment &amp; Daily Sale History</h3><div style="overflow-x:auto"><table class="bill-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Date</th><th>Entry</th><th>Description</th><th>Amount</th><th>Method</th></tr></thead><tbody>'+historyRows+'</tbody></table></div></div>');
+    const historyRows=activity.slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))).map(a=>'<tr><td>'+esc(a.date||'—')+'</td><td>'+esc(a.time||'—')+'</td><td>'+esc(a.kind==='payment'?'Payment Received':'Additional Sale')+'</td><td>'+esc(a.description||'')+'</td><td>'+money(a.amount||0)+'</td><td>'+esc(a.method||'—')+'</td></tr>').join('');
+    document.getElementById('billContent').insertAdjacentHTML('beforeend','<div style="margin:22px 0 0;padding-top:12px;border-top:2px solid #f58220"><h3 style="margin:0 0 8px;color:#202b3d">Payment &amp; Daily Sale History</h3><div style="overflow-x:auto"><table class="bill-table" style="width:100%;border-collapse:collapse"><thead><tr><th>Date</th><th>Time</th><th>Entry</th><th>Description</th><th>Amount</th><th>Method</th></tr></thead><tbody>'+historyRows+'</tbody></table></div></div>');
   }
   document.getElementById('billModal').style.display='flex';
   document.getElementById('billModal').dataset.printCustomer=x.customer||'Customer';
