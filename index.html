@@ -3297,11 +3297,11 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
 
 <section class="side-view" id="side-invoices">
     <aside class="monthly-dues-panel invoice-register-panel">
-      <div class="monthly-dues-head invoice-register-heading invoice-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><div class="invoice-heading-text"><h2>Invoice Management</h2><small>View, Search, Print and Manage Invoices</small></div></div><div class="invoice-window-controls" role="group" aria-label="Window controls"><button type="button" class="invoice-window-btn minimize" onclick="minimizeInvoiceRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="invoice-window-btn maximize" id="invoiceWindowMaximize" onclick="toggleInvoiceRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="invoice-window-btn close" onclick="closeInvoiceRegister()" aria-label="Close" title="Close">×</button></div></div>
+      <div class="monthly-dues-head invoice-register-heading invoice-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><h2>Invoice Management</h2></div><div class="invoice-window-controls" role="group" aria-label="Window controls"><button type="button" class="invoice-window-btn minimize" onclick="minimizeInvoiceRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="invoice-window-btn maximize" id="invoiceWindowMaximize" onclick="toggleInvoiceRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="invoice-window-btn close" onclick="closeInvoiceRegister()" aria-label="Close" title="Close">×</button></div></div>
       <div class="monthly-dues-content">
         <div class="invoice-register-tools">
           <input id="invoiceSearch" type="search" placeholder="Search invoice number / customer..." oninput="renderInvoiceRegister()">
-          <select id="invoiceBranchFilter" onchange="renderInvoiceRegister()"><option value="all">All Branches</option><option value="1">Head Office</option><option value="2">Bahria Enclave</option></select><button type="button" class="invoice-design-new-btn" onclick="fpOpenGenerateInvoice(this)">＋ New Invoice</button>
+          <select id="invoiceBranchFilter" onchange="renderInvoiceRegister()"><option value="all">All Branches</option><option value="1">Head Office</option><option value="2">Bahria Enclave</option></select>
         </div>
         <div id="invoiceRegisterList"><div class="empty">No invoices saved yet.</div></div>
       </div>
@@ -5084,8 +5084,8 @@ async function saveManagedCustomer(){
     payment_terms:getCustomerFormValue('manageCustomerPaymentTerms')||'Due on Receipt',
     portal_language:getCustomerFormValue('manageCustomerPortalLanguage')||'English',
     portal_access:getCustomerFormChecked('manageCustomerPortalAccess'),
-    address:getCustomerFormValue('manageBillingAddress')||getCustomerFormValue('manageCustomerWebsite'),
-    billing:{attention:getCustomerFormValue('manageBillingAttention'),country:getCustomerFormValue('manageBillingCountry'),address:getCustomerFormValue('manageBillingAddress')||getCustomerFormValue('manageCustomerWebsite'),city:getCustomerFormValue('manageBillingCity'),state:getCustomerFormValue('manageBillingState'),postal:getCustomerFormValue('manageBillingPostal'),phone:getCustomerFormValue('manageBillingPhone')},
+    address:getCustomerFormValue('manageBillingAddress'),
+    billing:{attention:getCustomerFormValue('manageBillingAttention'),country:getCustomerFormValue('manageBillingCountry'),address:getCustomerFormValue('manageBillingAddress'),city:getCustomerFormValue('manageBillingCity'),state:getCustomerFormValue('manageBillingState'),postal:getCustomerFormValue('manageBillingPostal'),phone:getCustomerFormValue('manageBillingPhone')},
     shipping:{attention:getCustomerFormValue('manageShippingAttention'),country:getCustomerFormValue('manageShippingCountry'),address:getCustomerFormValue('manageShippingAddress'),city:getCustomerFormValue('manageShippingCity'),state:getCustomerFormValue('manageShippingState'),postal:getCustomerFormValue('manageShippingPostal'),phone:getCustomerFormValue('manageShippingPhone')},
     contact_persons:[...document.querySelectorAll('.zoho-contact-card')].map(card=>({first:card.querySelector('.cp-first')?.value||'',last:card.querySelector('.cp-last')?.value||'',email:card.querySelector('.cp-email')?.value||'',mobile:card.querySelector('.cp-mobile')?.value||''})),
     custom1:getCustomerFormValue('manageCustomerCustom1'),custom2:getCustomerFormValue('manageCustomerCustom2'),
@@ -6416,7 +6416,9 @@ body.invoices-register-fullscreen #side-invoices .invoice-register-table{
   flex-direction:column!important;
   width:min(94vw,1320px)!important;
   max-width:1320px!important;
-  height:92vh!important;min-height:92vh!important;max-height:92vh!important;
+  height:500px!important;
+  min-height:500px!important;
+  max-height:500px!important;
   margin:0!important;
   padding:20px!important;
   box-sizing:border-box!important;
@@ -6484,20 +6486,6 @@ body.invoices-register-fullscreen #side-invoices .invoice-register-table{
   else portalPayrollWindow();
 })();
 <\/script>
-
-<style id="fozan-invoice-window-height-v28134">
-/* V2.8.134: Increase only Invoice Management window height; preserve all functions and graphic styling. */
-body.invoices-register-fullscreen #side-invoices .invoice-register-panel{
-  height:92vh!important; min-height:88vh!important; max-height:calc(100vh - 16px)!important;
-  width:min(96vw,1490px)!important; max-width:1490px!important;
-}
-@media(max-height:700px){
- body.invoices-register-fullscreen #side-invoices .invoice-register-panel{
-  height:calc(100vh - 16px)!important; min-height:calc(100vh - 16px)!important; max-height:calc(100vh - 16px)!important;
- }
-}
-</style>
-
 </body></html>`);
   doc.close();
 
@@ -7597,27 +7585,10 @@ function saleIsLinkedToSavedInvoice(sale,invoice){
   const saleNo=String(sale.invoice_no||sale.invoice_number||'').trim();
   if(invoiceNo&&saleNo===invoiceNo)return true;
   const description=String(sale.desc||sale.description||'').trim();
-  if(invoiceNo&&(
+  return !!invoiceNo&&(
     description.startsWith('Invoice '+invoiceNo+':')||
     description.startsWith('Invoice '+invoiceNo+' ')
-  ))return true;
-  // Safe legacy fallback: older records may have no linked ID or invoice number.
-  // Link only when customer + branch + date + exact total match AND this is the
-  // sole eligible sale candidate for the saved invoice, avoiding false matches.
-  const invoiceDate=String(invoice.date||invoice.invoice_date||'').slice(0,10);
-  const saleDate=String(sale.date||'').slice(0,10);
-  const invoiceTotal=Number(invoice.invoice_total??invoice.amount??0);
-  const saleTotal=Number(sale.amount||0);
-  if(!invoiceDate||invoiceDate!==saleDate||Math.abs(invoiceTotal-saleTotal)>0.01)return false;
-  const candidates=(data.sales||[]).filter(v=>
-    !isBalancePayment(v)&&!v.receipt_kind&&
-    !['advance_payment','routine_payment','cash_received','online_received','total_payment'].includes(v.type)&&
-    String(v.branch_id||'1')===String(invoice.branch_id||'1')&&
-    String(v.customer||'').trim().toLocaleLowerCase()===invoiceCustomer&&
-    String(v.date||'').slice(0,10)===invoiceDate&&
-    Math.abs(Number(v.amount||0)-invoiceTotal)<=0.01
   );
-  return candidates.length===1&&String(candidates[0].id||'')===String(sale.id||'');
 }
 function receivePaymentCustomerDue(customerName,branchId,excludeInvoiceId=''){
   const key=String(customerName||'').trim().toLocaleLowerCase();
@@ -7700,37 +7671,15 @@ function renderReceivePaymentHistory(customerName){
     return;
   }
   const key=customer.toLocaleLowerCase();
-  const branch=String(activeBranch||'1');
-  const sameBranch=(x)=>{
-    const recordBranch=String(x?.branch_id||'1');
-    if(recordBranch===branch)return true;
-    // Legacy records sometimes store a branch label instead of its numeric ID.
-    const normalize=v=>String(v||'').trim().toLocaleLowerCase().replace(/[^a-z0-9]/g,'');
-    const selectedLabel=normalize(branchName(branch));
-    const recordLabel=normalize(recordBranch);
-    return (branch==='1' && ['headoffice','pwd','main'].includes(recordLabel)) ||
-      (branch==='2' && ['bahriaenclaveoffice','bahriaenclave','bahria'].includes(recordLabel)) ||
-      recordLabel===selectedLabel;
-  };
-  const records=[];
-  const seen=new Set();
-  // Direct customer-balance receipt records.
-  (data.sales||[]).filter(x=>isBalancePayment(x)&&sameBranch(x)&&
+  const records=(data.sales||[]).filter(x=>
+    isBalancePayment(x)&&
+    String(x.branch_id||'1')===String(activeBranch)&&
     String(x.customer||'').trim().toLocaleLowerCase()===key
-  ).forEach(x=>{
-    const id=String(x.id||x.receipt_no||x.date+'-'+x.amount);
-    if(seen.has(id))return; seen.add(id);
-    records.push({id:String(x.id||''),receipt:String(x.receipt_no||''),date:x.date||'',time:x.time||'',amount:Number(x.amount||0),method:balanceMethod(x),description:String(x.desc||'').replace(/\s*\|\s*Receipt\s+PR-[\w-]+/i,'').trim(),kind:'Customer Balance Receipt'});
-  });
-  // Also read dated payment entries saved inside invoices, including legacy
-  // receipts that may not have a standalone sales receipt record.
-  (data.invoices||[]).filter(inv=>sameBranch(inv)&&String(inv.customer||'').trim().toLocaleLowerCase()===key)
-    .forEach(inv=>(Array.isArray(inv.activity_history)?inv.activity_history:[]).filter(a=>a.kind==='payment'&&Number(a.amount||0)>0).forEach(a=>{
-      const id=String(a.sale_id||a.receipt_no||'invoice-'+inv.id+'-'+a.date+'-'+a.amount);
-      if(seen.has(id))return; seen.add(id);
-      records.push({id:'',receipt:String(a.receipt_no||''),date:a.date||'',time:a.time||'',amount:Number(a.amount||0),method:String(a.method||'cash').toLowerCase()==='online'?'online':'cash',description:String(a.description||'Invoice payment'),kind:'Invoice Payment'});
-    }));
-  records.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||''))||String(b.receipt||'').localeCompare(String(a.receipt||'')));
+  ).sort((a,b)=>
+    String(b.date||'').localeCompare(String(a.date||''))||
+    String(b.time||'').localeCompare(String(a.time||''))||
+    String(b.id||'').localeCompare(String(a.id||''))
+  );
   if(count)count.textContent=String(records.length);
   if(caption)caption.textContent=customer+' · '+branchName(activeBranch);
   if(!records.length){
@@ -7738,19 +7687,20 @@ function renderReceivePaymentHistory(customerName){
     return;
   }
   list.innerHTML=records.map(x=>{
-    const mode=x.method==='online'?'ONLINE':'CASH';
+    const mode=balanceMethod(x)==='online'?'ONLINE':'CASH';
     const date=String(x.date||'—')+(x.time?' '+String(x.time):'');
-    const title=x.receipt||x.kind;
-    const detail=x.description||x.kind;
-    const printButton=x.id?'<button type="button" class="fozan-payment-history-print" onclick="printStoredReceivePaymentReceipt(\''+esc(x.id)+'\')">↗ View / Print</button>':'';
+    const receipt=String(x.receipt_no||'');
+    const details=String(x.desc||'').replace(/\s*\|\s*Receipt\s+PR-[\w-]+/i,'').trim();
     return '<div class="fozan-payment-history-row">'+
-      '<div class="fozan-payment-history-main"><strong>'+esc(title)+'</strong>'+ 
-      '<small>'+esc(date)+(detail?' · '+esc(detail):'')+'</small>'+ 
-      '<span class="fozan-payment-history-mode">'+mode+'</span></div>'+ 
-      '<div class="fozan-payment-history-amount">'+money(Number(x.amount||0))+'</div>'+printButton+
+      '<div class="fozan-payment-history-main"><strong>'+(receipt?esc(receipt):'Payment Receipt')+'</strong>'+
+      '<small>'+esc(date)+(details?' · '+esc(details):'')+'</small>'+
+      '<span class="fozan-payment-history-mode">'+mode+'</span></div>'+
+      '<div class="fozan-payment-history-amount">'+money(Number(x.amount||0))+'</div>'+
+      '<button type="button" class="fozan-payment-history-print" onclick="printStoredReceivePaymentReceipt(\''+esc(String(x.id||''))+'\')">↗ View / Print</button>'+
       '</div>';
   }).join('');
 }
+
 function updateReceivePaymentDue(){
   const customer=document.getElementById('receiveCustomer')?.value||'';
   renderReceivePaymentHistory(customer);
@@ -7959,12 +7909,11 @@ function saveReceivePayment(){
   const remaining=receivePaymentCustomerDue(customer,activeBranch);
   receipt.remaining_after_payment=remaining;
   persist();
+  closeReceivePayment();
   refreshSaleSuggestions();refreshBillCustomerList();
   renderDateHistory();renderDashboard();renderSales();refreshManagementMenuCounts();
-  // Show success while the Receive Payment modal is still open; only close it after the user acknowledges.
-  alert('Payment received successfully. Receipt '+receiptNo+' saved. Remaining balance: '+money(remaining));
-  closeReceivePayment();
   printReceivePaymentReceipt(receipt);
+  alert('Payment received successfully. Receipt '+receiptNo+' saved. Remaining balance: '+money(remaining));
   // Keep the lock briefly after the modal closes to ignore queued/double clicks.
   setTimeout(()=>{
     receivePaymentSaving=false;
@@ -9201,7 +9150,7 @@ function convertSavedQuoteToInvoice(quoteId){
   }
   if(!confirm('Convert quotation '+(quote.quote_no||'')+' into a new invoice? The quotation will remain saved.'))return;
 
-  const invoiceNo=nextBranchInvoiceNumber(branchId,true);
+  const invoiceNo=nextBranchInvoiceNumber(branchId);
   const stamp=nowLocal();
   const items=(quote.quote_items||[]).map(item=>({
     desc:item.desc||item.name||'',
@@ -9263,7 +9212,7 @@ function generateCustomQuote(){
   // be saved. The PDF picker is invoked directly from the Save Quote click flow.
   fozanSaveBillPDF();
 }
-function nextBranchInvoiceNumber(branch,reserve=false){
+function nextBranchInvoiceNumber(branch){
   const branchId=String(branch||'1');
   const key='fozan_invoice_counter_branch_'+branchId;
   const code=branchId==='2'?'BE':'PWD';
@@ -9287,17 +9236,8 @@ function nextBranchInvoiceNumber(branch,reserve=false){
     if(match)highest=Math.max(highest,Number(match[1])||0);
   });
   const next=highest+1;
-  // Merely opening/resetting the invoice builder previews the next number.
-  // Reserve/increment it only at a real save/commit action.
-  if(reserve)localStorage.setItem(key,String(next));
+  localStorage.setItem(key,String(next));
   return prefix+String(next).padStart(6,'0');
-}
-function reserveBranchInvoiceNumber(branch,invoiceNo){
-  const branchId=String(branch||'1');
-  const key='fozan_invoice_counter_branch_'+branchId;
-  const prefix=branchId==='2'?'FP-BE-':'FP-PWD-';
-  const match=String(invoiceNo||'').trim().match(new RegExp('^'+prefix+'(\d+)$','i'));
-  if(match){const n=Number(match[1])||0;const current=Number(localStorage.getItem(key)||0);if(n>current)localStorage.setItem(key,String(n));}
 }
 function getInvoiceCustomerRecords(){
   // The customer register is the source of truth. Historical invoices/quotes
@@ -9321,7 +9261,7 @@ function getInvoiceCustomerRecords(){
     const normalized={...c,name,branch_id:branch,
       mobile:c.mobile||c.work_phone||c.billing?.phone||c.shipping?.phone||'',
       email:c.email||'',company:c.company||c.company_name||'',
-      address:c.billing?.address||c.address||c.website||c.shipping?.address||'',
+      address:c.billing?.address||c.address||c.shipping?.address||'',
       payment_terms:c.payment_terms||c.terms||''};
     if(existing){
       // Fill missing fields from older invoice records without overwriting
@@ -9456,7 +9396,7 @@ function autofillInvoiceCustomerDetails(){
   put('customCustomerMobile',customer.mobile);
   put('customCustomerEmail',customer.email);
   put('customCompanyName',customer.company);
-  if(customer.address)put('customCustomerAddress',customer.address);
+  put('customCustomerAddress',customer.address);
   const terms=document.getElementById('customTerms');
   if(terms&&customer.payment_terms){const opt=[...terms.options].find(o=>o.text===customer.payment_terms||o.value===customer.payment_terms);if(opt)terms.value=opt.value;}
   if(window.editingSavedInvoiceId){
@@ -9620,15 +9560,13 @@ function toggleAddInvoiceMaximize(){
 function saveCustomInvoiceDraft(){
   if(!ensureInvoiceBranchSelected('Draft'))return;
   const name=(document.getElementById('customCustomerName').value||'').trim();
-  const draftInvoiceNo=document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch);
-  reserveBranchInvoiceNumber(activeBranch,draftInvoiceNo);
   const draft={
     id:window.editingCustomDraftId||uid(),branch_id:activeBranch,customer:name,
     mobile:(document.getElementById('customCustomerMobile').value||'').trim(),
     email:(document.getElementById('customCustomerEmail')?.value||'').trim(),
     company:(document.getElementById('customCompanyName').value||'').trim(),
     address:(document.getElementById('customCustomerAddress').value||'').trim(),
-    invoice_no:draftInvoiceNo,
+    invoice_no:document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch),
     date:document.getElementById('customBillDate').value||nowLocal().date,
     order_no:'',
     terms:document.getElementById('customTerms').value,
@@ -9831,7 +9769,7 @@ async function generateCustomBill(){
   }
   const invoiceNo=originalInvoice
     ? String(originalInvoice.invoice_no||'').trim()
-    : nextBranchInvoiceNumber(activeBranch,true);
+    : nextBranchInvoiceNumber(activeBranch);
   if(!invoiceNo){alert('Invoice number could not be generated. Please try again.');return;}
   const invoiceNoField=document.getElementById('customInvoiceNo');if(invoiceNoField)invoiceNoField.value=invoiceNo;
   // Previous Balance is a snapshot carried onto a NEW invoice only.
@@ -11928,7 +11866,7 @@ body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maxi
 body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
   display:flex!important;flex-direction:column!important;
   width:min(94vw,1320px)!important;max-width:1320px!important;
-  height:92vh!important;min-height:92vh!important;max-height:92vh!important;
+  height:500px!important;min-height:500px!important;max-height:500px!important;
   margin:0!important;padding:20px!important;box-sizing:border-box!important;
   overflow:hidden!important;
 }
@@ -12753,40 +12691,6 @@ body.invoice-workspace-active #billGeneratorPanel #customBillItems .custom-bill-
   color:#52616d!important;background:#fcfdff!important;
 }
 </style>
-
-<style id="fozan-invoice-window-actual-final-fix-v28136">
-/* V2.8.136: Correct the REAL active normal-window selector (later legacy rules were overriding prior height fixes). CSS only. */
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
-  height:88vh!important; min-height:680px!important; max-height:calc(100vh - 28px)!important;
-  width:min(96vw,1490px)!important; max-width:1490px!important;
-  display:flex!important; flex-direction:column!important; overflow:hidden!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel>.monthly-dues-content{
-  flex:1 1 auto!important; min-height:0!important; display:flex!important; flex-direction:column!important; overflow:hidden!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
-  display:grid!important; grid-template-columns:minmax(220px,1fr) minmax(180px,240px) minmax(150px,auto)!important;
-  align-items:center!important; gap:10px!important; flex:0 0 auto!important; width:100%!important; margin:0 0 10px!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools input,
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools select{
-  width:100%!important; min-width:0!important; margin:0!important; box-sizing:border-box!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools .invoice-design-new-btn{
-  width:auto!important; min-width:150px!important; margin:0!important; white-space:nowrap!important; grid-column:auto!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) #invoiceRegisterList{
-  flex:1 1 auto!important; min-height:0!important; width:100%!important; overflow:auto!important; overscroll-behavior:contain!important;
-}
-@media(max-height:760px){
- #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{height:calc(100vh - 28px)!important;min-height:0!important;max-height:calc(100vh - 28px)!important}
-}
-@media(max-width:760px){
- #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{width:calc(100vw - 20px)!important;height:calc(100vh - 20px)!important;min-height:0!important;max-height:calc(100vh - 20px)!important}
- #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{grid-template-columns:1fr!important;gap:6px!important}
- #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools .invoice-design-new-btn{width:100%!important}
-}
-</style>
 </body></html>
 
 <style id="fp-expense-final-visual-fix">
@@ -13470,7 +13374,7 @@ body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maxi
 body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
   display:flex!important;flex-direction:column!important;
   width:min(94vw,1320px)!important;max-width:1320px!important;
-  height:92vh!important;min-height:92vh!important;max-height:92vh!important;
+  height:500px!important;min-height:500px!important;max-height:500px!important;
   margin:0!important;padding:20px!important;box-sizing:border-box!important;
   overflow:hidden!important;
 }
@@ -14062,191 +13966,5 @@ body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maxi
   margin-top:auto!important;flex-shrink:0!important;
   break-inside:avoid!important;page-break-inside:avoid!important;
  }
-}
-</style>
-
-<style id="fozan-invoice-reference-graphic-v28133">
-/* V2.8.133: Graphic styling only — Invoice Management matches supplied reference */
-#side-invoices .invoice-register-panel{
- width:min(95vw,1490px)!important; max-width:1490px!important;
- height:min(86vh,900px)!important; min-height:560px!important;
- max-height:calc(100vh - 32px)!important;
- border:5px solid #fff!important;border-top:7px solid #f58220!important;
- border-radius:24px!important;box-shadow:0 16px 48px rgba(0,0,0,.3)!important;
- padding:10px!important;background:#fff!important;overflow:hidden!important;
- display:flex!important;flex-direction:column!important;box-sizing:border-box!important;
-}
-#side-invoices .invoice-register-heading{
- min-height:96px!important;flex:0 0 96px!important;
- background:linear-gradient(115deg,#101722 0%,#202a3c 58%,#f58220 58%,#ff8a00 70%,#171e2b 70%)!important;
- border:2px solid #f58220!important;border-radius:15px 15px 5px 5px!important;
- padding:14px 22px!important;color:#fff!important;box-shadow:0 3px 8px #0002!important;
-}
-#side-invoices .dues-heading-copy{display:flex!important;align-items:center!important;gap:18px!important}
-#side-invoices .dues-heading-icon{width:62px!important;height:62px!important;display:flex!important;align-items:center!important;justify-content:center!important;
- border-radius:13px!important;background:#f58220!important;color:#fff!important;font-size:36px!important;
- border:3px solid #fff!important;box-shadow:0 3px 8px #0003!important}
-#side-invoices .invoice-heading-text h2{font-size:28px!important;font-weight:800!important;color:#fff!important;margin:0!important;letter-spacing:.2px!important}
-#side-invoices .invoice-heading-text small{display:block!important;color:#e8edf4!important;font-size:15px!important;margin-top:4px!important}
-#side-invoices .invoice-window-controls{gap:10px!important}
-#side-invoices .invoice-window-btn{width:48px!important;height:48px!important;border-radius:11px!important;font-size:24px!important;border:2px solid #69788d!important;background:#35445a!important;color:#fff!important}
-#side-invoices .invoice-window-btn.close{background:#e92f45!important;border-color:#ff8795!important}
-#side-invoices .monthly-dues-content{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:hidden!important;padding:12px 4px 4px!important}
-#side-invoices .invoice-register-tools{display:grid!important;grid-template-columns:minmax(260px,1fr) minmax(180px,300px) auto!important;gap:12px!important;margin:4px 8px 16px!important;align-items:center!important}
-#side-invoices .invoice-register-tools input,#side-invoices .invoice-register-tools select{
- height:54px!important;border:2px solid #d5d9df!important;border-radius:12px!important;padding:0 16px!important;
- font-size:16px!important;background:#fff!important;box-shadow:0 1px 4px #0000000b!important;color:#252a31!important}
-#side-invoices .invoice-register-tools input{background-image:none!important}
-#side-invoices .invoice-design-new-btn{height:54px!important;border:0!important;border-radius:12px!important;
- background:linear-gradient(180deg,#ff941f,#f58200)!important;color:#fff!important;font-weight:800!important;
- font-size:17px!important;padding:0 22px!important;white-space:nowrap!important;box-shadow:0 4px 8px #f5822040!important;cursor:pointer!important}
-#side-invoices #invoiceRegisterList{flex:1!important;min-height:0!important;overflow:auto!important;border:1px solid #e5e7eb!important;border-radius:13px!important;background:#fff!important}
-#side-invoices .invoice-register-table{width:100%!important;min-width:1180px!important;border-collapse:separate!important;border-spacing:0!important;font-size:15px!important}
-#side-invoices .invoice-register-table thead th{position:sticky!important;top:0!important;z-index:2!important;
- background:linear-gradient(180deg,#ff941d,#f58200)!important;color:#fff!important;font-size:15px!important;font-weight:800!important;
- padding:16px 12px!important;border-right:1px solid #ffffff45!important;border-bottom:2px solid #d96b00!important;text-align:center!important}
-#side-invoices .invoice-register-table thead th:first-child{border-top-left-radius:10px!important}
-#side-invoices .invoice-register-table thead th:last-child{border-top-right-radius:10px!important}
-#side-invoices .invoice-register-table tbody td{padding:15px 12px!important;border-bottom:1px solid #e7e9ed!important;
- color:#202631!important;font-size:14px!important;vertical-align:middle!important;white-space:nowrap!important}
-#side-invoices .invoice-register-table tbody tr:nth-child(even){background:#f2f4f7!important}
-#side-invoices .invoice-register-table tbody tr:hover{background:#fff4e8!important}
-#side-invoices .invoice-register-table tbody td:first-child b{font-size:15px!important;font-weight:800!important}
-#side-invoices .invoice-register-table tbody td:nth-child(8){font-weight:800!important;color:#d62e2e!important}
-#side-invoices .invoice-register-table tbody td:last-child{min-width:180px!important;text-align:center!important}
-#side-invoices .invoice-view-btn,#side-invoices .admin-row-delete{width:39px!important;height:38px!important;padding:0!important;
- font-size:0!important;line-height:1!important;border-radius:9px!important;margin:0 3px!important;background:#fff!important;font-weight:800!important}
-#side-invoices .invoice-view-btn:first-of-type{border:2px solid #1688e0!important;color:#1688e0!important}
-#side-invoices .invoice-view-btn:first-of-type:before{content:"◉";font-size:19px!important}
-#side-invoices .invoice-view-btn:nth-of-type(2){border:2px solid #20a44b!important;color:#20a44b!important}
-#side-invoices .invoice-view-btn:nth-of-type(2):before{content:"▣";font-size:19px!important}
-#side-invoices .admin-row-delete{border:2px solid #ed3b50!important;color:#ed3b50!important}
-#side-invoices .admin-row-delete:before{content:"♲";font-size:20px!important}
-#side-invoices .invoice-register-summary{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;
- padding:12px 8px 5px!important;flex:0 0 auto!important}
-#side-invoices .invoice-register-summary .summary-card{display:flex!important;align-items:center!important;gap:12px!important;
- background:#fff!important;border:1px solid #e4e7ec!important;border-radius:12px!important;padding:12px 15px!important;
- box-shadow:0 3px 8px #00000010!important;min-width:0!important}
-#side-invoices .invoice-register-summary .summary-icon{font-size:28px!important}
-#side-invoices .invoice-register-summary small{display:block!important;color:#566171!important;font-size:12px!important;font-weight:700!important}
-#side-invoices .invoice-register-summary strong{display:block!important;color:#202632!important;font-size:16px!important;margin-top:3px!important;white-space:nowrap!important}
-@media(max-width:900px){
- #side-invoices .invoice-register-panel{width:calc(100vw - 18px)!important;height:calc(100vh - 18px)!important;min-height:0!important}
- #side-invoices .invoice-register-heading{min-height:75px!important;flex-basis:75px!important;padding:8px 12px!important}
- #side-invoices .invoice-heading-text h2{font-size:20px!important}
- #side-invoices .invoice-heading-text small{font-size:12px!important}
- #side-invoices .dues-heading-icon{width:46px!important;height:46px!important;font-size:25px!important}
- #side-invoices .invoice-register-tools{grid-template-columns:1fr!important}
- #side-invoices .invoice-register-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-}
-</style>
-
-<script id="fozan-invoice-register-summary-reference-v28133">
-(function(){
- function moneyVal(s){return Number(String(s||'').replace(/[^0-9.-]/g,''))||0;}
- function updateSummary(){
-  const panel=document.querySelector('#side-invoices .invoice-register-panel');
-  const list=document.getElementById('invoiceRegisterList');
-  if(!panel||!list)return;
-  let summary=panel.querySelector('.invoice-register-summary');
-  if(!summary){summary=document.createElement('div');summary.className='invoice-register-summary';panel.appendChild(summary);}
-  const rows=[...list.querySelectorAll('.invoice-register-table tbody tr')];
-  let total=0,advance=0,balance=0;
-  rows.forEach(row=>{const cells=row.querySelectorAll('td');if(cells.length>=8){total+=moneyVal(cells[5].textContent);advance+=moneyVal(cells[6].textContent);balance+=moneyVal(cells[7].textContent);}});
-  const fmt=n=>'Rs. '+Math.round(n).toLocaleString('en-PK');
-  summary.innerHTML='<div class="summary-card"><span class="summary-icon">▤</span><div><small>Total Invoices</small><strong>'+rows.length+'</strong></div></div>'+
-   '<div class="summary-card"><span class="summary-icon">🟠</span><div><small>Total Amount</small><strong>'+fmt(total)+'</strong></div></div>'+
-   '<div class="summary-card"><span class="summary-icon">💰</span><div><small>Total Advance</small><strong>'+fmt(advance)+'</strong></div></div>'+
-   '<div class="summary-card"><span class="summary-icon">⚖️</span><div><small>Total Balance</small><strong style="color:'+(balance>0?'#d52d2d':'#16813c')+'">'+fmt(balance)+'</strong></div></div>';
- }
- const observer=new MutationObserver(updateSummary);
- document.addEventListener('DOMContentLoaded',function(){const list=document.getElementById('invoiceRegisterList');if(list)observer.observe(list,{childList:true,subtree:true});updateSummary();});
- setInterval(updateSummary,1200);
-})();
-</script>
-
-<style id="fozan-invoice-window-normal-size-v28135">
-/* V2.8.135: Fix normal/restored window size and keep toolbar on one row. CSS only; no functions changed. */
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
-  width:min(95vw,1490px)!important;max-width:1490px!important;
-  height:88vh!important;min-height:min(680px,calc(100vh - 36px))!important;
-  max-height:calc(100vh - 36px)!important;
-  margin:0!important;box-sizing:border-box!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel>.monthly-dues-content{
-  flex:1 1 0!important;min-height:0!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
-  grid-template-columns:minmax(220px,1fr) minmax(170px,240px) auto!important;
-  align-items:center!important;gap:10px!important;flex:0 0 auto!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-design-new-btn{
-  width:auto!important;min-width:150px!important;white-space:nowrap!important;
-}
-#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) #invoiceRegisterList{
-  flex:1 1 0!important;min-height:140px!important;
-}
-@media(max-width:760px){
- #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
-  width:calc(100vw - 16px)!important;height:calc(100vh - 16px)!important;
-  min-height:0!important;max-height:calc(100vh - 16px)!important;padding:10px!important;
- }
- #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
-  grid-template-columns:minmax(0,1fr)!important;gap:7px!important;
- }
- #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-design-new-btn{width:100%!important}
-}
-</style>
-
-<style id="fozan-invoice-window-true-final-v28138">
-/* V2.8.138: Fix the actual Invoice Management panel height; CSS only. */
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized){
-  position:fixed!important;inset:0!important;z-index:10060!important;
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  width:100vw!important;height:100vh!important;min-height:100vh!important;
-  margin:0!important;padding:12px!important;box-sizing:border-box!important;
-  overflow:hidden!important;background:rgba(15,23,42,.58)!important;
-}
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel{
-  display:flex!important;flex:0 0 auto!important;flex-direction:column!important;
-  width:96vw!important;max-width:1540px!important;
-  height:calc(100vh - 40px)!important;min-height:calc(100vh - 40px)!important;max-height:calc(100vh - 40px)!important;
-  margin:0!important;padding:18px!important;box-sizing:border-box!important;
-  overflow:hidden!important;
-}
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel>.monthly-dues-content{
-  display:flex!important;flex:1 1 0!important;flex-direction:column!important;
-  width:100%!important;min-height:0!important;overflow:hidden!important;
-}
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
-  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(170px,245px) minmax(145px,175px)!important;
-  gap:10px!important;align-items:center!important;width:100%!important;margin:4px 0 12px!important;flex:0 0 auto!important;
-}
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools input,
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools select,
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools .invoice-design-new-btn{
-  width:100%!important;min-width:0!important;margin:0!important;box-sizing:border-box!important;
-}
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) #invoiceRegisterList{
-  display:block!important;flex:1 1 0!important;min-height:0!important;width:100%!important;
-  overflow:auto!important;overscroll-behavior:contain!important;
-}
-html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-summary{
-  flex:0 0 auto!important;
-}
-@media(max-height:680px){
- html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel{
-  height:calc(100vh - 20px)!important;min-height:calc(100vh - 20px)!important;max-height:calc(100vh - 20px)!important;
- }
-}
-@media(max-width:760px){
- html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel{
-  width:calc(100vw - 12px)!important;height:calc(100vh - 12px)!important;
-  min-height:calc(100vh - 12px)!important;max-height:calc(100vh - 12px)!important;padding:10px!important;
- }
- html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
- }
- html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-design-new-btn{grid-column:1/-1!important}
 }
 </style>
