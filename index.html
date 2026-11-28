@@ -8,7 +8,7 @@
 try{if(sessionStorage.getItem('fozan_user_session'))document.documentElement.classList.add('fozan-session-restoring');}catch(e){}
 </script>
 <style id="fozan-session-paint-guard-style">html.fozan-session-restoring #fozanLogin{display:none!important}</style>
-<title>Fozan Press — Business Management System V2.8.105</title>
+<title>Fozan Press — Business Management System V2.8.144</title>
 <style id="fozan-admin-settings-style">
 .admin-settings-nav{display:none!important}body.admin-role .admin-settings-nav{display:flex!important}
 .fp-settings-panel{max-width:1100px!important;margin:0 auto!important;padding:22px!important}
@@ -1976,6 +1976,17 @@ body.invoice-workspace-active #billGeneratorPanel #customBillItems .custom-bill-
 
 
 <style id="fozan-payment-receiving-css">
+
+/* V2.8.146: searchable customer selector; names only, no due amounts in results */
+#receivePaymentModal .receive-customer-search-wrap{position:relative;width:100%}
+#receivePaymentModal #receiveCustomerSearch{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;font:inherit;color:#1f2937;outline:none}
+#receivePaymentModal #receiveCustomerSearch:focus{border-color:#f58220;box-shadow:0 0 0 3px #f5822022}
+#receivePaymentModal .receive-customer-search-list{display:none;position:absolute;left:0;right:0;top:calc(100% + 3px);max-height:250px;overflow:auto;background:#fff;border:1px solid #d6dce5;border-radius:8px;box-shadow:0 8px 24px #0f172a22;z-index:10050}
+#receivePaymentModal .receive-customer-search-list.show{display:block}
+#receivePaymentModal .receive-customer-search-option{padding:9px 12px;cursor:pointer;color:#273244;border-bottom:1px solid #f0f2f5;font-size:13px}
+#receivePaymentModal .receive-customer-search-option:hover,#receivePaymentModal .receive-customer-search-option.active{background:#fff2e5;color:#b85d08}
+#receivePaymentModal .receive-customer-search-empty{padding:10px 12px;color:#718096;font-size:12px}
+
 #receivePaymentModal{z-index:10020;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.58)}
 #receivePaymentModal .fozan-receive-box{width:min(720px,100%);max-height:94vh;overflow:auto;padding:0;border:1px solid #e1e6ed;border-top:5px solid #f58220;border-radius:15px;box-shadow:0 18px 55px #10182740}
 #receivePaymentModal .fozan-receive-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:17px 20px;background:linear-gradient(120deg,#fff,#fff7ef);border-bottom:1px solid #e8edf2}
@@ -3297,11 +3308,11 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
 
 <section class="side-view" id="side-invoices">
     <aside class="monthly-dues-panel invoice-register-panel">
-      <div class="monthly-dues-head invoice-register-heading invoice-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><h2>Invoice Management</h2></div><div class="invoice-window-controls" role="group" aria-label="Window controls"><button type="button" class="invoice-window-btn minimize" onclick="minimizeInvoiceRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="invoice-window-btn maximize" id="invoiceWindowMaximize" onclick="toggleInvoiceRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="invoice-window-btn close" onclick="closeInvoiceRegister()" aria-label="Close" title="Close">×</button></div></div>
+      <div class="monthly-dues-head invoice-register-heading invoice-window-head"><div class="dues-heading-copy"><span class="dues-heading-icon">▧</span><div class="invoice-heading-text"><h2>Invoice Management</h2><small>View, Search, Print and Manage Invoices</small></div></div><div class="invoice-window-controls" role="group" aria-label="Window controls"><button type="button" class="invoice-window-btn minimize" onclick="minimizeInvoiceRegister()" aria-label="Minimize" title="Minimize">−</button><button type="button" class="invoice-window-btn maximize" id="invoiceWindowMaximize" onclick="toggleInvoiceRegisterMaximize()" aria-label="Maximize" title="Maximize">□</button><button type="button" class="invoice-window-btn close" onclick="closeInvoiceRegister()" aria-label="Close" title="Close">×</button></div></div>
       <div class="monthly-dues-content">
         <div class="invoice-register-tools">
           <input id="invoiceSearch" type="search" placeholder="Search invoice number / customer..." oninput="renderInvoiceRegister()">
-          <select id="invoiceBranchFilter" onchange="renderInvoiceRegister()"><option value="all">All Branches</option><option value="1">Head Office</option><option value="2">Bahria Enclave</option></select>
+          <select id="invoiceBranchFilter" onchange="renderInvoiceRegister()"><option value="all">All Branches</option><option value="1">Head Office</option><option value="2">Bahria Enclave</option></select><button type="button" class="invoice-design-new-btn" onclick="fpOpenGenerateInvoice(this)">＋ New Invoice</button>
         </div>
         <div id="invoiceRegisterList"><div class="empty">No invoices saved yet.</div></div>
       </div>
@@ -3623,6 +3634,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
                 </div>
               </div>
               <button type="button" class="fpd-new-link" onclick="fpdNewGo('fpdNewSalarySheet',this)"><span>▤</span>Salary Register</button>
+              <button type="button" class="fpd-new-link" onclick="openSalaryPaymentsWindow()"><span>💵</span>Salary / Payments</button>
               <button type="button" class="fpd-new-link" onclick="printStaffPayroll(true)"><span>▧</span>Payslips / PDF</button>
               <button type="button" class="fpd-new-link" onclick="fpdNewGo('fpdNewPayrollSummary',this)"><span>▥</span>Payroll Reports</button>
               <button type="button" class="fpd-new-link" onclick="switchExpenseWorkspace('general')"><span>▣</span>General Expenses</button>
@@ -3840,7 +3852,7 @@ body.invoice-workspace-active #billGeneratorPanel .bill-panel-toggle{display:non
       <div class="fozan-receive-grid">
         <div class="sale-field fozan-receive-wide">
           <label for="receiveCustomer">Customer Name</label>
-          <select id="receiveCustomer" onchange="updateReceivePaymentDue()"><option value="">Select customer with outstanding balance</option></select>
+          <div class="receive-customer-search-wrap"><input id="receiveCustomerSearch" type="text" autocomplete="off" placeholder="Type customer name to search..." oninput="filterReceiveCustomerOptions()" onfocus="filterReceiveCustomerOptions()" onkeydown="receiveCustomerSearchKeydown(event)"/><div id="receiveCustomerSearchList" class="receive-customer-search-list" role="listbox"></div><select id="receiveCustomer" onchange="updateReceivePaymentDue()" aria-hidden="true" tabindex="-1" style="display:none"><option value="">Select customer with outstanding balance</option></select></div>
         </div>
         <div class="sale-field"><label for="receiveBranch">Branch</label><input id="receiveBranch" type="text" readonly></div>
         <div class="sale-field"><label for="receiveOutstanding">Total Outstanding (Rs.)</label><input id="receiveOutstanding" type="text" readonly value="0.00"></div>
@@ -5084,8 +5096,8 @@ async function saveManagedCustomer(){
     payment_terms:getCustomerFormValue('manageCustomerPaymentTerms')||'Due on Receipt',
     portal_language:getCustomerFormValue('manageCustomerPortalLanguage')||'English',
     portal_access:getCustomerFormChecked('manageCustomerPortalAccess'),
-    address:getCustomerFormValue('manageBillingAddress'),
-    billing:{attention:getCustomerFormValue('manageBillingAttention'),country:getCustomerFormValue('manageBillingCountry'),address:getCustomerFormValue('manageBillingAddress'),city:getCustomerFormValue('manageBillingCity'),state:getCustomerFormValue('manageBillingState'),postal:getCustomerFormValue('manageBillingPostal'),phone:getCustomerFormValue('manageBillingPhone')},
+    address:getCustomerFormValue('manageBillingAddress')||getCustomerFormValue('manageCustomerWebsite'),
+    billing:{attention:getCustomerFormValue('manageBillingAttention'),country:getCustomerFormValue('manageBillingCountry'),address:getCustomerFormValue('manageBillingAddress')||getCustomerFormValue('manageCustomerWebsite'),city:getCustomerFormValue('manageBillingCity'),state:getCustomerFormValue('manageBillingState'),postal:getCustomerFormValue('manageBillingPostal'),phone:getCustomerFormValue('manageBillingPhone')},
     shipping:{attention:getCustomerFormValue('manageShippingAttention'),country:getCustomerFormValue('manageShippingCountry'),address:getCustomerFormValue('manageShippingAddress'),city:getCustomerFormValue('manageShippingCity'),state:getCustomerFormValue('manageShippingState'),postal:getCustomerFormValue('manageShippingPostal'),phone:getCustomerFormValue('manageShippingPhone')},
     contact_persons:[...document.querySelectorAll('.zoho-contact-card')].map(card=>({first:card.querySelector('.cp-first')?.value||'',last:card.querySelector('.cp-last')?.value||'',email:card.querySelector('.cp-email')?.value||'',mobile:card.querySelector('.cp-mobile')?.value||''})),
     custom1:getCustomerFormValue('manageCustomerCustom1'),custom2:getCustomerFormValue('manageCustomerCustom2'),
@@ -5902,13 +5914,16 @@ function renderStaffPayroll(){
     const linked=linkedStaffExpenseTotals(x,month);
     const advanceRows=data.expenses.filter(e=>String(e.staff_id||'')===String(x.id)&&String(e.date||'').slice(0,7)===month&&(e.staff_pay_type||'advance')==='advance');
     const advanceDetails=advanceRows.length?`<details style="margin-top:4px;font-size:10px;color:#657386"><summary style="cursor:pointer">${advanceRows.length} advance entr${advanceRows.length===1?'y':'ies'} · View details</summary><div style="margin-top:4px;line-height:1.45">${advanceRows.map(e=>`${esc(e.date||'')} · ${esc(e.taken_by||x.name||'Not specified')}: ${payrollMoney(e.amount)}`).join('<br>')}</div></details>`:'';
-    const paidAmt=Math.max(0,Number(x.paid_by_month?.[month]||0)+linked.paid);
+    const addonPayments=(typeof window.fozanSalaryAddonPaymentsFor==='function'?window.fozanSalaryAddonPaymentsFor(x,month):[]);
+    const addonPaid=addonPayments.reduce((sum,p)=>sum+Number(p.amount||0),0);
+    const paidAmt=Math.max(0,Number(x.paid_by_month?.[month]||0)+linked.paid+addonPaid);
     const advanceAmt=Math.max(0,Number(x.advance_by_month?.[month]||0)+linked.advance);
     const remaining=Math.max(0,take-paidAmt-advanceAmt);
+    const addonPaidDetails=addonPayments.length?`<details style="margin-top:4px;font-size:10px;color:#657386"><summary style="cursor:pointer">${addonPayments.length} Salary / Payments entr${addonPayments.length===1?'y':'ies'} · View details</summary><div style="margin-top:4px;line-height:1.45">${addonPayments.map(p=>`${esc(p.date||'')} · ${esc(p.mode||'Cash')}: ${payrollMoney(p.amount)}`).join('<br>')}</div></details>`:'';
     gross+=salary;deduction+=cut;net+=take;paid+=paidAmt;advance+=advanceAmt;due+=remaining;
     const safeId=String(x.id).replace(/[^a-zA-Z0-9_-]/g,'');
     const customCells=customKeys.map(k=>`<td>${esc(x.custom_fields?.[k]??'')}</td>`).join('');
-    return `<tr><td><b>${esc(x.name||'')}</b><br><small>${esc(x.designation||'')}</small></td><td>${esc(branchName(x.branch_id))}</td><td>${payrollMoney(salary)}</td><td>${leave}</td><td class="expense">${payrollMoney(cut)}</td><td><b>${payrollMoney(take)}</b></td><td class="cash">${payrollMoney(advanceAmt)}${advanceDetails?`<small style="display:block;margin-top:4px;color:#657386;font-size:10px;line-height:1.4">${advanceDetails}</small>`:''}</td><td class="cash">${payrollMoney(paidAmt)}</td><td class="debit"><b>${payrollMoney(remaining)}</b></td>${customCells}<td><div class="payroll-actions"><button class="muted" type="button" onclick="editStaff('${safeId}')">Edit</button><button class="danger" type="button" onclick="removeStaff('${safeId}')">Remove</button></div></td></tr>`;
+    return `<tr><td><b>${esc(x.name||'')}</b><br><small>${esc(x.designation||'')}</small></td><td>${esc(branchName(x.branch_id))}</td><td>${payrollMoney(salary)}</td><td>${leave}</td><td class="expense">${payrollMoney(cut)}</td><td><b>${payrollMoney(take)}</b></td><td class="cash">${payrollMoney(advanceAmt)}${advanceDetails?`<small style="display:block;margin-top:4px;color:#657386;font-size:10px;line-height:1.4">${advanceDetails}</small>`:''}</td><td class="cash">${payrollMoney(paidAmt)}${addonPaidDetails?`<small style="display:block;margin-top:4px;color:#657386;font-size:10px;line-height:1.4">${addonPaidDetails}</small>`:''}</td><td class="debit"><b>${payrollMoney(remaining)}</b></td>${customCells}<td><div class="payroll-actions"><button class="muted" type="button" onclick="editStaff('${safeId}')">Edit</button><button class="danger" type="button" onclick="removeStaff('${safeId}')">Remove</button></div></td></tr>`;
   }).join('');
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
   set('payrollGross',payrollMoney(gross));set('payrollDeduction',payrollMoney(deduction));
@@ -5934,8 +5949,10 @@ function printStaffPayroll(savePdf){
     const linked=linkedStaffExpenseTotals(x,month);
     const advanceRows=data.expenses.filter(e=>String(e.staff_id||'')===String(x.id)&&String(e.date||'').slice(0,7)===month&&(e.staff_pay_type||'advance')==='advance');
     const advanceDetails=advanceRows.length?`<details style="margin-top:4px;font-size:10px;color:#657386"><summary style="cursor:pointer">${advanceRows.length} advance entr${advanceRows.length===1?'y':'ies'} · View details</summary><div style="margin-top:4px;line-height:1.45">${advanceRows.map(e=>`${esc(e.date||'')} · ${esc(e.taken_by||x.name||'Not specified')}: ${payrollMoney(e.amount)}`).join('<br>')}</div></details>`:'';
+    const addonPayments=(typeof window.fozanSalaryAddonPaymentsFor==='function'?window.fozanSalaryAddonPaymentsFor(x,month):[]);
+    const addonPay=addonPayments.reduce((sum,p)=>sum+Number(p.amount||0),0);
     const adv=Number(x.advance_by_month?.[month]||0)+linked.advance;
-    const pay=Number(x.paid_by_month?.[month]||0)+linked.paid;
+    const pay=Number(x.paid_by_month?.[month]||0)+linked.paid+addonPay;
     const due=Math.max(0,take-adv-pay);
     gross+=salary;deduction+=cut;net+=take;advance+=adv;paid+=pay;pending+=due;
     return `<tr>
@@ -6416,9 +6433,7 @@ body.invoices-register-fullscreen #side-invoices .invoice-register-table{
   flex-direction:column!important;
   width:min(94vw,1320px)!important;
   max-width:1320px!important;
-  height:500px!important;
-  min-height:500px!important;
-  max-height:500px!important;
+  height:92vh!important;min-height:92vh!important;max-height:92vh!important;
   margin:0!important;
   padding:20px!important;
   box-sizing:border-box!important;
@@ -6486,6 +6501,20 @@ body.invoices-register-fullscreen #side-invoices .invoice-register-table{
   else portalPayrollWindow();
 })();
 <\/script>
+
+<style id="fozan-invoice-window-height-v28134">
+/* V2.8.134: Increase only Invoice Management window height; preserve all functions and graphic styling. */
+body.invoices-register-fullscreen #side-invoices .invoice-register-panel{
+  height:92vh!important; min-height:88vh!important; max-height:calc(100vh - 16px)!important;
+  width:min(96vw,1490px)!important; max-width:1490px!important;
+}
+@media(max-height:700px){
+ body.invoices-register-fullscreen #side-invoices .invoice-register-panel{
+  height:calc(100vh - 16px)!important; min-height:calc(100vh - 16px)!important; max-height:calc(100vh - 16px)!important;
+ }
+}
+</style>
+
 </body></html>`);
   doc.close();
 
@@ -7585,10 +7614,27 @@ function saleIsLinkedToSavedInvoice(sale,invoice){
   const saleNo=String(sale.invoice_no||sale.invoice_number||'').trim();
   if(invoiceNo&&saleNo===invoiceNo)return true;
   const description=String(sale.desc||sale.description||'').trim();
-  return !!invoiceNo&&(
+  if(invoiceNo&&(
     description.startsWith('Invoice '+invoiceNo+':')||
     description.startsWith('Invoice '+invoiceNo+' ')
+  ))return true;
+  // Safe legacy fallback: older records may have no linked ID or invoice number.
+  // Link only when customer + branch + date + exact total match AND this is the
+  // sole eligible sale candidate for the saved invoice, avoiding false matches.
+  const invoiceDate=String(invoice.date||invoice.invoice_date||'').slice(0,10);
+  const saleDate=String(sale.date||'').slice(0,10);
+  const invoiceTotal=Number(invoice.invoice_total??invoice.amount??0);
+  const saleTotal=Number(sale.amount||0);
+  if(!invoiceDate||invoiceDate!==saleDate||Math.abs(invoiceTotal-saleTotal)>0.01)return false;
+  const candidates=(data.sales||[]).filter(v=>
+    !isBalancePayment(v)&&!v.receipt_kind&&
+    !['advance_payment','routine_payment','cash_received','online_received','total_payment'].includes(v.type)&&
+    String(v.branch_id||'1')===String(invoice.branch_id||'1')&&
+    String(v.customer||'').trim().toLocaleLowerCase()===invoiceCustomer&&
+    String(v.date||'').slice(0,10)===invoiceDate&&
+    Math.abs(Number(v.amount||0)-invoiceTotal)<=0.01
   );
+  return candidates.length===1&&String(candidates[0].id||'')===String(sale.id||'');
 }
 function receivePaymentCustomerDue(customerName,branchId,excludeInvoiceId=''){
   const key=String(customerName||'').trim().toLocaleLowerCase();
@@ -7632,6 +7678,43 @@ function receivePaymentCustomers(){
   return [...names.values()].map(name=>({name,due:receivePaymentCustomerDue(name,branch)}))
     .filter(x=>x.due>0.009).sort((a,b)=>a.name.localeCompare(b.name));
 }
+
+var receiveCustomerSearchActiveIndex=-1;
+function filterReceiveCustomerOptions(){
+  const input=document.getElementById('receiveCustomerSearch');
+  const list=document.getElementById('receiveCustomerSearchList');
+  const select=document.getElementById('receiveCustomer');
+  if(!input||!list||!select)return;
+  const query=input.value.trim().toLocaleLowerCase();
+  const options=[...select.options].filter(o=>o.value&&o.text.toLocaleLowerCase().includes(query));
+  receiveCustomerSearchActiveIndex=-1;
+  list.innerHTML=options.length?options.map(o=>'<div class="receive-customer-search-option" role="option" data-value="'+esc(o.value)+'" onmousedown="chooseReceiveCustomerOption(this.dataset.value)">'+esc(o.text.replace(/\s+—\s+.*$/,'').trim())+'</div>').join(''):'<div class="receive-customer-search-empty">No matching customer found</div>';
+  list.classList.add('show');
+}
+function chooseReceiveCustomerOption(value){
+  const select=document.getElementById('receiveCustomer');
+  const input=document.getElementById('receiveCustomerSearch');
+  const list=document.getElementById('receiveCustomerSearchList');
+  if(!select||!input)return;
+  select.value=value;
+  const option=select.options[select.selectedIndex];
+  input.value=option?option.text.replace(/\s+—\s+.*$/,'').trim():'';
+  if(list)list.classList.remove('show');
+  updateReceivePaymentDue();
+}
+function receiveCustomerSearchKeydown(event){
+  const list=document.getElementById('receiveCustomerSearchList');
+  const options=list?[...list.querySelectorAll('.receive-customer-search-option')]:[];
+  if(event.key==='Escape'){if(list)list.classList.remove('show');return;}
+  if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+    event.preventDefault();if(!options.length)return;
+    receiveCustomerSearchActiveIndex=(receiveCustomerSearchActiveIndex+(event.key==='ArrowDown'?1:-1)+options.length)%options.length;
+    options.forEach((o,i)=>o.classList.toggle('active',i===receiveCustomerSearchActiveIndex));
+    options[receiveCustomerSearchActiveIndex]?.scrollIntoView({block:'nearest'});return;
+  }
+  if(event.key==='Enter'&&options.length){event.preventDefault();chooseReceiveCustomerOption(options[receiveCustomerSearchActiveIndex>=0?receiveCustomerSearchActiveIndex:0].dataset.value);}
+}
+
 function openReceivePayment(){
   if(previewMode)return alert('Preview mode is read-only.');
   if(activeBranch==='all')return alert('Please select Head Office or Bahria Enclave before receiving a payment.');
@@ -7646,7 +7729,9 @@ function openReceivePayment(){
   const customer=document.getElementById('receiveCustomer');
   const rows=receivePaymentCustomers();
   customer.innerHTML='<option value="">Select customer with outstanding balance</option>'+
-    rows.map(x=>`<option value="${esc(x.name)}">${esc(x.name)} — ${money(x.due)} due</option>`).join('');
+    rows.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+  const searchInput=document.getElementById('receiveCustomerSearch');if(searchInput)searchInput.value='';
+  const searchList=document.getElementById('receiveCustomerSearchList');if(searchList){searchList.innerHTML='';searchList.classList.remove('show');}
   document.getElementById('receiveOutstanding').value='0.00';
   document.getElementById('receiveAmount').value='';
   document.getElementById('receiveNote').value='';
@@ -7657,6 +7742,7 @@ function openReceivePayment(){
 function closeReceivePayment(){
   const modal=document.getElementById('receivePaymentModal');
   if(modal)modal.style.display='none';
+  const list=document.getElementById('receiveCustomerSearchList');if(list)list.classList.remove('show');
 }
 function renderReceivePaymentHistory(customerName){
   const list=document.getElementById('receivePaymentHistoryList');
@@ -7671,15 +7757,37 @@ function renderReceivePaymentHistory(customerName){
     return;
   }
   const key=customer.toLocaleLowerCase();
-  const records=(data.sales||[]).filter(x=>
-    isBalancePayment(x)&&
-    String(x.branch_id||'1')===String(activeBranch)&&
+  const branch=String(activeBranch||'1');
+  const sameBranch=(x)=>{
+    const recordBranch=String(x?.branch_id||'1');
+    if(recordBranch===branch)return true;
+    // Legacy records sometimes store a branch label instead of its numeric ID.
+    const normalize=v=>String(v||'').trim().toLocaleLowerCase().replace(/[^a-z0-9]/g,'');
+    const selectedLabel=normalize(branchName(branch));
+    const recordLabel=normalize(recordBranch);
+    return (branch==='1' && ['headoffice','pwd','main'].includes(recordLabel)) ||
+      (branch==='2' && ['bahriaenclaveoffice','bahriaenclave','bahria'].includes(recordLabel)) ||
+      recordLabel===selectedLabel;
+  };
+  const records=[];
+  const seen=new Set();
+  // Direct customer-balance receipt records.
+  (data.sales||[]).filter(x=>isBalancePayment(x)&&sameBranch(x)&&
     String(x.customer||'').trim().toLocaleLowerCase()===key
-  ).sort((a,b)=>
-    String(b.date||'').localeCompare(String(a.date||''))||
-    String(b.time||'').localeCompare(String(a.time||''))||
-    String(b.id||'').localeCompare(String(a.id||''))
-  );
+  ).forEach(x=>{
+    const id=String(x.id||x.receipt_no||x.date+'-'+x.amount);
+    if(seen.has(id))return; seen.add(id);
+    records.push({id:String(x.id||''),receipt:String(x.receipt_no||''),date:x.date||'',time:x.time||'',amount:Number(x.amount||0),method:balanceMethod(x),description:String(x.desc||'').replace(/\s*\|\s*Receipt\s+PR-[\w-]+/i,'').trim(),kind:'Customer Balance Receipt'});
+  });
+  // Also read dated payment entries saved inside invoices, including legacy
+  // receipts that may not have a standalone sales receipt record.
+  (data.invoices||[]).filter(inv=>sameBranch(inv)&&String(inv.customer||'').trim().toLocaleLowerCase()===key)
+    .forEach(inv=>(Array.isArray(inv.activity_history)?inv.activity_history:[]).filter(a=>a.kind==='payment'&&Number(a.amount||0)>0).forEach(a=>{
+      const id=String(a.sale_id||a.receipt_no||'invoice-'+inv.id+'-'+a.date+'-'+a.amount);
+      if(seen.has(id))return; seen.add(id);
+      records.push({id:'',receipt:String(a.receipt_no||''),date:a.date||'',time:a.time||'',amount:Number(a.amount||0),method:String(a.method||'cash').toLowerCase()==='online'?'online':'cash',description:String(a.description||'Invoice payment'),kind:'Invoice Payment'});
+    }));
+  records.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||''))||String(b.receipt||'').localeCompare(String(a.receipt||'')));
   if(count)count.textContent=String(records.length);
   if(caption)caption.textContent=customer+' · '+branchName(activeBranch);
   if(!records.length){
@@ -7687,20 +7795,19 @@ function renderReceivePaymentHistory(customerName){
     return;
   }
   list.innerHTML=records.map(x=>{
-    const mode=balanceMethod(x)==='online'?'ONLINE':'CASH';
+    const mode=x.method==='online'?'ONLINE':'CASH';
     const date=String(x.date||'—')+(x.time?' '+String(x.time):'');
-    const receipt=String(x.receipt_no||'');
-    const details=String(x.desc||'').replace(/\s*\|\s*Receipt\s+PR-[\w-]+/i,'').trim();
+    const title=x.receipt||x.kind;
+    const detail=x.description||x.kind;
+    const printButton=x.id?'<button type="button" class="fozan-payment-history-print" onclick="printStoredReceivePaymentReceipt(\''+esc(x.id)+'\')">↗ View / Print</button>':'';
     return '<div class="fozan-payment-history-row">'+
-      '<div class="fozan-payment-history-main"><strong>'+(receipt?esc(receipt):'Payment Receipt')+'</strong>'+
-      '<small>'+esc(date)+(details?' · '+esc(details):'')+'</small>'+
-      '<span class="fozan-payment-history-mode">'+mode+'</span></div>'+
-      '<div class="fozan-payment-history-amount">'+money(Number(x.amount||0))+'</div>'+
-      '<button type="button" class="fozan-payment-history-print" onclick="printStoredReceivePaymentReceipt(\''+esc(String(x.id||''))+'\')">↗ View / Print</button>'+
+      '<div class="fozan-payment-history-main"><strong>'+esc(title)+'</strong>'+ 
+      '<small>'+esc(date)+(detail?' · '+esc(detail):'')+'</small>'+ 
+      '<span class="fozan-payment-history-mode">'+mode+'</span></div>'+ 
+      '<div class="fozan-payment-history-amount">'+money(Number(x.amount||0))+'</div>'+printButton+
       '</div>';
   }).join('');
 }
-
 function updateReceivePaymentDue(){
   const customer=document.getElementById('receiveCustomer')?.value||'';
   renderReceivePaymentHistory(customer);
@@ -7909,11 +8016,12 @@ function saveReceivePayment(){
   const remaining=receivePaymentCustomerDue(customer,activeBranch);
   receipt.remaining_after_payment=remaining;
   persist();
-  closeReceivePayment();
   refreshSaleSuggestions();refreshBillCustomerList();
   renderDateHistory();renderDashboard();renderSales();refreshManagementMenuCounts();
-  printReceivePaymentReceipt(receipt);
+  // Show success while the Receive Payment modal is still open; only close it after the user acknowledges.
   alert('Payment received successfully. Receipt '+receiptNo+' saved. Remaining balance: '+money(remaining));
+  closeReceivePayment();
+  printReceivePaymentReceipt(receipt);
   // Keep the lock briefly after the modal closes to ignore queued/double clicks.
   setTimeout(()=>{
     receivePaymentSaving=false;
@@ -9150,7 +9258,7 @@ function convertSavedQuoteToInvoice(quoteId){
   }
   if(!confirm('Convert quotation '+(quote.quote_no||'')+' into a new invoice? The quotation will remain saved.'))return;
 
-  const invoiceNo=nextBranchInvoiceNumber(branchId);
+  const invoiceNo=nextBranchInvoiceNumber(branchId,true);
   const stamp=nowLocal();
   const items=(quote.quote_items||[]).map(item=>({
     desc:item.desc||item.name||'',
@@ -9212,7 +9320,7 @@ function generateCustomQuote(){
   // be saved. The PDF picker is invoked directly from the Save Quote click flow.
   fozanSaveBillPDF();
 }
-function nextBranchInvoiceNumber(branch){
+function nextBranchInvoiceNumber(branch,reserve=false){
   const branchId=String(branch||'1');
   const key='fozan_invoice_counter_branch_'+branchId;
   const code=branchId==='2'?'BE':'PWD';
@@ -9236,8 +9344,17 @@ function nextBranchInvoiceNumber(branch){
     if(match)highest=Math.max(highest,Number(match[1])||0);
   });
   const next=highest+1;
-  localStorage.setItem(key,String(next));
+  // Merely opening/resetting the invoice builder previews the next number.
+  // Reserve/increment it only at a real save/commit action.
+  if(reserve)localStorage.setItem(key,String(next));
   return prefix+String(next).padStart(6,'0');
+}
+function reserveBranchInvoiceNumber(branch,invoiceNo){
+  const branchId=String(branch||'1');
+  const key='fozan_invoice_counter_branch_'+branchId;
+  const prefix=branchId==='2'?'FP-BE-':'FP-PWD-';
+  const match=String(invoiceNo||'').trim().match(new RegExp('^'+prefix+'(\d+)$','i'));
+  if(match){const n=Number(match[1])||0;const current=Number(localStorage.getItem(key)||0);if(n>current)localStorage.setItem(key,String(n));}
 }
 function getInvoiceCustomerRecords(){
   // The customer register is the source of truth. Historical invoices/quotes
@@ -9261,7 +9378,7 @@ function getInvoiceCustomerRecords(){
     const normalized={...c,name,branch_id:branch,
       mobile:c.mobile||c.work_phone||c.billing?.phone||c.shipping?.phone||'',
       email:c.email||'',company:c.company||c.company_name||'',
-      address:c.billing?.address||c.address||c.shipping?.address||'',
+      address:c.billing?.address||c.address||c.website||c.shipping?.address||'',
       payment_terms:c.payment_terms||c.terms||''};
     if(existing){
       // Fill missing fields from older invoice records without overwriting
@@ -9396,7 +9513,7 @@ function autofillInvoiceCustomerDetails(){
   put('customCustomerMobile',customer.mobile);
   put('customCustomerEmail',customer.email);
   put('customCompanyName',customer.company);
-  put('customCustomerAddress',customer.address);
+  if(customer.address)put('customCustomerAddress',customer.address);
   const terms=document.getElementById('customTerms');
   if(terms&&customer.payment_terms){const opt=[...terms.options].find(o=>o.text===customer.payment_terms||o.value===customer.payment_terms);if(opt)terms.value=opt.value;}
   if(window.editingSavedInvoiceId){
@@ -9560,13 +9677,15 @@ function toggleAddInvoiceMaximize(){
 function saveCustomInvoiceDraft(){
   if(!ensureInvoiceBranchSelected('Draft'))return;
   const name=(document.getElementById('customCustomerName').value||'').trim();
+  const draftInvoiceNo=document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch);
+  reserveBranchInvoiceNumber(activeBranch,draftInvoiceNo);
   const draft={
     id:window.editingCustomDraftId||uid(),branch_id:activeBranch,customer:name,
     mobile:(document.getElementById('customCustomerMobile').value||'').trim(),
     email:(document.getElementById('customCustomerEmail')?.value||'').trim(),
     company:(document.getElementById('customCompanyName').value||'').trim(),
     address:(document.getElementById('customCustomerAddress').value||'').trim(),
-    invoice_no:document.getElementById('customInvoiceNo').value||nextBranchInvoiceNumber(activeBranch),
+    invoice_no:draftInvoiceNo,
     date:document.getElementById('customBillDate').value||nowLocal().date,
     order_no:'',
     terms:document.getElementById('customTerms').value,
@@ -9769,7 +9888,7 @@ async function generateCustomBill(){
   }
   const invoiceNo=originalInvoice
     ? String(originalInvoice.invoice_no||'').trim()
-    : nextBranchInvoiceNumber(activeBranch);
+    : nextBranchInvoiceNumber(activeBranch,true);
   if(!invoiceNo){alert('Invoice number could not be generated. Please try again.');return;}
   const invoiceNoField=document.getElementById('customInvoiceNo');if(invoiceNoField)invoiceNoField.value=invoiceNo;
   // Previous Balance is a snapshot carried onto a NEW invoice only.
@@ -11866,7 +11985,7 @@ body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maxi
 body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
   display:flex!important;flex-direction:column!important;
   width:min(94vw,1320px)!important;max-width:1320px!important;
-  height:500px!important;min-height:500px!important;max-height:500px!important;
+  height:92vh!important;min-height:92vh!important;max-height:92vh!important;
   margin:0!important;padding:20px!important;box-sizing:border-box!important;
   overflow:hidden!important;
 }
@@ -12691,6 +12810,40 @@ body.invoice-workspace-active #billGeneratorPanel #customBillItems .custom-bill-
   color:#52616d!important;background:#fcfdff!important;
 }
 </style>
+
+<style id="fozan-invoice-window-actual-final-fix-v28136">
+/* V2.8.136: Correct the REAL active normal-window selector (later legacy rules were overriding prior height fixes). CSS only. */
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
+  height:88vh!important; min-height:680px!important; max-height:calc(100vh - 28px)!important;
+  width:min(96vw,1490px)!important; max-width:1490px!important;
+  display:flex!important; flex-direction:column!important; overflow:hidden!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel>.monthly-dues-content{
+  flex:1 1 auto!important; min-height:0!important; display:flex!important; flex-direction:column!important; overflow:hidden!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
+  display:grid!important; grid-template-columns:minmax(220px,1fr) minmax(180px,240px) minmax(150px,auto)!important;
+  align-items:center!important; gap:10px!important; flex:0 0 auto!important; width:100%!important; margin:0 0 10px!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools input,
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools select{
+  width:100%!important; min-width:0!important; margin:0!important; box-sizing:border-box!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools .invoice-design-new-btn{
+  width:auto!important; min-width:150px!important; margin:0!important; white-space:nowrap!important; grid-column:auto!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) #invoiceRegisterList{
+  flex:1 1 auto!important; min-height:0!important; width:100%!important; overflow:auto!important; overscroll-behavior:contain!important;
+}
+@media(max-height:760px){
+ #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{height:calc(100vh - 28px)!important;min-height:0!important;max-height:calc(100vh - 28px)!important}
+}
+@media(max-width:760px){
+ #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{width:calc(100vw - 20px)!important;height:calc(100vh - 20px)!important;min-height:0!important;max-height:calc(100vh - 20px)!important}
+ #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{grid-template-columns:1fr!important;gap:6px!important}
+ #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools .invoice-design-new-btn{width:100%!important}
+}
+</style>
 </body></html>
 
 <style id="fp-expense-final-visual-fix">
@@ -13374,7 +13527,7 @@ body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maxi
 body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
   display:flex!important;flex-direction:column!important;
   width:min(94vw,1320px)!important;max-width:1320px!important;
-  height:500px!important;min-height:500px!important;max-height:500px!important;
+  height:92vh!important;min-height:92vh!important;max-height:92vh!important;
   margin:0!important;padding:20px!important;box-sizing:border-box!important;
   overflow:hidden!important;
 }
@@ -13968,3 +14121,212 @@ body.invoices-register-fullscreen #side-invoices.active:not(.invoice-window-maxi
  }
 }
 </style>
+
+<style id="fozan-invoice-reference-graphic-v28133">
+/* V2.8.133: Graphic styling only — Invoice Management matches supplied reference */
+#side-invoices .invoice-register-panel{
+ width:min(95vw,1490px)!important; max-width:1490px!important;
+ height:min(86vh,900px)!important; min-height:560px!important;
+ max-height:calc(100vh - 32px)!important;
+ border:5px solid #fff!important;border-top:7px solid #f58220!important;
+ border-radius:24px!important;box-shadow:0 16px 48px rgba(0,0,0,.3)!important;
+ padding:10px!important;background:#fff!important;overflow:hidden!important;
+ display:flex!important;flex-direction:column!important;box-sizing:border-box!important;
+}
+#side-invoices .invoice-register-heading{
+ min-height:96px!important;flex:0 0 96px!important;
+ background:linear-gradient(115deg,#101722 0%,#202a3c 58%,#f58220 58%,#ff8a00 70%,#171e2b 70%)!important;
+ border:2px solid #f58220!important;border-radius:15px 15px 5px 5px!important;
+ padding:14px 22px!important;color:#fff!important;box-shadow:0 3px 8px #0002!important;
+}
+#side-invoices .dues-heading-copy{display:flex!important;align-items:center!important;gap:18px!important}
+#side-invoices .dues-heading-icon{width:62px!important;height:62px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ border-radius:13px!important;background:#f58220!important;color:#fff!important;font-size:36px!important;
+ border:3px solid #fff!important;box-shadow:0 3px 8px #0003!important}
+#side-invoices .invoice-heading-text h2{font-size:28px!important;font-weight:800!important;color:#fff!important;margin:0!important;letter-spacing:.2px!important}
+#side-invoices .invoice-heading-text small{display:block!important;color:#e8edf4!important;font-size:15px!important;margin-top:4px!important}
+#side-invoices .invoice-window-controls{gap:10px!important}
+#side-invoices .invoice-window-btn{width:48px!important;height:48px!important;border-radius:11px!important;font-size:24px!important;border:2px solid #69788d!important;background:#35445a!important;color:#fff!important}
+#side-invoices .invoice-window-btn.close{background:#e92f45!important;border-color:#ff8795!important}
+#side-invoices .monthly-dues-content{display:flex!important;flex-direction:column!important;flex:1!important;min-height:0!important;overflow:hidden!important;padding:12px 4px 4px!important}
+#side-invoices .invoice-register-tools{display:grid!important;grid-template-columns:minmax(260px,1fr) minmax(180px,300px) auto!important;gap:12px!important;margin:4px 8px 16px!important;align-items:center!important}
+#side-invoices .invoice-register-tools input,#side-invoices .invoice-register-tools select{
+ height:54px!important;border:2px solid #d5d9df!important;border-radius:12px!important;padding:0 16px!important;
+ font-size:16px!important;background:#fff!important;box-shadow:0 1px 4px #0000000b!important;color:#252a31!important}
+#side-invoices .invoice-register-tools input{background-image:none!important}
+#side-invoices .invoice-design-new-btn{height:54px!important;border:0!important;border-radius:12px!important;
+ background:linear-gradient(180deg,#ff941f,#f58200)!important;color:#fff!important;font-weight:800!important;
+ font-size:17px!important;padding:0 22px!important;white-space:nowrap!important;box-shadow:0 4px 8px #f5822040!important;cursor:pointer!important}
+#side-invoices #invoiceRegisterList{flex:1!important;min-height:0!important;overflow:auto!important;border:1px solid #e5e7eb!important;border-radius:13px!important;background:#fff!important}
+#side-invoices .invoice-register-table{width:100%!important;min-width:1180px!important;border-collapse:separate!important;border-spacing:0!important;font-size:15px!important}
+#side-invoices .invoice-register-table thead th{position:sticky!important;top:0!important;z-index:2!important;
+ background:linear-gradient(180deg,#ff941d,#f58200)!important;color:#fff!important;font-size:15px!important;font-weight:800!important;
+ padding:16px 12px!important;border-right:1px solid #ffffff45!important;border-bottom:2px solid #d96b00!important;text-align:center!important}
+#side-invoices .invoice-register-table thead th:first-child{border-top-left-radius:10px!important}
+#side-invoices .invoice-register-table thead th:last-child{border-top-right-radius:10px!important}
+#side-invoices .invoice-register-table tbody td{padding:15px 12px!important;border-bottom:1px solid #e7e9ed!important;
+ color:#202631!important;font-size:14px!important;vertical-align:middle!important;white-space:nowrap!important}
+#side-invoices .invoice-register-table tbody tr:nth-child(even){background:#f2f4f7!important}
+#side-invoices .invoice-register-table tbody tr:hover{background:#fff4e8!important}
+#side-invoices .invoice-register-table tbody td:first-child b{font-size:15px!important;font-weight:800!important}
+#side-invoices .invoice-register-table tbody td:nth-child(8){font-weight:800!important;color:#d62e2e!important}
+#side-invoices .invoice-register-table tbody td:last-child{min-width:180px!important;text-align:center!important}
+#side-invoices .invoice-view-btn,#side-invoices .admin-row-delete{width:39px!important;height:38px!important;padding:0!important;
+ font-size:0!important;line-height:1!important;border-radius:9px!important;margin:0 3px!important;background:#fff!important;font-weight:800!important}
+#side-invoices .invoice-view-btn:first-of-type{border:2px solid #1688e0!important;color:#1688e0!important}
+#side-invoices .invoice-view-btn:first-of-type:before{content:"◉";font-size:19px!important}
+#side-invoices .invoice-view-btn:nth-of-type(2){border:2px solid #20a44b!important;color:#20a44b!important}
+#side-invoices .invoice-view-btn:nth-of-type(2):before{content:"▣";font-size:19px!important}
+#side-invoices .admin-row-delete{border:2px solid #ed3b50!important;color:#ed3b50!important}
+#side-invoices .admin-row-delete:before{content:"♲";font-size:20px!important}
+#side-invoices .invoice-register-summary{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;
+ padding:12px 8px 5px!important;flex:0 0 auto!important}
+#side-invoices .invoice-register-summary .summary-card{display:flex!important;align-items:center!important;gap:12px!important;
+ background:#fff!important;border:1px solid #e4e7ec!important;border-radius:12px!important;padding:12px 15px!important;
+ box-shadow:0 3px 8px #00000010!important;min-width:0!important}
+#side-invoices .invoice-register-summary .summary-icon{font-size:28px!important}
+#side-invoices .invoice-register-summary small{display:block!important;color:#566171!important;font-size:12px!important;font-weight:700!important}
+#side-invoices .invoice-register-summary strong{display:block!important;color:#202632!important;font-size:16px!important;margin-top:3px!important;white-space:nowrap!important}
+@media(max-width:900px){
+ #side-invoices .invoice-register-panel{width:calc(100vw - 18px)!important;height:calc(100vh - 18px)!important;min-height:0!important}
+ #side-invoices .invoice-register-heading{min-height:75px!important;flex-basis:75px!important;padding:8px 12px!important}
+ #side-invoices .invoice-heading-text h2{font-size:20px!important}
+ #side-invoices .invoice-heading-text small{font-size:12px!important}
+ #side-invoices .dues-heading-icon{width:46px!important;height:46px!important;font-size:25px!important}
+ #side-invoices .invoice-register-tools{grid-template-columns:1fr!important}
+ #side-invoices .invoice-register-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+</style>
+
+<script id="fozan-invoice-register-summary-reference-v28133">
+(function(){
+ function moneyVal(s){return Number(String(s||'').replace(/[^0-9.-]/g,''))||0;}
+ function updateSummary(){
+  const panel=document.querySelector('#side-invoices .invoice-register-panel');
+  const list=document.getElementById('invoiceRegisterList');
+  if(!panel||!list)return;
+  let summary=panel.querySelector('.invoice-register-summary');
+  if(!summary){summary=document.createElement('div');summary.className='invoice-register-summary';panel.appendChild(summary);}
+  const rows=[...list.querySelectorAll('.invoice-register-table tbody tr')];
+  let total=0,advance=0,balance=0;
+  rows.forEach(row=>{const cells=row.querySelectorAll('td');if(cells.length>=8){total+=moneyVal(cells[5].textContent);advance+=moneyVal(cells[6].textContent);balance+=moneyVal(cells[7].textContent);}});
+  const fmt=n=>'Rs. '+Math.round(n).toLocaleString('en-PK');
+  summary.innerHTML='<div class="summary-card"><span class="summary-icon">▤</span><div><small>Total Invoices</small><strong>'+rows.length+'</strong></div></div>'+
+   '<div class="summary-card"><span class="summary-icon">🟠</span><div><small>Total Amount</small><strong>'+fmt(total)+'</strong></div></div>'+
+   '<div class="summary-card"><span class="summary-icon">💰</span><div><small>Total Advance</small><strong>'+fmt(advance)+'</strong></div></div>'+
+   '<div class="summary-card"><span class="summary-icon">⚖️</span><div><small>Total Balance</small><strong style="color:'+(balance>0?'#d52d2d':'#16813c')+'">'+fmt(balance)+'</strong></div></div>';
+ }
+ const observer=new MutationObserver(updateSummary);
+ document.addEventListener('DOMContentLoaded',function(){const list=document.getElementById('invoiceRegisterList');if(list)observer.observe(list,{childList:true,subtree:true});updateSummary();});
+ setInterval(updateSummary,1200);
+})();
+</script>
+
+<style id="fozan-invoice-window-normal-size-v28135">
+/* V2.8.135: Fix normal/restored window size and keep toolbar on one row. CSS only; no functions changed. */
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
+  width:min(95vw,1490px)!important;max-width:1490px!important;
+  height:88vh!important;min-height:min(680px,calc(100vh - 36px))!important;
+  max-height:calc(100vh - 36px)!important;
+  margin:0!important;box-sizing:border-box!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel>.monthly-dues-content{
+  flex:1 1 0!important;min-height:0!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
+  grid-template-columns:minmax(220px,1fr) minmax(170px,240px) auto!important;
+  align-items:center!important;gap:10px!important;flex:0 0 auto!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-design-new-btn{
+  width:auto!important;min-width:150px!important;white-space:nowrap!important;
+}
+#side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) #invoiceRegisterList{
+  flex:1 1 0!important;min-height:140px!important;
+}
+@media(max-width:760px){
+ #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>.invoice-register-panel{
+  width:calc(100vw - 16px)!important;height:calc(100vh - 16px)!important;
+  min-height:0!important;max-height:calc(100vh - 16px)!important;padding:10px!important;
+ }
+ #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
+  grid-template-columns:minmax(0,1fr)!important;gap:7px!important;
+ }
+ #side-invoices.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-design-new-btn{width:100%!important}
+}
+</style>
+
+<style id="fozan-invoice-window-true-final-v28138">
+/* V2.8.138: Fix the actual Invoice Management panel height; CSS only. */
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized){
+  position:fixed!important;inset:0!important;z-index:10060!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100vw!important;height:100vh!important;min-height:100vh!important;
+  margin:0!important;padding:12px!important;box-sizing:border-box!important;
+  overflow:hidden!important;background:rgba(15,23,42,.58)!important;
+}
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel{
+  display:flex!important;flex:0 0 auto!important;flex-direction:column!important;
+  width:96vw!important;max-width:1540px!important;
+  height:calc(100vh - 40px)!important;min-height:calc(100vh - 40px)!important;max-height:calc(100vh - 40px)!important;
+  margin:0!important;padding:18px!important;box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel>.monthly-dues-content{
+  display:flex!important;flex:1 1 0!important;flex-direction:column!important;
+  width:100%!important;min-height:0!important;overflow:hidden!important;
+}
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(170px,245px) minmax(145px,175px)!important;
+  gap:10px!important;align-items:center!important;width:100%!important;margin:4px 0 12px!important;flex:0 0 auto!important;
+}
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools input,
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools select,
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools .invoice-design-new-btn{
+  width:100%!important;min-width:0!important;margin:0!important;box-sizing:border-box!important;
+}
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) #invoiceRegisterList{
+  display:block!important;flex:1 1 0!important;min-height:0!important;width:100%!important;
+  overflow:auto!important;overscroll-behavior:contain!important;
+}
+html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-summary{
+  flex:0 0 auto!important;
+}
+@media(max-height:680px){
+ html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel{
+  height:calc(100vh - 20px)!important;min-height:calc(100vh - 20px)!important;max-height:calc(100vh - 20px)!important;
+ }
+}
+@media(max-width:760px){
+ html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized)>aside.invoice-register-panel{
+  width:calc(100vw - 12px)!important;height:calc(100vh - 12px)!important;
+  min-height:calc(100vh - 12px)!important;max-height:calc(100vh - 12px)!important;padding:10px!important;
+ }
+ html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-register-tools{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+ }
+ html body section#side-invoices.side-view.active:not(.invoice-window-maximized):not(.invoice-window-minimized) .invoice-design-new-btn{grid-column:1/-1!important}
+}
+</style>
+
+<!-- V2.8.144 ADD-ON: isolated salary payments register; existing modules/functions unchanged -->
+<style id="fozan-salary-payments-addon-css">
+#fozanSalaryPaymentsModal{display:none;position:fixed;inset:0;z-index:10080;background:#101827bb;align-items:center;justify-content:center;padding:14px}#fozanSalaryPaymentsModal.open{display:flex}
+#fozanSalaryPaymentsModal .fsp-window{width:min(1180px,100%);max-height:96vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid #334155;border-top:5px solid #f58220;border-radius:15px;background:#f4f6f9;box-shadow:0 22px 70px #0005}
+#fozanSalaryPaymentsModal .fsp-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:linear-gradient(110deg,#111827,#273449);color:#fff}#fozanSalaryPaymentsModal .fsp-head h2{margin:0;color:#fff;font-size:19px}#fozanSalaryPaymentsModal .fsp-head p{margin:4px 0 0;color:#c5d0df;font-size:11px}#fozanSalaryPaymentsModal .fsp-close{width:36px;height:36px;padding:0;background:#dc3545;color:#fff;font-size:24px;border-radius:8px}
+#fozanSalaryPaymentsModal .fsp-body{padding:15px;overflow:auto}#fozanSalaryPaymentsModal .fsp-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:13px}#fozanSalaryPaymentsModal .fsp-kpis>div{padding:12px;border:1px solid #e1e6ed;border-radius:10px;background:#fff}#fozanSalaryPaymentsModal .fsp-kpis small{display:block;font-size:10px;color:#64748b;font-weight:800}#fozanSalaryPaymentsModal .fsp-kpis strong{display:block;margin-top:5px;font-size:17px;color:#1f2937}
+#fozanSalaryPaymentsModal .fsp-grid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);gap:12px}#fozanSalaryPaymentsModal .fsp-card{border:1px solid #e1e6ed;border-radius:12px;background:#fff;padding:14px;min-width:0}#fozanSalaryPaymentsModal .fsp-card h3{margin:0 0 12px;font-size:15px;color:#253348}#fozanSalaryPaymentsModal label{display:block;margin:8px 0;font-size:11px;font-weight:800;color:#475569}#fozanSalaryPaymentsModal input,#fozanSalaryPaymentsModal select,#fozanSalaryPaymentsModal textarea{display:block;width:100%;margin:4px 0 0;padding:9px;border:1px solid #d8e0e9;border-radius:8px;background:#fff;font-size:12px}#fozanSalaryPaymentsModal .fsp-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}#fozanSalaryPaymentsModal .fsp-btn{background:linear-gradient(110deg,#f58220,#e96b08);color:#fff;font-weight:800;padding:10px 14px}#fozanSalaryPaymentsModal .fsp-table-wrap{overflow:auto;max-height:430px;border:1px solid #e5e9ef;border-radius:9px}#fozanSalaryPaymentsModal table{min-width:700px;margin:0;font-size:11px}#fozanSalaryPaymentsModal th{position:sticky;top:0;background:#202b3d;color:#fff}#fozanSalaryPaymentsModal td{vertical-align:top}#fozanSalaryPaymentsModal .fsp-empty{text-align:center;color:#64748b;padding:20px}
+@media(max-width:760px){#fozanSalaryPaymentsModal .fsp-grid{grid-template-columns:1fr}#fozanSalaryPaymentsModal .fsp-kpis{grid-template-columns:1fr 1fr}#fozanSalaryPaymentsModal{padding:6px}#fozanSalaryPaymentsModal .fsp-body{padding:9px}}
+</style>
+<div id="fozanSalaryPaymentsModal" aria-hidden="true" onclick="if(event.target===this)closeSalaryPaymentsWindow()"><div class="fsp-window" role="dialog" aria-modal="true" aria-labelledby="fspTitle">
+<div class="fsp-head"><div><h2 id="fspTitle">Salary / Payments</h2><p>Separate salary-payment register • Other modules remain untouched</p></div><button class="fsp-close" type="button" onclick="closeSalaryPaymentsWindow()">×</button></div>
+<div class="fsp-body"><div class="fsp-kpis"><div><small>Payments This Month</small><strong id="fspMonthTotal">Rs. 0</strong></div><div><small>All Recorded Payments</small><strong id="fspAllTotal">Rs. 0</strong></div><div><small>Payment Entries</small><strong id="fspCount">0</strong></div><div><small>Selected Employee</small><strong id="fspSelectedEmployee">—</strong></div></div>
+<div class="fsp-grid"><section class="fsp-card"><h3>Record Salary Payment</h3><label>Staff / Employee<select id="fspStaff"></select></label><div class="fsp-two"><label>Payment Date<input id="fspDate" type="date"></label><label>Amount (Rs.)<input id="fspAmount" type="number" min="1" step="1" placeholder="Enter amount"></label></div><div class="fsp-two"><label>Payment Method<select id="fspMode"><option>Cash</option><option>Online</option><option>Bank Transfer</option><option>Other</option></select></label><label>Salary Month<select id="fspMonth"></select></label></div><label>Notes / Remarks<textarea id="fspNote" rows="2" placeholder="Optional details"></textarea></label><button type="button" class="fsp-btn" onclick="saveSalaryPaymentAddon()">＋ Save Payment</button><p style="font-size:10px;color:#64748b;line-height:1.5;margin:10px 0 0">This register is independent and will not change existing payroll totals, staff records, expenses, or other modules.</p></section>
+<section class="fsp-card"><h3>Payment History</h3><div class="fsp-two"><label>Month Filter<select id="fspFilterMonth" onchange="renderSalaryPaymentsAddon()"></select></label><label>Branch Filter<select id="fspFilterBranch" onchange="renderSalaryPaymentsAddon()"><option value="all">Both Branches</option><option value="1">PWD Head Office</option><option value="2">Bahria Enclave</option></select></label></div><div class="fsp-table-wrap"><div id="fspHistoryTable"></div></div></section></div></div></div></div>
+<script id="fozan-salary-payments-addon-js">
+(function(){const KEY='fozan_salary_payments_addon_v1';function rows(){try{const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}function saveRows(a){localStorage.setItem(KEY,JSON.stringify(a))}function money(n){return 'Rs. '+Number(n||0).toLocaleString('en-PK')}function safe(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function staff(){return Array.isArray(data.staff)?data.staff:[]}window.fozanSalaryAddonPaymentsFor=function(staffRow,monthKey){return rows().filter(p=>String(p.staffId)===String(staffRow?.id)&&String(p.month||'')===String(monthKey||''))};function branch(id){return String(id)==='2'?'Bahria Enclave':'PWD Head Office'}function month(){return typeof currentMonthKey==='function'?currentMonthKey():new Date().toISOString().slice(0,7)}function date(){return typeof nowLocal==='function'?nowLocal().date:new Date().toISOString().slice(0,10)}
+window.openSalaryPaymentsWindow=function(){if(currentUserRole!=='admin'){alert('Admin access required.');return}const m=document.getElementById('fozanSalaryPaymentsModal');m.classList.add('open');m.setAttribute('aria-hidden','false');init();renderSalaryPaymentsAddon()};window.closeSalaryPaymentsWindow=function(){const m=document.getElementById('fozanSalaryPaymentsModal');m.classList.remove('open');m.setAttribute('aria-hidden','true')};
+function init(){const s=document.getElementById('fspStaff');s.innerHTML='<option value="">Select employee</option>'+staff().map(x=>'<option value="'+safe(x.id)+'">'+safe(x.name||'Unnamed')+' — '+safe(branch(x.branch_id))+'</option>').join('');s.onchange=()=>document.getElementById('fspSelectedEmployee').textContent=staff().find(x=>String(x.id)===s.value)?.name||'—';document.getElementById('fspDate').value=date();const ms=document.getElementById('fspMonth'),f=document.getElementById('fspFilterMonth');ms.innerHTML='';f.innerHTML='<option value="all">All Months</option>';for(let i=0;i<18;i++){let d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);let k=d.toISOString().slice(0,7),label=d.toLocaleString('en-US',{month:'long',year:'numeric'});ms.add(new Option(label,k));f.add(new Option(label,k))}ms.value=month();f.value=month()}
+window.saveSalaryPaymentAddon=function(){if(currentUserRole!=='admin')return alert('Admin access required.');let id=document.getElementById('fspStaff').value,s=staff().find(x=>String(x.id)===id),amount=Number(document.getElementById('fspAmount').value),dt=document.getElementById('fspDate').value,m=document.getElementById('fspMonth').value;if(!s)return alert('Select an employee.');if(!(amount>0))return alert('Enter a valid amount.');if(!dt)return alert('Select payment date.');let a=rows();a.unshift({id:'fsp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),staffId:String(s.id),staffName:s.name||'Unnamed',branchId:String(s.branch_id||1),date:dt,month:m,amount,mode:document.getElementById('fspMode').value,note:document.getElementById('fspNote').value.trim()});saveRows(a);document.getElementById('fspAmount').value='';document.getElementById('fspNote').value='';renderSalaryPaymentsAddon();if(typeof renderStaffPayroll==='function')renderStaffPayroll();alert('Payment saved. Monthly Salary Sheet/Register updated and pending salary reduced.')};window.deleteSalaryPaymentAddon=function(id){if(!confirm('Delete this payment record?'))return;saveRows(rows().filter(x=>x.id!==id));renderSalaryPaymentsAddon();if(typeof renderStaffPayroll==='function')renderStaffPayroll()};window.renderSalaryPaymentsAddon=function(){let a=rows(),m=document.getElementById('fspFilterMonth').value||month(),b=document.getElementById('fspFilterBranch').value||'all',f=a.filter(x=>(m==='all'||x.month===m)&&(b==='all'||String(x.branchId)===b));document.getElementById('fspMonthTotal').textContent=money(a.filter(x=>x.month===month()).reduce((t,x)=>t+Number(x.amount||0),0));document.getElementById('fspAllTotal').textContent=money(a.reduce((t,x)=>t+Number(x.amount||0),0));document.getElementById('fspCount').textContent=a.length;let out=document.getElementById('fspHistoryTable');if(!f.length){out.innerHTML='<div class="fsp-empty">No payment records found for this filter.</div>';return}out.innerHTML='<table><thead><tr><th>Date</th><th>Employee</th><th>Branch</th><th>Amount</th><th>Method</th><th>Month</th><th>Notes</th><th>Action</th></tr></thead><tbody>'+f.map(x=>'<tr><td>'+safe(x.date)+'</td><td><b>'+safe(x.staffName)+'</b></td><td>'+safe(branch(x.branchId))+'</td><td style="color:#16804a;font-weight:800">'+money(x.amount)+'</td><td>'+safe(x.mode)+'</td><td>'+safe(x.month)+'</td><td>'+safe(x.note||'—')+'</td><td><button type="button" class="danger" onclick="deleteSalaryPaymentAddon(\''+safe(x.id)+'\')">Delete</button></td></tr>').join('')+'</tbody></table>'};})();
+</script>
+
+<script>document.addEventListener("click",function(e){const w=document.querySelector("#receivePaymentModal .receive-customer-search-wrap");const l=document.getElementById("receiveCustomerSearchList");if(w&&l&&!w.contains(e.target))l.classList.remove("show");});</script>
